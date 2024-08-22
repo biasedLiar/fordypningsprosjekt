@@ -6,16 +6,21 @@ import pandas as pd
 
 import helper.plotHelper as plotHelper
 import helper.KNearestNeighbor as kNearest
+import helper.fileHelper as fileHelper
+
 
 CUTOFF = True
-CUTOFFPOINT = 12
+CUTOFFPOINT = 200
 
-
+STOP_AFTER_CONSEC_500S = False
 # ANGLE = 0.2095
 ANGLE = 1.0
 render_mode = "human"  # Set to None to run without graphics
 
-def run_k_nearest(k=-1, show_results=True, save_results=True):
+path = f"plots\\kNearest\\{CUTOFFPOINT}_gens"
+fileHelper.createDirIfNotExist(path)
+
+def run_k_nearest(k=-1, show_results=True, save_results=True, window_width=5):
     if k > 0:
         kNearest.K = k
     env = gym.make("CartPole-v1", render_mode=render_mode)
@@ -63,7 +68,7 @@ def run_k_nearest(k=-1, show_results=True, save_results=True):
                 last_it_succeeded = False
             else:
                 print("truncated")
-                if last_it_succeeded:
+                if last_it_succeeded and STOP_AFTER_CONSEC_500S:
                     print(f"Steps alive: {steps_alive}")
                     break
                 else:
@@ -77,7 +82,7 @@ def run_k_nearest(k=-1, show_results=True, save_results=True):
             its_before_finished += 1
 
     print(f"\n\nFinished. Iterations before two successful iterations in a row:\n{its_before_finished}")
-    rolling_avg = plotHelper.rolling_average(data, 10)
+    rolling_avg = plotHelper.rolling_average(data, window_width)
 
     plt.plot(data, label="Steps")
     plt.plot(rolling_avg, label="10-step avg")
@@ -87,22 +92,49 @@ def run_k_nearest(k=-1, show_results=True, save_results=True):
     plt.legend(loc="upper left")
     plt.title(f"k nearest neighbor classification, k={kNearest.K}, angle={ANGLE}")
 
-    plot_name = f"plots\\kNearest\\K_{kNearest.K}--angle_{ANGLE}--plot.png"
+    plot_name = path + f"\\K-{kNearest.K}__angle-{ANGLE}__plot.png"
     if save_results:
         plt.savefig(plot_name)
     if show_results:
         plt.show()
+    plt.clf()
     return data
 
 
-def run_and_compare_range_k_nearest(bottom, top, step=1):
+def run_and_compare_range_k_nearest(bottom, top, window_width, step=1):
     survival_stats = []
     for i in range(bottom, top+1, step):
-        survival_stats.append(run_k_nearest(k=i, show_results=False, save_results=True))
+        survival_stat = run_k_nearest(k=i, show_results=False, save_results=True)
+        survival_stats.append(survival_stat)
+
+    for i in range(len(survival_stats)):
+        plt.plot(survival_stats[i], label=f"k={i*step + bottom}")
+
+    plt.xlabel("iterations")
+    plt.ylabel("steps")
+    plt.legend(loc="upper left")
+    plt.title(f"k nearest neighbor classification, k={range(bottom, top + 1, step)}, angle={ANGLE}")
+    plot_name = path +  f"\\K-{bottom}-{top}__group__angle-{ANGLE}__plot.png"
+    plt.savefig(plot_name)
+    plt.clf()
+
+    for i in range(len(survival_stats)):
+        rolling_avg = plotHelper.rolling_average(survival_stats[i], window_width)
+        plt.plot(rolling_avg, label=f"k={step*i + bottom}")
+
+    plt.xlabel("iterations")
+    plt.ylabel("steps")
+    plt.legend(loc="upper left")
+    plt.title(f"k-nearest neighbor, rolling avg of {window_width}, k={range(bottom, top + 1, step)}, angle={ANGLE}")
+    plot_name = path + f"\\K-{bottom}-{top}__group__rolling-avg__angle-{ANGLE}__plot.png"
+    plt.savefig(plot_name)
+    plt.clf()
 
 
 
+# shift file saving
 
 if __name__ == '__main__':
-    run_k_nearest()
+    # run_k_nearest()
+    run_and_compare_range_k_nearest(1, 11, 7, 2)
     print("Finished")
