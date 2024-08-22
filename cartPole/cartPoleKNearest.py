@@ -1,11 +1,14 @@
 import gymnasium as gym
 import pygame
 import numpy as np
-import helper.KNearestNeighbor as kNearest
 import matplotlib.pyplot as plt
+import pandas as pd
+
+import helper.plotHelper as plotHelper
+import helper.KNearestNeighbor as kNearest
 
 CUTOFF = True
-CUTOFFPOINT = 200
+CUTOFFPOINT = 12
 
 
 # ANGLE = 0.2095
@@ -31,7 +34,7 @@ def run_k_nearest(k=-1, show_results=True, save_results=True):
     last_it_succeeded = False
     its_before_finished = 0
 
-    training_survival_stats = []
+    data = np.array([], dtype=int)
 
     while its_before_finished < CUTOFFPOINT:
         last_closest_distance = kNearest.k_nearest_distance(terminated_observations_normalized, observation, mean, std)
@@ -67,16 +70,21 @@ def run_k_nearest(k=-1, show_results=True, save_results=True):
                     last_it_succeeded = True
 
             print(f"{its_before_finished}: Steps alive: {steps_alive}")
-            training_survival_stats.append(steps_alive)
+            data = np.append(data, [steps_alive])
             steps_alive = 0
             last_closest_distance_change = None
             observation, info = env.reset()
             its_before_finished += 1
 
     print(f"\n\nFinished. Iterations before two successful iterations in a row:\n{its_before_finished}")
-    plt.plot(training_survival_stats)
+    rolling_avg = plotHelper.rolling_average(data, 10)
+
+    plt.plot(data, label="Steps")
+    plt.plot(rolling_avg, label="10-step avg")
+
     plt.xlabel("iterations")
     plt.ylabel("steps")
+    plt.legend(loc="upper left")
     plt.title(f"k nearest neighbor classification, k={kNearest.K}, angle={ANGLE}")
 
     plot_name = f"plots\\kNearest\\K_{kNearest.K}--angle_{ANGLE}--plot.png"
@@ -84,7 +92,7 @@ def run_k_nearest(k=-1, show_results=True, save_results=True):
         plt.savefig(plot_name)
     if show_results:
         plt.show()
-    return training_survival_stats
+    return data
 
 
 def run_and_compare_range_k_nearest(bottom, top, step=1):
