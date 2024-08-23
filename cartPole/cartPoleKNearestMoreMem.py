@@ -11,7 +11,7 @@ import helper.fileHelper as fileHelper
 
 ############### Constants ###################
 CUTOFF = True
-CUTOFFPOINT = 400
+CUTOFFPOINT = 200
 
 STOP_AFTER_CONSEC_500S = False
 
@@ -23,12 +23,13 @@ SHOW_GAMES = False
 MANUAL_ROLLING_AVERAGE = -1
 
 K_START = 1
-K_END = 5
-K_STEP = 2
+K_END = 16
+K_STEP = 5
 
+SHORT_TERM_MEM_LENGTH = 5
 ########### End constants #################
 
-path = f"plots\\kNearest\\{ANGLE}_angle\\{CUTOFFPOINT}_gens"
+path = f"plots\\kNearestMem\\{ANGLE}_angle\\{CUTOFFPOINT}_gens"
 fileHelper.createDirIfNotExist(path)
 
 if SHOW_GAMES:
@@ -40,6 +41,8 @@ if MANUAL_ROLLING_AVERAGE == -1:
     window_width = round(CUTOFFPOINT/26.67)
 else:
     window_width = MANUAL_ROLLING_AVERAGE
+
+
 
 def run_k_nearest(k=-1, show_results=True, save_results=True, window_width=5):
     if k > 0:
@@ -61,6 +64,8 @@ def run_k_nearest(k=-1, show_results=True, save_results=True, window_width=5):
     its_before_finished = 0
 
     data = np.array([], dtype=int)
+    short_term_memory = np.zeros((0, 4))
+
 
     while its_before_finished < CUTOFFPOINT:
         last_closest_distance = kNearest.k_nearest_distance(terminated_observations_normalized, observation, mean, std)
@@ -77,11 +82,12 @@ def run_k_nearest(k=-1, show_results=True, save_results=True, window_width=5):
 
         last_closest_distance_change = closest_distance_change
 
+        short_term_memory = update_short_term_memory(short_term_memory, observation)
         steps_alive += 1
 
         if np.abs(observation[2]) > 1.0 or np.abs(observation[0]) > 2.4 or truncated:
             if not truncated:
-                terminated_observations = np.concatenate((terminated_observations, [observation]), axis=0)
+                terminated_observations = add_short_term_mem_to_observations(terminated_observations, short_term_memory)
                 mean = terminated_observations.mean(axis=0)
                 std = terminated_observations.std(axis=0)
                 std = np.where(std != 0., std, 1.)  # To avoid division by zero
@@ -120,6 +126,16 @@ def run_k_nearest(k=-1, show_results=True, save_results=True, window_width=5):
     plt.clf()
     return data
 
+
+def update_short_term_memory(short_term_mem, datapoint):
+    if len(short_term_mem) == SHORT_TERM_MEM_LENGTH:
+        short_term_mem = np.concatenate((short_term_mem[1:], [datapoint]), axis=0)
+    else:
+        short_term_mem = np.concatenate((short_term_mem, [datapoint]), axis=0)
+    return short_term_mem
+
+def add_short_term_mem_to_observations(terminated_observations, short_term_memory):
+    return np.concatenate((terminated_observations, short_term_memory))
 
 def run_and_compare_range_k_nearest(bottom, top, window_width, step=1):
     survival_stats = []
