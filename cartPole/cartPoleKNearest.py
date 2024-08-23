@@ -9,16 +9,27 @@ import helper.KNearestNeighbor as kNearest
 import helper.fileHelper as fileHelper
 
 
+# Constants
 CUTOFF = True
-CUTOFFPOINT = 200
+CUTOFFPOINT = 400
 
 STOP_AFTER_CONSEC_500S = False
-# ANGLE = 0.2095
-ANGLE = 1.0
-render_mode = "human"  # Set to None to run without graphics
 
-path = f"plots\\kNearest\\{CUTOFFPOINT}_gens"
+ANGLE = 0.2095
+# ANGLE = 1.0
+
+SHOW_GAMES = False
+
+
+
+
+path = f"plots\\kNearest\\{ANGLE}_angle\\{CUTOFFPOINT}_gens"
 fileHelper.createDirIfNotExist(path)
+
+if SHOW_GAMES:
+    render_mode = "human"  # Set to None to run without graphics
+else:
+    render_mode = None
 
 def run_k_nearest(k=-1, show_results=True, save_results=True, window_width=5):
     if k > 0:
@@ -67,7 +78,6 @@ def run_k_nearest(k=-1, show_results=True, save_results=True, window_width=5):
                 terminated_observations_normalized = (terminated_observations - mean) / std
                 last_it_succeeded = False
             else:
-                print("truncated")
                 if last_it_succeeded and STOP_AFTER_CONSEC_500S:
                     print(f"Steps alive: {steps_alive}")
                     break
@@ -87,12 +97,12 @@ def run_k_nearest(k=-1, show_results=True, save_results=True, window_width=5):
     plt.plot(data, label="Steps")
     plt.plot(rolling_avg, label="10-step avg")
 
-    plt.xlabel("iterations")
-    plt.ylabel("steps")
+    plt.xlabel("Iterations")
+    plt.ylabel("Steps")
     plt.legend(loc="upper left")
-    plt.title(f"k nearest neighbor classification, k={kNearest.K}, angle={ANGLE}")
+    plt.title(f"K-Nearest Neighbor Classification, k={kNearest.K}, angle={ANGLE}")
 
-    plot_name = path + f"\\K-{kNearest.K}__angle-{ANGLE}__plot.png"
+    plot_name = path + f"\\K{kNearest.K}__plot.png"
     if save_results:
         plt.savefig(plot_name)
     if show_results:
@@ -110,11 +120,11 @@ def run_and_compare_range_k_nearest(bottom, top, window_width, step=1):
     for i in range(len(survival_stats)):
         plt.plot(survival_stats[i], label=f"k={i*step + bottom}")
 
-    plt.xlabel("iterations")
-    plt.ylabel("steps")
+    plt.xlabel("Iterations")
+    plt.ylabel("Steps")
     plt.legend(loc="upper left")
-    plt.title(f"k nearest neighbor classification, k={range(bottom, top + 1, step)}, angle={ANGLE}")
-    plot_name = path +  f"\\K-{bottom}-{top}__group__angle-{ANGLE}__plot.png"
+    plt.title(f"K-Nearest Neighbor Classification, k={range(bottom, top + 1, step)}, angle={ANGLE}")
+    plot_name = path +  f"\\K{bottom}-K{top}__group__plot.png"
     plt.savefig(plot_name)
     plt.clf()
 
@@ -122,11 +132,11 @@ def run_and_compare_range_k_nearest(bottom, top, window_width, step=1):
         rolling_avg = plotHelper.rolling_average(survival_stats[i], window_width)
         plt.plot(rolling_avg, label=f"k={step*i + bottom}")
 
-    plt.xlabel("iterations")
-    plt.ylabel("steps")
+    plt.xlabel("Iterations")
+    plt.ylabel("Steps")
     plt.legend(loc="upper left")
-    plt.title(f"k-nearest neighbor, rolling avg of {window_width}, k={range(bottom, top + 1, step)}, angle={ANGLE}")
-    plot_name = path + f"\\K-{bottom}-{top}__group__rolling-avg__angle-{ANGLE}__plot.png"
+    plt.title(f"K-Nearest Neighbor, Rolling avg of {window_width}, k={range(bottom, top + 1, step)}, angle={ANGLE}")
+    plot_name = path + f"\\K{bottom}-K{top}__group__rolling-avg-{window_width}__plot.png"
     plt.savefig(plot_name)
     plt.clf()
 
@@ -136,5 +146,5 @@ def run_and_compare_range_k_nearest(bottom, top, window_width, step=1):
 
 if __name__ == '__main__':
     # run_k_nearest()
-    run_and_compare_range_k_nearest(1, 11, 7, 2)
+    run_and_compare_range_k_nearest(1, 21, 15, 2)
     print("Finished")
