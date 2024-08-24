@@ -22,14 +22,14 @@ SHOW_GAMES = False
 
 MANUAL_ROLLING_AVERAGE = -1
 
-K_START = 1
-K_END = 16
-K_STEP = 5
+K_START = 2
+K_END = 6
+K_STEP = 1
 
-SHORT_TERM_MEM_LENGTH = 5
+SHORT_TERM_MEM_LENGTH = 7
 ########### End constants #################
 
-path = f"plots\\kNearestMem\\{ANGLE}_angle\\{CUTOFFPOINT}_gens"
+path = f"plots\\kNearestMem\\{ANGLE}_angle\\{SHORT_TERM_MEM_LENGTH}_mem_len\\{CUTOFFPOINT}_gens"
 fileHelper.createDirIfNotExist(path)
 
 if SHOW_GAMES:
@@ -116,7 +116,7 @@ def run_k_nearest(k=-1, show_results=True, save_results=True, window_width=5):
     plt.xlabel("Iterations")
     plt.ylabel("Steps")
     plt.legend(loc="upper left")
-    plt.title(f"K-Nearest Neighbor Classification, k={kNearest.K}, angle={ANGLE}")
+    plt.title(f"K-Nearest Neighbor Classification, short-term-mem={SHORT_TERM_MEM_LENGTH}, angle={ANGLE}")
 
     plot_name = path + f"\\K{kNearest.K}__plot.png"
     if save_results:
@@ -134,8 +134,12 @@ def update_short_term_memory(short_term_mem, datapoint):
         short_term_mem = np.concatenate((short_term_mem, [datapoint]), axis=0)
     return short_term_mem
 
+
 def add_short_term_mem_to_observations(terminated_observations, short_term_memory):
     return np.concatenate((terminated_observations, short_term_memory))
+
+
+
 
 def run_and_compare_range_k_nearest(bottom, top, window_width, step=1):
     survival_stats = []
@@ -149,7 +153,7 @@ def run_and_compare_range_k_nearest(bottom, top, window_width, step=1):
     plt.xlabel("Iterations")
     plt.ylabel("Steps")
     plt.legend(loc="upper left")
-    plt.title(f"K-Nearest Neighbor Classification, k={range(bottom, top + 1, step)}, angle={ANGLE}")
+    plt.title(f"K-Nearest Neighbor Classification, short-term-mem={SHORT_TERM_MEM_LENGTH}, angle={ANGLE}")
     plot_name = path +  f"\\K{bottom}-K{top}__group__plot.png"
     plt.savefig(plot_name)
     plt.clf()
@@ -161,7 +165,7 @@ def run_and_compare_range_k_nearest(bottom, top, window_width, step=1):
     plt.xlabel("Iterations")
     plt.ylabel("Steps")
     plt.legend(loc="upper left")
-    plt.title(f"K-Nearest Neighbor, Rolling avg of {window_width}, k={range(bottom, top + 1, step)}, angle={ANGLE}")
+    plt.title(f"K-Nearest Neighbor, Rolling avg of {window_width}, short-term-mem={SHORT_TERM_MEM_LENGTH}, angle={ANGLE}")
     plot_name = path + f"\\K{bottom}-K{top}__group__rolling-avg-{window_width}__plot.png"
     plt.savefig(plot_name)
     plt.clf()
