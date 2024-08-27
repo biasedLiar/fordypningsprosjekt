@@ -23,8 +23,8 @@ SHOW_GAMES = False
 MANUAL_ROLLING_AVERAGE = -1
 
 K_START = 1
-K_END = 5
-K_STEP = 2
+K_END = 6
+K_STEP = 1
 
 ########### End constants #################
 
