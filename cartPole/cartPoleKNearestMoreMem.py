@@ -18,12 +18,12 @@ STOP_AFTER_CONSEC_500S = False
 ANGLE = 0.2095
 # ANGLE = 1.0
 
-SHOW_GAMES = True
+SHOW_GAMES = False
 
 MANUAL_ROLLING_AVERAGE = -1
 
-K_START = 4
-K_END = 4
+K_START = 2
+K_END = 6
 K_STEP = 1
 
 SHORT_TERM_MEM_LENGTH = 7
@@ -85,7 +85,7 @@ def run_k_nearest(k=-1, show_results=True, save_results=True, window_width=5):
         short_term_memory = update_short_term_memory(short_term_memory, observation)
         steps_alive += 1
 
-        if np.abs(observation[2]) > 1.0 or np.abs(observation[0]) > 2.4 or truncated:
+        if np.abs(observation[2]) > ANGLE or np.abs(observation[0]) > 2.4 or truncated:
             if not truncated:
                 terminated_observations = add_short_term_mem_to_observations(terminated_observations, short_term_memory)
                 mean = terminated_observations.mean(axis=0)

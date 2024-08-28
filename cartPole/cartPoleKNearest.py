@@ -23,8 +23,8 @@ SHOW_GAMES = False
 MANUAL_ROLLING_AVERAGE = -1
 
 K_START = 1
-K_END = 6
-K_STEP = 1
+K_END = 21
+K_STEP = 2
 
 ########### End constants #################
 
@@ -79,7 +79,7 @@ def run_k_nearest(k=-1, show_results=True, save_results=True, window_width=5):
 
         steps_alive += 1
 
-        if np.abs(observation[2]) > 1.0 or np.abs(observation[0]) > 2.4 or truncated:
+        if np.abs(observation[2]) > ANGLE or np.abs(observation[0]) > 2.4 or truncated:
             if not truncated:
                 terminated_observations = np.concatenate((terminated_observations, [observation]), axis=0)
                 mean = terminated_observations.mean(axis=0)
