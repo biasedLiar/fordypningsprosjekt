@@ -12,15 +12,16 @@ from classes.cartPoleTreeNode import *
 
 ############### Constants ###################
 CUTOFF = True
-CUTOFFPOINT = 200
+CUTOFFPOINT = 600
 
 STOP_AFTER_CONSEC_500S = False
 
 ANGLE = 0.2095
 # ANGLE = 1.0
 
-SHOW_GAMES = True
+SHOW_GAMES = False
 
+# Set to -1 for automatic rolling average generation.
 MANUAL_ROLLING_AVERAGE = -1
 
 K_START = 1
@@ -49,6 +50,7 @@ def run_k_nearest(k=-1, show_results=True, save_results=True, window_width=5):
     env = gym.make("CartPole-v1", render_mode=render_mode)
     env.action_space.seed(0)
     np.random.seed(0)
+    random.seed(0)
 
     observation, info = env.reset(seed=0)
 
@@ -67,16 +69,21 @@ def run_k_nearest(k=-1, show_results=True, save_results=True, window_width=5):
     current_node = root_node
 
     while its_before_finished < CUTOFFPOINT:
+        if steps_alive%STEPS_PER_NODE == 0:
+            if steps_alive >= 20:
+                testwer = "sdf"
+            action = current_node.pick_action()
+
         observation, reward, terminated, truncated, info = env.step(action)
 
         if steps_alive%STEPS_PER_NODE == 0:
             visited_nodes.append(current_node)
             current_node = current_node.register_move(observation, steps_alive, is_game_over(observation), action)
-            action = current_node.pick_action()
+
 
         steps_alive += 1
 
-        if np.abs(observation[2]) > ANGLE or np.abs(observation[0]) > 2.4 or truncated:
+        if (np.abs(observation[2]) > ANGLE or np.abs(observation[0]) > 2.4 or truncated):
             if not truncated:
                 for node in reversed(visited_nodes):
                     node.update()
@@ -90,9 +97,11 @@ def run_k_nearest(k=-1, show_results=True, save_results=True, window_width=5):
 
             current_node = root_node
             visited_nodes = []
-            observation, info = env.reset()
+            observation, info = env.reset(seed=0)
 
-            print(f"{its_before_finished}: Steps alive: {steps_alive}")
+            #print(f"{its_before_finished}: Steps alive: {steps_alive}")
+            print(root_node.visualize_tree())
+            #print(root_node.show_selected_path())
             data = np.append(data, [steps_alive])
             steps_alive = 0
             its_before_finished += 1

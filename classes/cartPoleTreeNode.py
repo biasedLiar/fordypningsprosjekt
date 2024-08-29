@@ -3,7 +3,8 @@ import random
 EXPLORE = 0
 MAXIMIZE_POINTS = 1
 
-RISK_THRESHOLD = 4.5
+RISK_THRESHOLD = 3.5
+
 
 class CartPoleTreeNode:
     def __init__(self, state, time_step, is_final):
@@ -17,6 +18,8 @@ class CartPoleTreeNode:
         self.holes_beneath = 0 if is_final else 2
         self.strategy = MAXIMIZE_POINTS
         self.is_final = is_final
+        self.most_recent_choice = -1
+        self.visited = 0
 
     def update(self):
         if self.children[0] != None and self.children[1] != None:
@@ -30,12 +33,13 @@ class CartPoleTreeNode:
             self.max_depth = self.children[i].max_depth + 1
             self.max_unexplored_depth = self.children[i].max_unexplored_depth + 1 if self.children[i].max_unexplored_depth != 0 else 1
             self.holes_beneath = self.children[i].holes_beneath + 1
+        self.visited += 1
         self.risk_weighted_score = self.update_risk_weighted_score()
 
 
     def register_move(self, new_state, new_time_step, is_final, direction):
         if self.children[direction] != None:
-            if (not self.states_are_equal(new_state, self.children[direction].state) or is_final != self.children[direction].is_final):
+            if (not self.states_are_equal(new_state, self.children[direction].state) or is_final != self.children[direction].is_final) and False:
                 print("States are not matching")
                 # TODO fix this part
                 # Why are same steps not giving same results?
@@ -47,8 +51,11 @@ class CartPoleTreeNode:
         if new_strategy != None:
             self.strategy = new_strategy
         if self.strategy == MAXIMIZE_POINTS:
-            return self.maximize_points()
-        return 0
+            choice = self.maximize_points()
+        else:
+            choice = 0
+        self.most_recent_choice = choice
+        return choice
 
     def states_are_equal(self, obs1, obs2):
         if len(obs1) != len(obs2):
@@ -67,6 +74,31 @@ class CartPoleTreeNode:
         if left_score == right_score:
             return random.getrandbits(1)
         return 0 if left_score > right_score else 1
+
+    def visualize_tree(self):
+        if self.children[0] == None and self.children[1] == None:
+            return [1]
+        if self.children[0] != None and self.children[1] != None:
+            vis_list = [1]
+            visual_0 = self.children[0].visualize_tree()
+            visual_1 = self.children[1].visualize_tree()
+            for i in range(max(len(visual_1), len(visual_0))):
+                sum = 0
+                if len(visual_0) > i:
+                    sum += visual_0[i]
+                if len(visual_1) > i:
+                    sum += visual_1[i]
+                vis_list.append(sum)
+            return [1] + vis_list
+        i = 0 if self.children[0] != None else 1
+        return [1] + self.children[i].visualize_tree()
+
+    def show_selected_path(self):
+        if self.most_recent_choice == -1:
+            return ""
+        return str(self.most_recent_choice) + self.children[self.most_recent_choice].show_selected_path()
+
+
 
 
 
