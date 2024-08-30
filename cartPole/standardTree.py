@@ -12,7 +12,7 @@ from classes.cartPoleTreeNode import *
 
 ############### Constants ###################
 CUTOFF = True
-CUTOFFPOINT = 600
+CUTOFFPOINT = 6000
 
 STOP_AFTER_CONSEC_500S = False
 
@@ -29,6 +29,8 @@ K_END = 1
 K_STEP = 1
 
 STEPS_PER_NODE = 3
+
+START_STRATEGY = BALANCED
 ########### End constants #################
 
 path = f"plots\\standard_tree\\{ANGLE}_angle\\{CUTOFFPOINT}_gens"
@@ -64,27 +66,26 @@ def run_k_nearest(k=-1, show_results=True, save_results=True, window_width=5):
     its_before_finished = 0
 
     data = np.array([], dtype=int)
-    root_node = CartPoleTreeNode(observation, 0, False)
+    root_node = CartPoleTreeNode(observation, 0, START_STRATEGY, "-")
     visited_nodes = []
     current_node = root_node
 
     while its_before_finished < CUTOFFPOINT:
         if steps_alive%STEPS_PER_NODE == 0:
-            if steps_alive >= 20:
-                testwer = "sdf"
             action = current_node.pick_action()
 
         observation, reward, terminated, truncated, info = env.step(action)
 
         if steps_alive%STEPS_PER_NODE == 0:
             visited_nodes.append(current_node)
-            current_node = current_node.register_move(observation, steps_alive, is_game_over(observation), action)
+            current_node = current_node.register_move(observation, steps_alive, action)
 
 
         steps_alive += 1
 
         if (np.abs(observation[2]) > ANGLE or np.abs(observation[0]) > 2.4 or truncated):
             if not truncated:
+                current_node.mark_final()
                 for node in reversed(visited_nodes):
                     node.update()
                 last_it_succeeded = False
@@ -96,11 +97,12 @@ def run_k_nearest(k=-1, show_results=True, save_results=True, window_width=5):
                     last_it_succeeded = True
 
             current_node = root_node
+            root_node.set_root_strategy(START_STRATEGY)
             visited_nodes = []
             observation, info = env.reset(seed=0)
 
-            #print(f"{its_before_finished}: Steps alive: {steps_alive}")
-            print(root_node.visualize_tree())
+            print(f"{its_before_finished}: Steps alive: {steps_alive}")
+            #print(root_node.visualize_tree())
             #print(root_node.show_selected_path())
             data = np.append(data, [steps_alive])
             steps_alive = 0
@@ -126,7 +128,10 @@ def run_k_nearest(k=-1, show_results=True, save_results=True, window_width=5):
     return data
 
 def is_game_over(observation):
-    return np.abs(observation[2]) > ANGLE or np.abs(observation[0]) > 2.4
+    game_over = np.abs(observation[2]) > ANGLE or np.abs(observation[0]) > 2.4
+    if game_over:
+        print("hmmm")
+    return game_over
 
 
 def run_and_compare_range_k_nearest(bottom, top, window_width, step=1):
