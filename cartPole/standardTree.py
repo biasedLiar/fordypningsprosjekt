@@ -12,7 +12,7 @@ from classes.cartPoleTreeNode import *
 
 ############### Constants ###################
 CUTOFF = True
-CUTOFFPOINT = 6000
+CUTOFFPOINT = 600
 
 STOP_AFTER_CONSEC_500S = False
 
@@ -28,12 +28,12 @@ K_START = 1
 K_END = 1
 K_STEP = 1
 
-STEPS_PER_NODE = 3
-
+STEPS_PER_NODE = 5
+DETERMINISTIC = True
 START_STRATEGY = BALANCED
 ########### End constants #################
 
-path = f"plots\\standard_tree\\{ANGLE}_angle\\{CUTOFFPOINT}_gens"
+path = f"plots\\standard_tree\\{'deterministic' if DETERMINISTIC else 'non-deterministic'}\\{STEPS_PER_NODE}-discrete\\{CUTOFFPOINT}_gens"
 fileHelper.createDirIfNotExist(path)
 
 if SHOW_GAMES:
