@@ -1,9 +1,6 @@
 import random
+from helper.strategy_names import *
 
-##### Strategies ########
-EXPLORE = 0
-BALANCED = 1
-MAXIMIZE_POINTS = 2
 #########################
 
 ##### Constants ########

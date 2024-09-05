@@ -5,15 +5,15 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 import helper.plotHelper as plotHelper
-from helper.strategy_names import *
 import helper.KNearestNeighbor as kNearest
+from helper.strategy_names import *
 import helper.fileHelper as fileHelper
 from classes.cartPoleTreeNode import *
 
 
 ############### Constants ###################
 CUTOFF = True
-CUTOFFPOINT = 600
+CUTOFFPOINT = 6000
 
 STOP_AFTER_CONSEC_500S = False
 
@@ -29,8 +29,8 @@ K_START = 1
 K_END = 1
 K_STEP = 1
 
-STEPS_PER_NODE = 5
-DETERMINISTIC = True
+STEPS_PER_NODE = 3
+DETERMINISTIC = False
 START_STRATEGY = BALANCED
 ########### End constants #################
 
@@ -66,10 +66,13 @@ def run_k_nearest(k=-1, show_results=True, save_results=True, window_width=5):
     last_it_succeeded = False
     its_before_finished = 0
 
+    all_nodes = {}
     data = np.array([], dtype=int)
     root_node = CartPoleTreeNode(observation, 0, START_STRATEGY, "-")
     visited_nodes = []
     current_node = root_node
+
+    #TODO update this file so we can make it run
 
     while its_before_finished < CUTOFFPOINT:
         if steps_alive%STEPS_PER_NODE == 0:
@@ -121,7 +124,7 @@ def run_k_nearest(k=-1, show_results=True, save_results=True, window_width=5):
     plt.xlabel("Iterations")
     plt.ylabel("Steps")
     plt.legend(loc="upper left")
-    plt.title(f"{'Deterministic' if DETERMINISTIC else 'Non-deterministic'} {STEPS_PER_NODE}-discrete {name_of_strategy(START_STRATEGY)} search")
+    plt.title(f"{'Deterministic' if DETERMINISTIC else 'Non-deterministic'} {STEPS_PER_NODE}-discrete {name_of_strategy(START_STRATEGY)}-search")
 
     plot_name = path + f"\\{name_of_strategy(START_STRATEGY)}_plot.png"
     if save_results:
@@ -178,4 +181,4 @@ def run_and_compare_range_k_nearest(bottom, top, window_width, step=1):
 if __name__ == '__main__':
     run_k_nearest(show_results=False)
     #run_and_compare_range_k_nearest(K_START, K_END, window_width, K_STEP)
-    print("Finished")
+    print("Finished with new")
