@@ -8,7 +8,7 @@ import helper.plotHelper as plotHelper
 import helper.KNearestNeighbor as kNearest
 from helper.strategy_names import *
 import helper.fileHelper as fileHelper
-from classes.cartPoleTreeNode import *
+from classes.discreteCartPoleTreeNode import *
 
 
 ############### Constants ###################
@@ -47,7 +47,7 @@ if MANUAL_ROLLING_AVERAGE == -1:
 else:
     window_width = MANUAL_ROLLING_AVERAGE
 
-def run_k_nearest(k=-1, show_results=True, save_results=True, window_width=5):
+def run_k_nearest(k=-1, show_results=True, save_results=True):
     if k > 0:
         kNearest.K = k
     env = gym.make("CartPole-v1", render_mode=render_mode)
@@ -68,11 +68,9 @@ def run_k_nearest(k=-1, show_results=True, save_results=True, window_width=5):
 
     all_nodes = {}
     data = np.array([], dtype=int)
-    root_node = CartPoleTreeNode(observation, 0, START_STRATEGY, "-")
+    root_node = DCartPoleTreeNode(observation, 0, START_STRATEGY, "-")
     visited_nodes = []
     current_node = root_node
-
-    #TODO update this file so we can make it run
 
     while its_before_finished < CUTOFFPOINT:
         if steps_alive%STEPS_PER_NODE == 0:
@@ -82,9 +80,12 @@ def run_k_nearest(k=-1, show_results=True, save_results=True, window_width=5):
 
         if steps_alive%STEPS_PER_NODE == 0:
             visited_nodes.append(current_node)
-            current_node = current_node.register_move(observation, steps_alive, action)
-
-
+            new_node_bucket = current_node.calc_state_bucket(observation)
+            if not new_node_bucket in all_nodes:
+                current_node = current_node.register_move(observation, steps_alive, action)
+                all_nodes[current_node.get_state_bucket] = current_node
+            else:
+                current_node = current_node.register_existing_move(node, steps_alive, action)
         steps_alive += 1
 
         if (np.abs(observation[2]) > ANGLE or np.abs(observation[0]) > 2.4 or truncated):
