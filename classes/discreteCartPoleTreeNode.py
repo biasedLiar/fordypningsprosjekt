@@ -22,6 +22,7 @@ class DCartPoleTreeNode:
         self.max_depth = [1, 1]
         self.max_unexplored_depth = [1, 1]
         self.risk_weighted_score = self.update_risk_weighted_score()
+        self.state_bucket = self.calc_state_bucket(state)
         self.holes_beneath = [1, 1]
         self.most_recent_choice = -1
         self.strategy = strategy
@@ -39,19 +40,20 @@ class DCartPoleTreeNode:
 
 
     def update(self):
-        if not self.children[0] and not self.children[1]:
-            self.max_depth = [self.average_max_depth(self.children[0]), self.average_max_depth(self.children(1))]
-            self.max_unexplored_depth = [self.average_max_unexplored_depth(self.children[0]), self.average_max_unexplored_depth(self.children(1))]
+        if bool(self.children[0]) and bool(self.children[1]):
+            self.max_depth = [self.average_max_depth(self.children[0]), self.average_max_depth(self.children[1])]
+            self.max_unexplored_depth = [self.average_max_unexplored_depth(self.children[0]), self.average_max_unexplored_depth(self.children[1])]
             if max(self.max_unexplored_depth) >= 0.5:
-                self.max_unexplored_depth += 1
-            self.holes_beneath = [self.average_holes_beneath(self.children[0]), self.average_holes_beneath(self.children(1))]
+                self.max_unexplored_depth = [depth + 1 for depth in self.max_unexplored_depth]
+            self.holes_beneath = [self.average_holes_beneath(self.children[0]), self.average_holes_beneath(self.children[1])]
         else:
             i = self.most_recent_choice
-            self.max_depth[i] = self.average_max_depth(self.children[1])
-            self.max_unexplored_depth[i] = self.average_max_unexplored_depth(self.children[1]) #TODO check if this is correct
+            self.max_depth[i] = self.average_max_depth(self.children[i])
+            self.max_unexplored_depth[i] = self.average_max_unexplored_depth(self.children[i])
             self.holes_beneath[i] = self.average_holes_beneath(self.children[i])
         self.visited += 1
         self.risk_weighted_score = self.update_risk_weighted_score()
+        test = 1
 
 
     def get_state_bucket(self):
@@ -100,10 +102,12 @@ class DCartPoleTreeNode:
             else:
                 choice = self.maximize_points()
         elif self.strategy == EXPLORE:
-            return self.explore()
+            choice = self.explore()
         else:
             choice = 0
         self.most_recent_choice = choice
+        if self.most_recent_choice == -1:
+            test = 1
         return choice
 
     def states_are_equal(self, obs1, obs2):
@@ -120,7 +124,8 @@ class DCartPoleTreeNode:
         if not child:
             return 1 + RISK_THRESHOLD
         total_sum = self.average_max_depth(child)
-        unexplored_sum = self.average_max_unexplored_depth(child) + RISK_THRESHOLD
+        unexplored_sum = self.average_max_unexplored_depth(child)
+        unexplored_sum += (RISK_THRESHOLD if unexplored_sum > 0 else 0)
 
         return max(total_sum, unexplored_sum)
 
@@ -136,7 +141,7 @@ class DCartPoleTreeNode:
         visited = 0
         for key, node in child.items():
             visited += node.visited
-            sum += node.visited * (node.max_depth[0] + node.max_depth[1])
+            sum += node.visited * (max(node.max_depth[0], node.max_depth[1]))
         sum /= visited
         return sum + 1
 
@@ -150,8 +155,9 @@ class DCartPoleTreeNode:
         visited = 0
         for key, node in child.items():
             visited += node.visited
-            sum += node.visited * max(node.max_unexplored_depth)
-            more_than_1 += node.visited * (1 if max(node.max_unexplored_depth) >= 1 else 0)
+            if not node.is_final:
+                sum += node.visited * max(node.max_unexplored_depth)
+                more_than_1 += node.visited * (1 if max(node.max_unexplored_depth) >= 1 else 0)
         sum /= visited
         if more_than_1 < visited*0.5:
             sum = -1

@@ -1,3 +1,5 @@
+import random
+
 import gymnasium as gym
 import pygame
 import numpy as np
@@ -29,9 +31,10 @@ K_START = 1
 K_END = 1
 K_STEP = 1
 
-STEPS_PER_NODE = 3
-DETERMINISTIC = False
-START_STRATEGY = BALANCED
+STEPS_PER_NODE = 5
+DETERMINISTIC = True
+SEMI_DETERMINISTIC = 4
+START_STRATEGY = EXPLORE
 ########### End constants #################
 
 path = f"plots\\standard_tree\\{'deterministic' if DETERMINISTIC else 'non-deterministic'}\\{STEPS_PER_NODE}-discrete\\{CUTOFFPOINT}_gens"
@@ -47,6 +50,11 @@ if MANUAL_ROLLING_AVERAGE == -1:
 else:
     window_width = MANUAL_ROLLING_AVERAGE
 
+
+if SEMI_DETERMINISTIC > 1:
+    seeds= list(range(SEMI_DETERMINISTIC))
+else:
+    seeds = [5]
 def run_k_nearest(k=-1, show_results=True, save_results=True):
     if k > 0:
         kNearest.K = k
@@ -55,7 +63,9 @@ def run_k_nearest(k=-1, show_results=True, save_results=True):
     np.random.seed(0)
     random.seed(0)
 
-    observation, info = env.reset(seed=0)
+    current_seed = seeds[0]
+
+    observation, info = env.reset(seed=current_seed)
 
     steps_alive = 0
     terminated_observations = np.zeros((0, 4))
@@ -71,17 +81,22 @@ def run_k_nearest(k=-1, show_results=True, save_results=True):
     root_node = DCartPoleTreeNode(observation, 0, START_STRATEGY, "-")
     visited_nodes = []
     current_node = root_node
+    all_nodes[current_node.get_state_bucket] = current_node
+    action = current_node.pick_action()
+
+    root_list = {}
+    root_list[current_seed] = root_node
 
     while its_before_finished < CUTOFFPOINT:
-        if steps_alive%STEPS_PER_NODE == 0:
-            action = current_node.pick_action()
 
         observation, reward, terminated, truncated, info = env.step(action)
 
         if steps_alive%STEPS_PER_NODE == 0:
             visited_nodes.append(current_node)
             new_node_bucket = current_node.calc_state_bucket(observation)
-            if not new_node_bucket in all_nodes:
+            action = current_node.pick_action()
+
+            if not new_node_bucket in all_nodes.keys():
                 current_node = current_node.register_move(observation, steps_alive, action)
                 all_nodes[current_node.get_state_bucket] = current_node
             else:
@@ -101,17 +116,46 @@ def run_k_nearest(k=-1, show_results=True, save_results=True):
                 else:
                     last_it_succeeded = True
 
-            current_node = root_node
-            root_node.set_root_strategy(START_STRATEGY)
+
+
+            if current_seed == 0 and its_before_finished > 1500:
+                test = current_seed #TODO why is bad stuff happening
+
             visited_nodes = []
+
+
             if DETERMINISTIC:
-                observation, info = env.reset(seed=0)
+                random.shuffle(seeds)
+                current_seed = seeds[0]
+                observation, info = env.reset(seed=current_seed)
             else:
                 observation, info = env.reset()
 
+            new_node_bucket = current_node.calc_state_bucket(observation)
+
+            if not current_seed in root_list.keys():
+                current_node = DCartPoleTreeNode(observation, 0, START_STRATEGY, "-")
+                all_nodes[new_node_bucket] = current_node
+                root_list[current_seed] = current_node
+                if not current_seed in root_list:
+                    test =  all_nodes[new_node_bucket]
+                    test2 = 1
+            else:
+                current_node = all_nodes[new_node_bucket]
+                if new_node_bucket != root_list[current_seed].get_state_bucket():
+                    print("States not matching...")
+                    input()
+
+            current_node.set_root_strategy(START_STRATEGY)
+
+
+
             print(f"{its_before_finished}: Steps alive: {steps_alive}")
+
+
             #print(root_node.visualize_tree())
             #print(root_node.show_selected_path())
+
             data = np.append(data, [steps_alive])
             steps_alive = 0
             its_before_finished += 1
