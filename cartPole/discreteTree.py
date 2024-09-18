@@ -55,6 +55,9 @@ if SEMI_DETERMINISTIC > 1:
     seeds= list(range(SEMI_DETERMINISTIC))
 else:
     seeds = [5]
+
+if DETERMINISTIC:
+    seeds = [1]
 def run_k_nearest(k=-1, show_results=True, save_results=True):
     if k > 0:
         kNearest.K = k
@@ -68,8 +71,10 @@ def run_k_nearest(k=-1, show_results=True, save_results=True):
     observation, info = env.reset(seed=current_seed)
 
     steps_alive = 0
-    terminated_observations = np.zeros((0, 4))
-    terminated_observations_normalized = np.zeros((0, 4))
+    visited_observations = []
+    all_observations = np.zeros((0, 4))
+    obs_mapped = []
+    observations_normalized = np.zeros((0, 4))
     mean = np.zeros((4))
     std = np.ones((4))
     action = 0
@@ -81,7 +86,7 @@ def run_k_nearest(k=-1, show_results=True, save_results=True):
     root_node = DCartPoleTreeNode(observation, 0, START_STRATEGY, "-")
     visited_nodes = []
     current_node = root_node
-    all_nodes[current_node.get_state_bucket] = current_node
+    all_nodes[current_node.get_state_bucket()] = current_node
     action = current_node.pick_action()
 
     root_list = {}
@@ -93,17 +98,20 @@ def run_k_nearest(k=-1, show_results=True, save_results=True):
 
         if steps_alive%STEPS_PER_NODE == 0:
             visited_nodes.append(current_node)
-            new_node_bucket = current_node.calc_state_bucket(observation)
+            visited_observations.append(observation)
+            observation_normalized = normalize_one_observations(observation, mean, std)
+            new_node_bucket = current_node.calc_state_bucket(observation_normalized)
             action = current_node.pick_action()
 
             if not new_node_bucket in all_nodes.keys():
-                current_node = current_node.register_move(observation, steps_alive, action)
-                all_nodes[current_node.get_state_bucket] = current_node
+                current_node = current_node.register_move(observation_normalized, steps_alive, action)
+                all_nodes[current_node.get_state_bucket()] = current_node
             else:
                 current_node = current_node.register_existing_move(node, steps_alive, action)
         steps_alive += 1
 
         if (np.abs(observation[2]) > ANGLE or np.abs(observation[0]) > 2.4 or truncated):
+            all_observations, normalized_observations, mean, std = add_and_normalize(visited_observations, all_observations, obs_mapped)
             if not truncated:
                 current_node.mark_final()
                 for node in reversed(visited_nodes):
@@ -118,10 +126,11 @@ def run_k_nearest(k=-1, show_results=True, save_results=True):
 
 
 
-            if current_seed == 0 and its_before_finished > 1500:
+            if current_seed == 0 and its_before_finished > 2000:
                 test = current_seed #TODO why is bad stuff happening
 
             visited_nodes = []
+            visited_observations = []
 
 
             if DETERMINISTIC:
@@ -130,9 +139,10 @@ def run_k_nearest(k=-1, show_results=True, save_results=True):
                 observation, info = env.reset(seed=current_seed)
             else:
                 observation, info = env.reset()
+            observation_normalized = normalize_one_observations(observation, mean, std)
 
-            new_node_bucket = current_node.calc_state_bucket(observation)
-
+            new_node_bucket = current_node.calc_state_bucket(observation_normalized)
+            #To normalize or not to normalize
             if not current_seed in root_list.keys():
                 current_node = DCartPoleTreeNode(observation, 0, START_STRATEGY, "-")
                 all_nodes[new_node_bucket] = current_node
@@ -141,6 +151,9 @@ def run_k_nearest(k=-1, show_results=True, save_results=True):
                     test =  all_nodes[new_node_bucket]
                     test2 = 1
             else:
+                print("Starting...")
+                for node in all_nodes:
+                    print(node)
                 current_node = all_nodes[new_node_bucket]
                 if new_node_bucket != root_list[current_seed].get_state_bucket():
                     print("States not matching...")
@@ -185,6 +198,27 @@ def is_game_over(observation):
         print("hmmm")
     return game_over
 
+def add_and_normalize(past_observations, all_observations, obs_mapped):
+    for obs in past_observations:
+        obs_mapped, all_observations = add_if_not_present(obs, obs_mapped, all_observations)
+    normalized_observations, mean, std = normalize_all_observations(all_observations)
+    return all_observations, normalized_observations, mean, std
+
+def add_if_not_present(observation, obs_mapped, all_observations):
+    if (str(observation) not in obs_mapped):
+        obs_mapped.append(str(observation))
+        all_observations = np.concatenate((all_observations, [observation]), axis=0)
+    return obs_mapped, all_observations
+
+def normalize_all_observations(observations):
+    mean = observations.mean(axis=0)
+    std = observations.std(axis=0)
+    std = np.where(std != 0., std, 1.)  # To avoid division by zero
+    normalized_observations = (observations - mean) / std
+    return normalized_observations, mean, std
+
+def normalize_one_observations(observation, mean, std):
+    return (observation - mean) / std
 
 def run_and_compare_range_k_nearest(bottom, top, window_width, step=1):
     survival_stats = []
