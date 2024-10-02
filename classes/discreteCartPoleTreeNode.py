@@ -1,3 +1,4 @@
+import math
 import random
 from helper.strategy_names import *
 
@@ -6,7 +7,7 @@ from helper.strategy_names import *
 RISK_THRESHOLD = 4.5
 EXPLORE_PERCENTAGE = 0.5
 STRATEGY = BALANCED
-ACCURACY_LIMIT = 0.1
+ACCURACY_LIMIT = 0.01
 
 PRINT_CHOICES = False
 
@@ -34,6 +35,7 @@ class DCartPoleTreeNode:
         self.max_depth = [0, 0]
         self.max_unexplored_depth = [0, 0]
         self.risk_weighted_score = [0, 0]
+        self.risk_weighted_score[self.most_recent_choice] = -1
         self.holes_beneath = [0, 0]
         self.is_final = True
         self.visited += 1
@@ -57,11 +59,12 @@ class DCartPoleTreeNode:
 
 
     def get_state_bucket(self):
-        bucket = [round(val/ACCURACY_LIMIT)*ACCURACY_LIMIT for val in self.state]
-        return str(bucket)
+        return self.calc_state_bucket(self.state)
 
     def calc_state_bucket(self, new_state):
         bucket = [round(val/ACCURACY_LIMIT)*ACCURACY_LIMIT for val in new_state]
+        bucket[0] = abs(0 if new_state[0] < 3.8 else math.copysign(1, new_state[0]))
+
         return str(bucket)
 
     def register_move(self, new_state, new_time_step, direction):
@@ -74,7 +77,7 @@ class DCartPoleTreeNode:
         return self.children[direction][bucket]
 
     def register_existing(self, new_node, new_time_step, direction):
-        bucket = self.calc_state_bucket(new_node.get_state_bucket())
+        bucket = self.calc_state_bucket(new_node.state)
         if bucket in self.children[direction]:
             self.children[direction][bucket].strategy = self.strategy
         else:

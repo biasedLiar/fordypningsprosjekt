@@ -99,19 +99,17 @@ def run_k_nearest(k=-1, show_results=True, save_results=True):
         if steps_alive%STEPS_PER_NODE == 0:
             visited_nodes.append(current_node)
             visited_observations.append(observation)
-            observation_normalized = normalize_one_observations(observation, mean, std)
-            new_node_bucket = current_node.calc_state_bucket(observation_normalized)
+            new_node_bucket = current_node.calc_state_bucket(observation)
             action = current_node.pick_action()
 
             if not new_node_bucket in all_nodes.keys():
-                current_node = current_node.register_move(observation_normalized, steps_alive, action)
+                current_node = current_node.register_move(observation, steps_alive, action)
                 all_nodes[current_node.get_state_bucket()] = current_node
             else:
-                current_node = current_node.register_existing_move(node, steps_alive, action)
+                current_node = current_node.register_existing(current_node, steps_alive, action)
         steps_alive += 1
 
         if (np.abs(observation[2]) > ANGLE or np.abs(observation[0]) > 2.4 or truncated):
-            all_observations, normalized_observations, mean, std = add_and_normalize(visited_observations, all_observations, obs_mapped)
             if not truncated:
                 current_node.mark_final()
                 for node in reversed(visited_nodes):
@@ -139,9 +137,8 @@ def run_k_nearest(k=-1, show_results=True, save_results=True):
                 observation, info = env.reset(seed=current_seed)
             else:
                 observation, info = env.reset()
-            observation_normalized = normalize_one_observations(observation, mean, std)
 
-            new_node_bucket = current_node.calc_state_bucket(observation_normalized)
+            new_node_bucket = current_node.calc_state_bucket(observation)
             #To normalize or not to normalize
             if not current_seed in root_list.keys():
                 current_node = DCartPoleTreeNode(observation, 0, START_STRATEGY, "-")
@@ -151,9 +148,6 @@ def run_k_nearest(k=-1, show_results=True, save_results=True):
                     test =  all_nodes[new_node_bucket]
                     test2 = 1
             else:
-                print("Starting...")
-                for node in all_nodes:
-                    print(node)
                 current_node = all_nodes[new_node_bucket]
                 if new_node_bucket != root_list[current_seed].get_state_bucket():
                     print("States not matching...")
@@ -198,11 +192,7 @@ def is_game_over(observation):
         print("hmmm")
     return game_over
 
-def add_and_normalize(past_observations, all_observations, obs_mapped):
-    for obs in past_observations:
-        obs_mapped, all_observations = add_if_not_present(obs, obs_mapped, all_observations)
-    normalized_observations, mean, std = normalize_all_observations(all_observations)
-    return all_observations, normalized_observations, mean, std
+
 
 def add_if_not_present(observation, obs_mapped, all_observations):
     if (str(observation) not in obs_mapped):
