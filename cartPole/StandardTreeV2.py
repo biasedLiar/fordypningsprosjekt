@@ -14,30 +14,31 @@ from classes.TreeV2 import *
 
 
 ############### Constants ###################
-CUTOFF = True
-CUTOFFPOINT = 6000
-
-STOP_AFTER_CONSEC_500S = False
-
-ANGLE = 0.2095
-
+CUTOFFPOINT = 750
+BUCKET_ACCURACY = 0.1
 SHOW_GAMES = False
-STRATEGY = BALANCED
+START_STRATEGY = EXPLORE
+STEPS_PER_NODE = 3
+
+
+
+
 
 # Set to -1 for automatic rolling average generation.
 MANUAL_ROLLING_AVERAGE = -1
+CUTOFF = False
+STOP_AFTER_CONSEC_500S = False
+ANGLE = 0.2095
 
 K_START = 1
 K_END = 1
 K_STEP = 1
 
-STEPS_PER_NODE = 5
 DETERMINISTIC = True
 SEMI_DETERMINISTIC = 4
-START_STRATEGY = EXPLORE
 ########### End constants #################
 
-path = f"plots\\standard_tree\\{'deterministic' if DETERMINISTIC else 'non-deterministic'}\\{STEPS_PER_NODE}-discrete\\{CUTOFFPOINT}_gens"
+path = f"plots\\treeV2\\{'deterministic' if DETERMINISTIC else 'non-deterministic'}\\{STEPS_PER_NODE}-discrete\\{CUTOFFPOINT}_gens"
 fileHelper.createDirIfNotExist(path)
 
 if SHOW_GAMES:
@@ -58,9 +59,7 @@ else:
 
 if DETERMINISTIC:
     seeds = [1]
-def run_k_nearest(k=-1, show_results=True, save_results=True):
-    if k > 0:
-        kNearest.K = k
+def run_standard(show_results=True, save_results=True):
     env = gym.make("CartPole-v1", render_mode=render_mode)
     env.action_space.seed(0)
     np.random.seed(0)
@@ -70,37 +69,29 @@ def run_k_nearest(k=-1, show_results=True, save_results=True):
     observation, info = env.reset(seed=current_seed)
     steps_alive = 0
     action = 0
-    its_before_finished = 0
+    actionstring = ""
+    iterations = 0
     data = np.array([], dtype=int)
-    current_node = DCartPoleTreeNode(observation, 0, START_STRATEGY, "-")
 
-    while its_before_finished < CUTOFFPOINT:
+    tree = TreeV2(BUCKET_ACCURACY, observation, START_STRATEGY)
+    action = tree.pick_action()
+    actionstring += str(action)
 
+    while iterations < CUTOFFPOINT:
         observation, reward, terminated, truncated, info = env.step(action)
 
-        if steps_alive%STEPS_PER_NODE == 0:
-            print("test1")
+        if steps_alive%STEPS_PER_NODE == 0 and not terminated:
+            tree.update_result(observation, terminated)
+            action = tree.pick_action()
+            actionstring += str(action)
 
+
+        if steps_alive > 90 and iterations > 469:
+            test = 2
         steps_alive += 1
 
         if (np.abs(observation[2]) > ANGLE or np.abs(observation[0]) > 2.4 or truncated):
-            if not truncated:
-                current_node.mark_final()
-                for node in reversed(visited_nodes):
-                    node.update()
-                last_it_succeeded = False
-            else:
-                if last_it_succeeded and STOP_AFTER_CONSEC_500S:
-                    print(f"Steps alive: {steps_alive}")
-                    break
-                else:
-                    last_it_succeeded = True
-
-
-
-            visited_nodes = []
-            visited_observations = []
-
+            tree.finished_round(not truncated)
 
             if DETERMINISTIC:
                 random.shuffle(seeds)
@@ -109,12 +100,18 @@ def run_k_nearest(k=-1, show_results=True, save_results=True):
             else:
                 observation, info = env.reset()
 
-            print(f"{its_before_finished}: Steps alive: {steps_alive}")
+            print(f"{iterations}: Steps alive: {steps_alive}, Nodes: {tree.get_num_nodes()}, String: {actionstring}")
 
+            tree.start_round(observation)
+            action = tree.pick_action()
+            actionstring = str(action)
+
+
+            data = np.append(data, [steps_alive])
             steps_alive = 0
-            its_before_finished += 1
+            iterations += 1
 
-    print(f"\n\nFinished. Iterations before two successful iterations in a row:\n{its_before_finished}")
+    print(f"\n\nFinished. Iterations before two successful iterations in a row:\n{iterations}")
     rolling_avg = plotHelper.rolling_average(data, window_width)
 
     plt.plot(data, label="Steps")
@@ -123,7 +120,7 @@ def run_k_nearest(k=-1, show_results=True, save_results=True):
     plt.xlabel("Iterations")
     plt.ylabel("Steps")
     plt.legend(loc="upper left")
-    plt.title(f"{'Deterministic' if DETERMINISTIC else 'Non-deterministic'} {STEPS_PER_NODE}-discrete {name_of_strategy(START_STRATEGY)}-search")
+    plt.title(f"V2 {'Deterministic' if DETERMINISTIC else 'Non-deterministic'} {STEPS_PER_NODE}-discrete {name_of_strategy(START_STRATEGY)}-search")
 
     plot_name = path + f"\\{name_of_strategy(START_STRATEGY)}_plot.png"
     if save_results:
@@ -136,6 +133,4 @@ def run_k_nearest(k=-1, show_results=True, save_results=True):
 # shift file saving
 
 if __name__ == '__main__':
-    run_k_nearest(show_results=False)
-    #run_and_compare_range_k_nearest(K_START, K_END, window_width, K_STEP)
-    print("Finished with new")
+    run_standard(show_results=False)

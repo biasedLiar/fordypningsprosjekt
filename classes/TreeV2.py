@@ -1,14 +1,19 @@
-from TreeNodeV2 import *
+import numpy as np
+
+from classes.TreeNodeV2 import *
 from helper.strategy_names import *
 
 
 class TreeV2:
-    def __init__(self, bucket_accuracy, observation, strategy):
+    def __init__(self, bucket_accuracy, observation, strategy=MAXIMIZE_POINTS):
         self.discrete_nodes = {}
         self.bucket_accuracy = bucket_accuracy
-        self.current_node = self.create_new_node(self.calc_bucket(observation))
+        self.current_node = self.create_new_node(observation)
         self.visited_nodes = []
         self.strategy = strategy
+        self.steps_alive = 0
+        self.iterations = 0
+        self.just_picked = False
 
 
 
@@ -16,7 +21,8 @@ class TreeV2:
 
 
     def start_round(self, observation):
-        bucket = self.calc_bucket(observation)
+        self.steps_alive = 0
+        bucket = self.calc_str_bucket(observation)
         if bucket in self.discrete_nodes:
             self.current_node = self.discrete_nodes[bucket]
         else:
@@ -24,27 +30,108 @@ class TreeV2:
 
 
     def pick_action(self):
-        action = self.current_node.pick_action(self.strategy)
+        if self.current_node.should_copy_neigbor(self.strategy):
+            action = self.current_node.action_picked_previously_by_other_node
+            if action == -1 or self.should_update_action_from_other_node():
+                action = self.get_action_of_closest_neigbor()
+                self.current_node.action_chosen_by_other_node(action)
+        else:
+            action = self.current_node.pick_action(self.strategy)
+
+        self.just_picked = False
         return action
 
-    def update_result(self):
-        print("test")
+    def update_result(self, observation, terminated=False):
+        if terminated:
+            return
+        self.visited_nodes.append(self.current_node)
 
+        bucket = self.calc_str_bucket(observation)
+        if bucket in self.discrete_nodes:
+            self.current_node = self.discrete_nodes[bucket]
+        else:
+            self.current_node = self.create_new_node(observation)
+        self.just_picked = True
+        self.steps_alive += 1
+
+
+    def finished_round(self, terminated=True):
+        if terminated:
+            self.current_node.just_died()
+        else:
+            self.current_node.just_won()
+        prev_node = self.current_node
+        if self.iterations > 300:
+            #print(f"iterations is now at {self.iterations}")
+            test = 2
+        for node in reversed(self.visited_nodes):
+            node.update(prev_node)
+            prev_node = node
+
+        for node in self.discrete_nodes.values():
+            if len(node.chosen_actions) != 0:
+                raise Exception("Node not emptying chosen action list")
+        self.visited_nodes = []
+        self.iterations += 1
+
+
+    def get_num_nodes(self):
+        return len(self.discrete_nodes)
 
     ############### Internal helper functions ####################################
-    def create_new_node(self, bucket):
-        new_node = TreeNodeV2(bucket)
+
+    def create_new_node(self, observation):
+        bucket = self.calc_str_bucket(observation)
+        new_node = TreeNodeV2(bucket, 5.5)
         if bucket in self.discrete_nodes:
             raise Exception("Creating node for existing bucket")
         self.discrete_nodes[bucket] = new_node
         return new_node
 
+    def calc_str_bucket(self, observation):
+        bucket = self.calc_bucket(observation)
+        return str(bucket)
 
     def calc_bucket(self, observation):
         bucket = [round(i/self.bucket_accuracy)*self.bucket_accuracy for i in observation]
-        bucket[1] = round(observation[1]/1.2)
-        return str(bucket)
+        bucket[2] = round(observation[2]/(self.bucket_accuracy*0.1))*self.bucket_accuracy*0.1
+        return bucket
 
+    def bucket_to_state(self, node):
+        handled_string = node.str_bucket.replace("[", "").replace("]", "").replace(",", "")
+        state = [float(element) for element in handled_string.split()]
+        return state
+
+    def get_action_of_closest_neigbor(self):
+        neigbor = self.find_closest_neigbor()
+        action = neigbor.pick_action_for_other_node(self.strategy)
+        return action
+
+    def find_closest_neigbor(self):
+
+        #np.sum(np.square((observation - mean) / std -terminated_observations_normalized), axis=1)
+        closest_neighbor = self.current_node
+        closest_distance = -1
+        for distant_node in self.discrete_nodes.values():
+            distance = self.distance_from_current_node_to(distant_node)
+            if distance > 0 and (closest_distance == -1 or distance < closest_distance):
+                closest_neighbor = distant_node
+                closest_distance = distance
+        return closest_neighbor
+
+    def distance_from_current_node_to(self, node):
+        distant_state = self.bucket_to_state(node)
+        current_state = self.bucket_to_state(self.current_node)
+        distance = np.sum([np.square(distant_state[i] - current_state[i]) for i in range(4)])
+        return distance
+
+    def should_update_action_from_other_node(self):
+        num = self.current_node.times_visited
+        while num > 2:
+            if num%3 != 0:
+                return False
+            num = num/3
+        return num == 1
 
 
 
