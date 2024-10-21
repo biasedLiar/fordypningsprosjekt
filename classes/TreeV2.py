@@ -1,11 +1,9 @@
-import numpy as np
-
 from classes.TreeNodeV2 import *
 from helper.strategy_names import *
 
 
 class TreeV2:
-    def __init__(self, bucket_accuracy, observation, strategy=MAXIMIZE_POINTS):
+    def __init__(self, bucket_accuracy, observation, strategy=MAXIMIZE_POINTS, num_neighbors_copied=3, use_many_neighbors=False):
         self.discrete_nodes = {}
         self.bucket_accuracy = bucket_accuracy
         self.current_node = self.create_new_node(observation)
@@ -13,7 +11,9 @@ class TreeV2:
         self.strategy = strategy
         self.steps_alive = 0
         self.iterations = 0
-        self.just_picked = False
+        self.num_neighbours_copied = num_neighbors_copied
+        self.use_many_neighbors = use_many_neighbors
+
 
 
 
@@ -33,12 +33,10 @@ class TreeV2:
         if self.current_node.should_copy_neigbor(self.strategy):
             action = self.current_node.action_picked_previously_by_other_node
             if action == -1 or self.should_update_action_from_other_node():
-                action = self.get_action_of_closest_neigbor()
+                action = self.get_action_of_closest_neighbor()
                 self.current_node.action_chosen_by_other_node(action)
         else:
             action = self.current_node.pick_action(self.strategy)
-
-        self.just_picked = False
         return action
 
     def update_result(self, observation, terminated=False):
@@ -51,7 +49,6 @@ class TreeV2:
             self.current_node = self.discrete_nodes[bucket]
         else:
             self.current_node = self.create_new_node(observation)
-        self.just_picked = True
         self.steps_alive += 1
 
 
@@ -102,14 +99,16 @@ class TreeV2:
         state = [float(element) for element in handled_string.split()]
         return state
 
-    def get_action_of_closest_neigbor(self):
-        neigbor = self.find_closest_neigbor()
-        action = neigbor.pick_action_for_other_node(self.strategy)
+    def get_action_of_closest_neighbor(self):
+        if self.use_many_neighbors:
+            neighbors = self.find_closest_n_neighbors(self.num_neighbours_copied)
+            action = self.vote_on_action(neighbors)
+        else:
+            neighbor = self.find_closest_neighbor()
+            action = neighbor.pick_action_for_other_node(self.strategy)
         return action
 
-    def find_closest_neigbor(self):
-
-        #np.sum(np.square((observation - mean) / std -terminated_observations_normalized), axis=1)
+    def find_closest_neighbor(self):
         closest_neighbor = self.current_node
         closest_distance = -1
         for distant_node in self.discrete_nodes.values():
@@ -118,6 +117,29 @@ class TreeV2:
                 closest_neighbor = distant_node
                 closest_distance = distance
         return closest_neighbor
+
+    def find_closest_n_neighbors(self, n):
+        if len(self.discrete_nodes) == 1:
+            return [self.current_node]
+
+        if len(self.discrete_nodes) - 1 < n*n:
+            n= np.floor(np.sqrt(len(self.discrete_nodes)))
+
+        distances = {}
+        for distant_node in self.discrete_nodes.values():
+            distance = self.distance_from_current_node_to(distant_node)
+            if distance > 0:
+                distances[distant_node] = distance
+        sorted_neighbors = [k for k, v in sorted(distances.items(), key=lambda node: node[1])]
+        nearest_n_neigbors = sorted_neighbors[:int(n)]
+        return nearest_n_neigbors
+
+    def vote_on_action(self, neighbors):
+        votes = [0, 0]
+        for node in neighbors:
+            recommended_action = node.pick_action_for_other_node(self.strategy)
+            votes[recommended_action] += 1
+        return int(np.round(votes[1]/len(neighbors)))
 
     def distance_from_current_node_to(self, node):
         distant_state = self.bucket_to_state(node)

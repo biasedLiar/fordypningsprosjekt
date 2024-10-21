@@ -18,10 +18,11 @@ CUTOFFPOINT = 750
 BUCKET_ACCURACY = 0.1
 SHOW_GAMES = False
 START_STRATEGY = EXPLORE
-STEPS_PER_NODE = 3
+STEPS_PER_NODE = 1
+NEIGHBORS = 7
 
 
-
+# TODO steps 5 neighbors 1 why
 
 
 # Set to -1 for automatic rolling average generation.
@@ -34,8 +35,8 @@ K_START = 1
 K_END = 1
 K_STEP = 1
 
-DETERMINISTIC = True
-SEMI_DETERMINISTIC = 4
+DETERMINISTIC = False
+SEMI_DETERMINISTIC = 10
 ########### End constants #################
 
 path = f"plots\\treeV2\\{'deterministic' if DETERMINISTIC else 'non-deterministic'}\\{STEPS_PER_NODE}-discrete\\{CUTOFFPOINT}_gens"
@@ -59,6 +60,12 @@ else:
 
 if DETERMINISTIC:
     seeds = [1]
+
+use_multiple_neighbors = False
+if NEIGHBORS > 1:
+    use_multiple_neighbors = True
+
+
 def run_standard(show_results=True, save_results=True):
     env = gym.make("CartPole-v1", render_mode=render_mode)
     env.action_space.seed(0)
@@ -73,7 +80,7 @@ def run_standard(show_results=True, save_results=True):
     iterations = 0
     data = np.array([], dtype=int)
 
-    tree = TreeV2(BUCKET_ACCURACY, observation, START_STRATEGY)
+    tree = TreeV2(BUCKET_ACCURACY, observation, strategy=START_STRATEGY, num_neighbors_copied=NEIGHBORS, use_many_neighbors=use_multiple_neighbors)
     action = tree.pick_action()
     actionstring += str(action)
 
@@ -120,9 +127,9 @@ def run_standard(show_results=True, save_results=True):
     plt.xlabel("Iterations")
     plt.ylabel("Steps")
     plt.legend(loc="upper left")
-    plt.title(f"V2 {'Deterministic' if DETERMINISTIC else 'Non-deterministic'} {STEPS_PER_NODE}-discrete {name_of_strategy(START_STRATEGY)}-search")
+    plt.title(f"V2 {'Deterministic' if DETERMINISTIC else 'Non-deterministic'} {STEPS_PER_NODE}-discrete {NEIGHBORS}-Neighbor {name_of_strategy(START_STRATEGY)}-search,  Nodes: {tree.get_num_nodes()}")
 
-    plot_name = path + f"\\{name_of_strategy(START_STRATEGY)}_plot.png"
+    plot_name = path + f"\\{name_of_strategy(START_STRATEGY)}_{NEIGHBORS}N-plot.png"
     if save_results:
         plt.savefig(plot_name)
     if show_results:
