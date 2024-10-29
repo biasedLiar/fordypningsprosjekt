@@ -3,7 +3,7 @@ import numpy as np
 
 class TreeNodeV3:
     def __init__(self, state):
-        self.children = [[], []]
+        self.children = [-1, -1]
         self.state = state
         raise NotImplementedError("Finish function")
 

@@ -75,7 +75,6 @@ def run_standard(show_results=True, save_results=True):
     current_seed = seeds[0]
     observation, info = env.reset(seed=current_seed)
     steps_alive = 0
-    action = 0
     actionstring = ""
     iterations = 0
     data = np.array([], dtype=int)
