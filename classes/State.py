@@ -11,3 +11,8 @@ class State:
         for i in range(4):
             self.obs[i] += other_state.obs[i]
 
+    def __hash__(self):
+        return hash((self.obs[0], self.obs[1], self.obs[2], self.obs[3]))
+
+    def __str__(self):
+        return str(self.obs)

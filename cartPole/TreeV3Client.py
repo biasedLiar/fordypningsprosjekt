@@ -14,7 +14,7 @@ from classes.TreeV3 import *
 
 
 ############### Constants ###################
-CUTOFFPOINT = 750
+CUTOFFPOINT = 100
 BUCKET_ACCURACY = 0.1
 SHOW_GAMES = False
 START_STRATEGY = EXPLORE
@@ -91,9 +91,6 @@ def run_standard(show_results=True, save_results=True):
             action = tree.pick_action()
             actionstring += str(action)
 
-
-        if steps_alive > 90 and iterations > 469:
-            test = 2
         steps_alive += 1
 
         if (np.abs(observation[2]) > ANGLE or np.abs(observation[0]) > 2.4 or truncated):

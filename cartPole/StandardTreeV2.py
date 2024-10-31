@@ -14,7 +14,7 @@ from classes.TreeV2 import *
 
 
 ############### Constants ###################
-CUTOFFPOINT = 750
+CUTOFFPOINT = 250
 BUCKET_ACCURACY = 0.1
 SHOW_GAMES = False
 START_STRATEGY = EXPLORE
