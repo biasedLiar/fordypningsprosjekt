@@ -1,10 +1,12 @@
 from helper.strategy_names import *
 import numpy as np
+from classes.State import *
 
 class TreeNodeV3:
     def __init__(self, state):
         self.children = [-1, -1]
         self.state = state
+        self.ev = 0
         raise NotImplementedError("Finish function")
 
     def update_ev(self):
@@ -34,4 +36,16 @@ class TreeNodeV3:
 
     def explore(self):
         raise NotImplementedError("Finish function")
+
+    def new_state_from_average(self, nodes, action):
+        deltas = [0, 0, 0, 0]
+        for node in nodes:
+            start = node.obs
+            end = node.children[action].obs
+            delta = end - start
+            deltas += delta
+        deltas /= len(nodes)
+        destination = State(self.obs + deltas)
+        return destination
+
 
