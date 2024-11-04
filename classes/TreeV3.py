@@ -6,7 +6,7 @@ from classes.State import *
 
 
 class TreeV3:
-    def __init__(self, observation, num_nodes_checked=3, stop_exploring_distance=0.2):
+    def __init__(self, observation, num_nodes_checked=3, stop_exploring_distance=0.2, layers_checked=1):
         self.state_actions = [[], []]
         self.state_actions_linalg = [np.zeros((0, 4)), np.zeros((0, 4))]
         self.nodes = {}
@@ -19,6 +19,7 @@ class TreeV3:
         self.num_nodes_checked = num_nodes_checked
         self.stop_exploring_distance = stop_exploring_distance
         self.most_recent_action = -1
+        self.layers_checked = layers_checked
 
 
 
@@ -30,9 +31,16 @@ class TreeV3:
         self.steps_alive = 0
         self.update_result(observation)
 
-
     def pick_action(self):
+        evs = self.multi_lvl_evs(self.current_node.state, self.layers_checked)
+        action = np.argmin(evs)
+        self.most_recent_action = action
+        return action
+
+    def old_pick_action(self):
+        raise Exception("Deprecated")
         current_state = self.current_node.state
+
         new_states, farthest_distances = self.calc_new_states(current_state)
         if self.should_explore_given(farthest_distances):
             if farthest_distances[0] == -1:
@@ -46,6 +54,8 @@ class TreeV3:
             action = np.argmin(evs)
         self.most_recent_action = action
         return action
+
+
 
     def update_result(self, observation, terminated=False):
         if terminated:
@@ -84,6 +94,35 @@ class TreeV3:
         return len(self.nodes)
 
     ############### Internal helper functions ####################################
+
+    def multi_lvl_evs(self, current_state, layers_left):
+        new_states, farthest_distances = self.calc_new_states(current_state)
+
+        if layers_left == self.layers_checked and self.should_explore_given(farthest_distances):
+            if farthest_distances[0] == -1:
+                action = 0
+            elif farthest_distances[1] == -1:
+                action = 1
+            else:
+                action = 0 if farthest_distances[0] >= farthest_distances[1] else 1
+            evs = [1, 1]
+            evs[action] = 0
+            return evs
+
+
+        if layers_left == 1:
+            evs = self.get_evs_of_states(new_states)
+        else:
+            evs = []
+            for state in new_states:
+                next_evs = self.multi_lvl_evs(state, layers_left - 1)
+                evs.append(min(next_evs))
+
+        return evs
+
+
+
+
     def add_node_to_tree(self, node):
         self.nodes[node.state] = node
         node2 = self.nodes[node.state]
@@ -179,7 +218,7 @@ class TreeV3:
         return node
 
     def new_state_from_average(self, state, nodes, action):
-        deltas = [0, 0, 0, 0]
+        deltas = np.zeros(4)
         for node in nodes:
             start = node.state.obs
             end = node.children[action].state.obs

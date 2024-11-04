@@ -14,15 +14,13 @@ from classes.TreeV3 import *
 
 
 ############### Constants ###################
-CUTOFFPOINT = 100
-BUCKET_ACCURACY = 0.1
+CUTOFFPOINT = 250
 SHOW_GAMES = False
 START_STRATEGY = EXPLORE
-STEPS_PER_NODE = 1
-NEIGHBORS = 7
+LAYERS_CHECKED = 3
+NEIGHBORS = 15
 
 
-# TODO steps 5 neighbors 1 why
 
 
 # Set to -1 for automatic rolling average generation.
@@ -39,7 +37,7 @@ DETERMINISTIC = False
 SEMI_DETERMINISTIC = 10
 ########### End constants #################
 
-path = f"plots\\treeV3\\{'deterministic' if DETERMINISTIC else 'non-deterministic'}\\{STEPS_PER_NODE}-discrete\\{CUTOFFPOINT}_gens"
+path = f"plots\\treeV3\\{str(LAYERS_CHECKED)}-layer\\{CUTOFFPOINT}_gens"
 fileHelper.createDirIfNotExist(path)
 
 if SHOW_GAMES:
@@ -79,14 +77,14 @@ def run_standard(show_results=True, save_results=True):
     iterations = 0
     data = np.array([], dtype=int)
 
-    tree = TreeV3(observation)
+    tree = TreeV3(observation, num_nodes_checked=NEIGHBORS, layers_checked=LAYERS_CHECKED)
     action = tree.pick_action()
     actionstring += str(action)
 
     while iterations < CUTOFFPOINT:
         observation, reward, terminated, truncated, info = env.step(action)
 
-        if steps_alive%STEPS_PER_NODE == 0 and not terminated:
+        if not terminated:
             tree.update_result(observation, terminated)
             action = tree.pick_action()
             actionstring += str(action)
@@ -123,7 +121,7 @@ def run_standard(show_results=True, save_results=True):
     plt.xlabel("Iterations")
     plt.ylabel("Steps")
     plt.legend(loc="upper left")
-    plt.title(f"V3 {'Deterministic' if DETERMINISTIC else 'Non-deterministic'} {STEPS_PER_NODE}-discrete {NEIGHBORS}-Neighbor")
+    plt.title(f"V3 {LAYERS_CHECKED}-layer {NEIGHBORS}-Neighbor")
 
     plot_name = path + f"\\{NEIGHBORS}N-plot.png"
     if save_results:
