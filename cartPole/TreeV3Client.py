@@ -14,11 +14,12 @@ from classes.TreeV3 import *
 
 
 ############### Constants ###################
-CUTOFFPOINT = 250
+CUTOFFPOINT = 100
 SHOW_GAMES = False
 START_STRATEGY = EXPLORE
-LAYERS_CHECKED = 3
+LAYERS_CHECKED = 2
 NEIGHBORS = 15
+SIGMA = 0.5
 
 
 
@@ -37,7 +38,11 @@ DETERMINISTIC = False
 SEMI_DETERMINISTIC = 10
 ########### End constants #################
 
-path = f"plots\\treeV3\\{str(LAYERS_CHECKED)}-layer\\{CUTOFFPOINT}_gens"
+if SIGMA != 0.8:
+    sigma_path = f"{str(SIGMA)}-sigma\\"
+else:
+    sigma_path = ""
+path = f"plots\\treeV3\\{sigma_path}{str(LAYERS_CHECKED)}-layer\\{CUTOFFPOINT}_gens"
 fileHelper.createDirIfNotExist(path)
 
 if SHOW_GAMES:
@@ -77,7 +82,7 @@ def run_standard(show_results=True, save_results=True):
     iterations = 0
     data = np.array([], dtype=int)
 
-    tree = TreeV3(observation, num_nodes_checked=NEIGHBORS, layers_checked=LAYERS_CHECKED)
+    tree = TreeV3(observation, num_nodes_checked=NEIGHBORS, layers_checked=LAYERS_CHECKED, sigma=SIGMA)
     action = tree.pick_action()
     actionstring += str(action)
 
@@ -121,7 +126,7 @@ def run_standard(show_results=True, save_results=True):
     plt.xlabel("Iterations")
     plt.ylabel("Steps")
     plt.legend(loc="upper left")
-    plt.title(f"V3 {LAYERS_CHECKED}-layer {NEIGHBORS}-Neighbor")
+    plt.title(f"V3 {LAYERS_CHECKED}-layer {NEIGHBORS}-Neighbor {SIGMA}-sigma")
 
     plot_name = path + f"\\{NEIGHBORS}N-plot.png"
     if save_results:

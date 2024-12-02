@@ -3,6 +3,7 @@ import pygame
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
+import random
 
 import helper.plotHelper as plotHelper
 import helper.KNearestNeighbor as kNearest
@@ -27,6 +28,8 @@ K_END = 6
 K_STEP = 1
 
 SHORT_TERM_MEM_LENGTH = 7
+
+DETERMINISTIC = False
 ########### End constants #################
 
 path = f"plots\\kNearestMem\\{ANGLE}_angle\\{SHORT_TERM_MEM_LENGTH}_mem_len\\{CUTOFFPOINT}_gens"
@@ -43,13 +46,13 @@ else:
     window_width = MANUAL_ROLLING_AVERAGE
 
 
-
 def run_k_nearest(k=-1, show_results=True, save_results=True, window_width=5):
     if k > 0:
         kNearest.K = k
     env = gym.make("CartPole-v1", render_mode=render_mode)
     env.action_space.seed(0)
     np.random.seed(0)
+    random.seed(0)
 
     observation, info = env.reset(seed=0)
 

@@ -6,12 +6,13 @@ from classes.State import *
 
 
 class TreeV3:
-    def __init__(self, observation, num_nodes_checked=3, stop_exploring_distance=0.2, layers_checked=1):
+    def __init__(self, observation, num_nodes_checked=3, stop_exploring_distance=0.2, layers_checked=1, sigma=0.8):
         self.state_actions = [[], []]
         self.state_actions_linalg = [np.zeros((0, 4)), np.zeros((0, 4))]
         self.nodes = {}
         self.nodes_array = []
         self.nodes_array_linalg = np.zeros((0, 4))
+        self.sigma = sigma
         self.current_node = self.create_new_node(State(observation))
         self.visited_nodes = []
         self.steps_alive = 0
@@ -214,7 +215,7 @@ class TreeV3:
             node = self.nodes[state]
             raise Exception("Repeat node, this should not happen")
         else:
-            node = TreeNodeV3(state)
+            node = TreeNodeV3(state, ev_multiplier=self.sigma)
         return node
 
     def new_state_from_average(self, state, nodes, action):

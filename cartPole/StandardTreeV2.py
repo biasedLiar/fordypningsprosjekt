@@ -19,7 +19,7 @@ BUCKET_ACCURACY = 0.1
 SHOW_GAMES = False
 START_STRATEGY = EXPLORE
 STEPS_PER_NODE = 1
-NEIGHBORS = 7
+NEIGHBORS = 4
 
 
 # TODO steps 5 neighbors 1 why
@@ -35,7 +35,7 @@ K_START = 1
 K_END = 1
 K_STEP = 1
 
-DETERMINISTIC = False
+DETERMINISTIC = True
 SEMI_DETERMINISTIC = 10
 ########### End constants #################
 
