@@ -32,12 +32,12 @@ K_END = 1
 K_STEP = 1
 
 STEPS_PER_NODE = 5
-DETERMINISTIC = True
-SEMI_DETERMINISTIC = 4
-START_STRATEGY = EXPLORE
+DETERMINISTIC = False
+SEMI_DETERMINISTIC = 3
+START_STRATEGY = BALANCED
 ########### End constants #################
 
-path = f"plots\\standard_tree\\{'deterministic' if DETERMINISTIC else 'non-deterministic'}\\{STEPS_PER_NODE}-discrete\\{CUTOFFPOINT}_gens"
+path = f"plots\\discrete_tree\\{'deterministic' if DETERMINISTIC else 'non-deterministic'}\\{STEPS_PER_NODE}-discrete\\{CUTOFFPOINT}_gens"
 fileHelper.createDirIfNotExist(path)
 
 if SHOW_GAMES:
@@ -50,12 +50,6 @@ if MANUAL_ROLLING_AVERAGE == -1:
 else:
     window_width = MANUAL_ROLLING_AVERAGE
 
-
-if SEMI_DETERMINISTIC > 1:
-    seeds= list(range(SEMI_DETERMINISTIC))
-else:
-    seeds = [5]
-
 if DETERMINISTIC:
     seeds = [1]
 def run_k_nearest(k=-1, show_results=True, save_results=True):
@@ -66,7 +60,7 @@ def run_k_nearest(k=-1, show_results=True, save_results=True):
     np.random.seed(0)
     random.seed(0)
 
-    current_seed = seeds[0]
+    current_seed = 1
 
     observation, info = env.reset(seed=current_seed)
 
@@ -135,23 +129,36 @@ def run_k_nearest(k=-1, show_results=True, save_results=True):
                 random.shuffle(seeds)
                 current_seed = seeds[0]
                 observation, info = env.reset(seed=current_seed)
+                print("Not fully random")
             else:
                 observation, info = env.reset()
 
             new_node_bucket = current_node.calc_state_bucket(observation)
-            #To normalize or not to normalize
-            if not current_seed in root_list.keys():
+
+            if not current_node.get_state_bucket() in all_nodes.keys():
                 current_node = DCartPoleTreeNode(observation, 0, START_STRATEGY, "-")
                 all_nodes[new_node_bucket] = current_node
                 root_list[current_seed] = current_node
                 if not current_seed in root_list:
-                    test =  all_nodes[new_node_bucket]
+                    test = all_nodes[new_node_bucket]
                     test2 = 1
+
             else:
-                current_node = all_nodes[new_node_bucket]
-                if new_node_bucket != root_list[current_seed].get_state_bucket():
-                    print("States not matching...")
-                    input()
+                current_node = all_nodes[current_node.get_state_bucket()]
+            # #To normalize or not to normalize
+            # if not current_seed in root_list.keys():
+            #     current_node = DCartPoleTreeNode(observation, 0, START_STRATEGY, "-")
+            #     all_nodes[new_node_bucket] = current_node
+            #     root_list[current_seed] = current_node
+            #     if not current_seed in root_list:
+            #         test =  all_nodes[new_node_bucket]
+            #         test2 = 1
+            # else:
+            #
+            #     current_node = root_list[current_seed]
+            #     if new_node_bucket != root_list[current_seed].get_state_bucket():
+            #         print("States not matching...")
+            #         input()
 
             current_node.set_root_strategy(START_STRATEGY)
 

@@ -13,7 +13,7 @@ from classes.cartPoleTreeNode import *
 
 ############### Constants ###################
 CUTOFF = True
-CUTOFFPOINT = 600
+CUTOFFPOINT = 6000
 
 STOP_AFTER_CONSEC_500S = False
 
@@ -29,8 +29,8 @@ K_START = 1
 K_END = 1
 K_STEP = 1
 
-STEPS_PER_NODE = 5
-DETERMINISTIC = True
+STEPS_PER_NODE = 4
+DETERMINISTIC = False
 START_STRATEGY = BALANCED
 ########### End constants #################
 
@@ -58,10 +58,6 @@ def run_k_nearest(k=-1, show_results=True, save_results=True, window_width=5):
     observation, info = env.reset(seed=0)
 
     steps_alive = 0
-    terminated_observations = np.zeros((0, 4))
-    terminated_observations_normalized = np.zeros((0, 4))
-    mean = np.zeros((4))
-    std = np.ones((4))
     action = 0
     last_it_succeeded = False
     its_before_finished = 0

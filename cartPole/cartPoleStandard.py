@@ -4,7 +4,7 @@ import numpy as np
 
 ANGLE = 0.2095
 
-render_mode = "human"  # Set to None to run without graphics
+render_mode = "None"  # Set to None to run without graphics
 
 env = gym.make("CartPole-v1", render_mode=render_mode)
 env.action_space.seed(0)
