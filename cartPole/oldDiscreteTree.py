@@ -5,10 +5,10 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 import helper.plotHelper as plotHelper
-from helper.strategy_names import *
 import helper.KNearestNeighbor as kNearest
+from helper.strategy_names import *
 import helper.fileHelper as fileHelper
-from classes.cartPoleTreeNode import *
+from classes.OldCartPoleNode import *
 
 
 ############### Constants ###################
@@ -29,12 +29,12 @@ K_START = 1
 K_END = 1
 K_STEP = 1
 
-STEPS_PER_NODE = 5
+STEPS_PER_NODE = 1
 DETERMINISTIC = False
-START_STRATEGY = BALANCED
+START_STRATEGY = MAXIMIZE_POINTS
 ########### End constants #################
 
-path = f"plots\\standard_tree\\{'deterministic' if DETERMINISTIC else 'non-deterministic'}\\{STEPS_PER_NODE}-discrete\\{CUTOFFPOINT}_gens"
+path = f"plots\\discrete_tree\\{'deterministic' if DETERMINISTIC else 'non-deterministic'}\\{STEPS_PER_NODE}-discrete\\{CUTOFFPOINT}_gens"
 fileHelper.createDirIfNotExist(path)
 
 if SHOW_GAMES:
@@ -47,7 +47,7 @@ if MANUAL_ROLLING_AVERAGE == -1:
 else:
     window_width = MANUAL_ROLLING_AVERAGE
 
-def run_k_nearest(k=-1, show_results=True, save_results=True, window_width=5):
+def run_k_nearest(k=-1, show_results=True, save_results=True):
     if k > 0:
         kNearest.K = k
     env = gym.make("CartPole-v1", render_mode=render_mode)
@@ -58,12 +58,17 @@ def run_k_nearest(k=-1, show_results=True, save_results=True, window_width=5):
     observation, info = env.reset(seed=0)
 
     steps_alive = 0
+    terminated_observations = np.zeros((0, 4))
+    terminated_observations_normalized = np.zeros((0, 4))
+    mean = np.zeros((4))
+    std = np.ones((4))
     action = 0
     last_it_succeeded = False
     its_before_finished = 0
 
+    all_nodes = {}
     data = np.array([], dtype=int)
-    root_node = CartPoleTreeNode(observation, 0, START_STRATEGY, "-")
+    root_node = OldCartPoleTreeNode(observation, 0, START_STRATEGY, "-")
     visited_nodes = []
     current_node = root_node
 
@@ -75,9 +80,14 @@ def run_k_nearest(k=-1, show_results=True, save_results=True, window_width=5):
 
         if steps_alive%STEPS_PER_NODE == 0:
             visited_nodes.append(current_node)
-            current_node = current_node.register_move(observation, steps_alive, action)
+            new_node_bucket = current_node.calc_state_bucket(observation)
+            if not new_node_bucket in all_nodes:
+                current_node = current_node.register_move(observation, steps_alive, action)
+                all_nodes[new_node_bucket] = current_node
 
-
+            else:
+                node = all_nodes[new_node_bucket]
+                current_node = current_node.register_existing(node, steps_alive, action)
         steps_alive += 1
 
         if (np.abs(observation[2]) > ANGLE or np.abs(observation[0]) > 2.4 or truncated):
@@ -117,7 +127,7 @@ def run_k_nearest(k=-1, show_results=True, save_results=True, window_width=5):
     plt.xlabel("Iterations")
     plt.ylabel("Steps")
     plt.legend(loc="upper left")
-    plt.title(f"{'Deterministic' if DETERMINISTIC else 'Non-deterministic'} {STEPS_PER_NODE}-discrete {name_of_strategy(START_STRATEGY)} search")
+    plt.title(f"{'Deterministic' if DETERMINISTIC else 'Non-deterministic'} {STEPS_PER_NODE}-discrete {name_of_strategy(START_STRATEGY)}-search")
 
     plot_name = path + f"\\{name_of_strategy(START_STRATEGY)}_plot.png"
     if save_results:
@@ -174,4 +184,4 @@ def run_and_compare_range_k_nearest(bottom, top, window_width, step=1):
 if __name__ == '__main__':
     run_k_nearest(show_results=False)
     #run_and_compare_range_k_nearest(K_START, K_END, window_width, K_STEP)
-    print("Finished")
+    print("Finished with new")
