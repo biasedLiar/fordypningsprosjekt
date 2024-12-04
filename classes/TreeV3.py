@@ -6,13 +6,13 @@ from classes.State import *
 
 
 class TreeV3:
-    def __init__(self, observation, num_nodes_checked=3, stop_exploring_distance=0.2, layers_checked=1, sigma=0.8):
+    def __init__(self, observation, num_nodes_checked=3, stop_exploring_distance=0.2, layers_checked=1, gamma=0.8):
         self.state_actions = [[], []]
         self.state_actions_linalg = [np.zeros((0, 4)), np.zeros((0, 4))]
         self.nodes = {}
         self.nodes_array = []
         self.nodes_array_linalg = np.zeros((0, 4))
-        self.sigma = sigma
+        self.gamma = gamma
         self.current_node = self.create_new_node(State(observation))
         self.visited_nodes = []
         self.steps_alive = 0
@@ -38,23 +38,6 @@ class TreeV3:
         self.most_recent_action = action
         return action
 
-    def old_pick_action(self):
-        raise Exception("Deprecated")
-        current_state = self.current_node.state
-
-        new_states, farthest_distances = self.calc_new_states(current_state)
-        if self.should_explore_given(farthest_distances):
-            if farthest_distances[0] == -1:
-                action = 0
-            elif farthest_distances[1] == -1:
-                action = 1
-            else:
-                action = 0 if farthest_distances[0] >= farthest_distances[1] else 1
-        else:
-            evs = self.get_evs_of_states(new_states)
-            action = np.argmin(evs)
-        self.most_recent_action = action
-        return action
 
 
 
@@ -73,12 +56,15 @@ class TreeV3:
 
     def finished_round(self, terminated=True):
         if terminated:
-            self.current_node.just_died()
+            self.current_node.times_visited += 1
+            self.current_node.ev = 100
         else:
-            self.current_node.just_won()
+            self.current_node.times_visited += 1
+            self.current_node.ev = 0
         prev_node = self.current_node
         for node in reversed(self.visited_nodes):
-            node.update(prev_node)
+            node.times_visited += 1
+            node.ev = prev_node.ev * self.gamma
             self.add_node_to_tree(node)
             prev_node = node
 
@@ -99,7 +85,8 @@ class TreeV3:
     def multi_lvl_evs(self, current_state, layers_left):
         new_states, farthest_distances = self.calc_new_states(current_state)
 
-        if layers_left == self.layers_checked and self.should_explore_given(farthest_distances):
+        # Check if node should explore
+        if self.is_bottom_lvl(layers_left) and self.should_explore_given(farthest_distances):
             if farthest_distances[0] == -1:
                 action = 0
             elif farthest_distances[1] == -1:
@@ -126,7 +113,6 @@ class TreeV3:
 
     def add_node_to_tree(self, node):
         self.nodes[node.state] = node
-        node2 = self.nodes[node.state]
         self.nodes_array.append(node)
         action = node.most_recent_action
         self.state_actions[action].append(node)
@@ -183,7 +169,6 @@ class TreeV3:
 
 
     def calc_value_of_state(self, state):
-        current_state = np.array(state)
         if len(self.nodes_array_linalg) == 0:
             return -1
         else:
@@ -196,7 +181,8 @@ class TreeV3:
             return ev
 
 
-
+    def is_bottom_lvl(self, layers_left):
+        return layers_left == self.layers_checked
 
     def should_explore_given(self, distances):
         if distances[0] == -1 or distances[1] == -1:
@@ -215,7 +201,7 @@ class TreeV3:
             node = self.nodes[state]
             raise Exception("Repeat node, this should not happen")
         else:
-            node = TreeNodeV3(state, ev_multiplier=self.sigma)
+            node = TreeNodeV3(state, ev_multiplier=self.gamma)
         return node
 
     def new_state_from_average(self, state, nodes, action):

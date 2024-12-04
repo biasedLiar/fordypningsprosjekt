@@ -19,17 +19,17 @@ class TreeNodeV3:
 
 
     def just_died(self):
+        raise NotImplementedError("Finish function")
         self.times_visited += 1
         self.ev = 100
 
     def just_won(self):
+        raise NotImplementedError("Finish function")
         self.times_visited += 1
         self.ev = 0
 
     def update(self, prev_node):
-        chosen_action = self.most_recent_action
-        self.children[chosen_action] = prev_node
-
+        raise NotImplementedError("Finish function")
         self.times_visited += 1
         self.ev = prev_node.ev * self.ev_multiplier
 

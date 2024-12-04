@@ -19,7 +19,7 @@ SHOW_GAMES = False
 START_STRATEGY = EXPLORE
 LAYERS_CHECKED = 2
 NEIGHBORS = 15
-SIGMA = 0.5
+GAMMA = 0.8
 
 
 
@@ -38,8 +38,8 @@ DETERMINISTIC = False
 SEMI_DETERMINISTIC = 10
 ########### End constants #################
 
-if SIGMA != 0.8:
-    sigma_path = f"{str(SIGMA)}-sigma\\"
+if GAMMA != 0.8:
+    sigma_path = f"{str(GAMMA)}-sigma\\"
 else:
     sigma_path = ""
 path = f"plots\\treeV3\\{sigma_path}{str(LAYERS_CHECKED)}-layer\\{CUTOFFPOINT}_gens"
@@ -76,27 +76,27 @@ def run_standard(show_results=True, save_results=True):
     random.seed(0)
 
     current_seed = seeds[0]
-    observation, info = env.reset(seed=current_seed)
-    steps_alive = 0
+    observation, info = env.reset(seed=0)
+    steps_alive = 1
     actionstring = ""
     iterations = 0
     data = np.array([], dtype=int)
 
-    tree = TreeV3(observation, num_nodes_checked=NEIGHBORS, layers_checked=LAYERS_CHECKED, sigma=SIGMA)
+    tree = TreeV3(observation, num_nodes_checked=NEIGHBORS, layers_checked=LAYERS_CHECKED, gamma=GAMMA)
     action = tree.pick_action()
     actionstring += str(action)
 
     while iterations < CUTOFFPOINT:
         observation, reward, terminated, truncated, info = env.step(action)
 
-        if not terminated:
+        if not terminated and not truncated:
             tree.update_result(observation, terminated)
             action = tree.pick_action()
             actionstring += str(action)
 
-        steps_alive += 1
+            steps_alive += 1
 
-        if (np.abs(observation[2]) > ANGLE or np.abs(observation[0]) > 2.4 or truncated):
+        else:
             tree.finished_round(not truncated)
 
             if DETERMINISTIC:
@@ -114,7 +114,7 @@ def run_standard(show_results=True, save_results=True):
 
 
             data = np.append(data, [steps_alive])
-            steps_alive = 0
+            steps_alive = 1
             iterations += 1
 
     print(f"\n\nFinished. Iterations before two successful iterations in a row:\n{iterations}")
@@ -126,7 +126,7 @@ def run_standard(show_results=True, save_results=True):
     plt.xlabel("Iterations")
     plt.ylabel("Steps")
     plt.legend(loc="upper left")
-    plt.title(f"V3 {LAYERS_CHECKED}-layer {NEIGHBORS}-Neighbor {SIGMA}-sigma")
+    plt.title(f"V3 {LAYERS_CHECKED}-layer {NEIGHBORS}-Neighbor {GAMMA}-sigma")
 
     plot_name = path + f"\\{NEIGHBORS}N-plot.png"
     if save_results:

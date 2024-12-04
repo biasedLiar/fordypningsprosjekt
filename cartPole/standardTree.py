@@ -100,6 +100,7 @@ def run_k_nearest(k=-1, show_results=True, save_results=True, window_width=5):
                 observation, info = env.reset(seed=0)
             else:
                 observation, info = env.reset()
+                test = 1
 
             print(f"{its_before_finished}: Steps alive: {steps_alive}")
             #print(root_node.visualize_tree())
