@@ -17,7 +17,7 @@ from classes.TreeV3 import *
 CUTOFFPOINT = 100
 SHOW_GAMES = False
 START_STRATEGY = EXPLORE
-LAYERS_CHECKED = 2
+LAYERS_CHECKED = 3
 NEIGHBORS = 15
 GAMMA = 0.8
 
@@ -77,7 +77,7 @@ def run_standard(show_results=True, save_results=True):
 
     current_seed = seeds[0]
     observation, info = env.reset(seed=0)
-    steps_alive = 1
+    steps_alive = 0
     actionstring = ""
     iterations = 0
     data = np.array([], dtype=int)
@@ -89,14 +89,14 @@ def run_standard(show_results=True, save_results=True):
     while iterations < CUTOFFPOINT:
         observation, reward, terminated, truncated, info = env.step(action)
 
-        if not terminated and not truncated:
+        if not terminated:
             tree.update_result(observation, terminated)
             action = tree.pick_action()
             actionstring += str(action)
 
             steps_alive += 1
 
-        else:
+        if terminated or truncated:
             tree.finished_round(not truncated)
 
             if DETERMINISTIC:
@@ -114,21 +114,26 @@ def run_standard(show_results=True, save_results=True):
 
 
             data = np.append(data, [steps_alive])
-            steps_alive = 1
+            steps_alive = 0
             iterations += 1
 
     print(f"\n\nFinished. Iterations before two successful iterations in a row:\n{iterations}")
     rolling_avg = plotHelper.rolling_average(data, window_width)
 
+
+    avg = np.sum(data)/len(data)
+
+    avg_plot = np.full((CUTOFFPOINT), avg)
     plt.plot(data, label="Steps")
     plt.plot(rolling_avg, label=f"{window_width}-step avg")
+    plt.plot(avg_plot, label=f"avg score")
 
     plt.xlabel("Iterations")
     plt.ylabel("Steps")
     plt.legend(loc="upper left")
-    plt.title(f"V3 {LAYERS_CHECKED}-layer {NEIGHBORS}-Neighbor {GAMMA}-sigma")
+    plt.title(f"{LAYERS_CHECKED}-layer {NEIGHBORS}-Neighbor {GAMMA}-gamma: avg={avg}")
 
-    plot_name = path + f"\\{NEIGHBORS}N-plot.png"
+    plot_name = path + f"\\{LAYERS_CHECKED}L-{NEIGHBORS}N-plot3.png"
     if save_results:
         plt.savefig(plot_name)
     if show_results:
