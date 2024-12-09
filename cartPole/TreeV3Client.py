@@ -5,6 +5,8 @@ import pygame
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
+from time import time
+
 
 import helper.plotHelper as plotHelper
 import helper.KNearestNeighbor as kNearest
@@ -14,7 +16,7 @@ from classes.TreeV3 import *
 
 
 ############### Constants ###################
-CUTOFFPOINT = 100
+CUTOFFPOINT = 250
 SHOW_GAMES = False
 START_STRATEGY = EXPLORE
 LAYERS_CHECKED = 3
@@ -25,7 +27,7 @@ GAMMA = 0.8
 
 
 # Set to -1 for automatic rolling average generation.
-MANUAL_ROLLING_AVERAGE = -1
+MANUAL_ROLLING_AVERAGE = 100
 CUTOFF = False
 STOP_AFTER_CONSEC_500S = False
 ANGLE = 0.2095
@@ -69,7 +71,7 @@ if NEIGHBORS > 1:
     use_multiple_neighbors = True
 
 
-def run_standard(show_results=True, save_results=True):
+def run_standard(show_results=True, save_results=True, neighbors=NEIGHBORS, layers_checked=LAYERS_CHECKED, local_path=path):
     env = gym.make("CartPole-v1", render_mode=render_mode)
     env.action_space.seed(0)
     np.random.seed(0)
@@ -82,7 +84,7 @@ def run_standard(show_results=True, save_results=True):
     iterations = 0
     data = np.array([], dtype=int)
 
-    tree = TreeV3(observation, num_nodes_checked=NEIGHBORS, layers_checked=LAYERS_CHECKED, gamma=GAMMA)
+    tree = TreeV3(observation, num_nodes_checked=neighbors, layers_checked=layers_checked, gamma=GAMMA)
     action = tree.pick_action()
     actionstring += str(action)
 
@@ -123,25 +125,80 @@ def run_standard(show_results=True, save_results=True):
 
     avg = np.sum(data)/len(data)
 
-    avg_plot = np.full((CUTOFFPOINT), avg)
+    avg_plot = np.full((CUTOFFPOINT), 475)
     plt.plot(data, label="Steps")
     plt.plot(rolling_avg, label=f"{window_width}-step avg")
-    plt.plot(avg_plot, label=f"avg score")
+    plt.plot(avg_plot, label=f"CartPole-v1 threshold")
 
     plt.xlabel("Iterations")
     plt.ylabel("Steps")
     plt.legend(loc="upper left")
-    plt.title(f"{LAYERS_CHECKED}-layer {NEIGHBORS}-Neighbor {GAMMA}-gamma: avg={avg}")
+    plt.title(f"{layers_checked}-layer {neighbors}-Neighbor {GAMMA}-gamma: v1 threshold")
 
-    plot_name = path + f"\\{LAYERS_CHECKED}L-{NEIGHBORS}N-plot3.png"
+    plot_name = local_path + f"\\{layers_checked}L-{neighbors}N-plot-v1.png"
     if save_results:
         plt.savefig(plot_name)
     if show_results:
         plt.show()
     plt.clf()
+
+    data = np.array([(200 if datum >200 else datum) for datum in data])
+
+    rolling_avg = plotHelper.rolling_average(data, window_width)
+
+    avg_plot = np.full((CUTOFFPOINT), 195)
+    plt.plot(data, label="Steps")
+    plt.plot(rolling_avg, label=f"{window_width}-step avg")
+    plt.plot(avg_plot, label=f"CartPole-v0 threshold")
+
+    plt.xlabel("Iterations")
+    plt.ylabel("Steps")
+    plt.legend(loc="upper left")
+    plt.title(f"{layers_checked}-layer {neighbors}-Neighbor {GAMMA}-gamma V0 threshold")
+
+    plot_name = local_path + f"\\{layers_checked}L-{neighbors}N-plot-v0.png"
+    if save_results:
+        plt.savefig(plot_name)
+    if show_results:
+        plt.show()
+    plt.clf()
+
     return data
 
 # shift file saving
 
+
+def run_standard_iterated():
+    layers_list = [1, 2, 3, 4]
+    neighbors_list = [3, 5, 7, 10, 15, 20]
+    for layers in layers_list:
+        outer_start = time()
+        for neighbors in neighbors_list:
+
+            if GAMMA != 0.8:
+                sigma_path = f"{str(GAMMA)}-sigma\\"
+            else:
+                sigma_path = ""
+            path = f"plots\\treeV3\\{sigma_path}{str(layers)}-layer\\{CUTOFFPOINT}_gens"
+            fileHelper.createDirIfNotExist(path)
+
+            print("\n\n\n-----------------------------")
+            print(f"Starting {layers=}, {neighbors=}")
+            print("------------------------------\n\n\n")
+            inner_start = time()
+            run_standard(show_results=False, layers_checked=layers, neighbors=neighbors, local_path=path)
+            inner_stop = time()
+            print("----------------------------")
+            print(f"Finished {layers=}, {neighbors=}, time= {round(inner_stop - inner_start)} seconds")
+            print("------------------------------")
+
+        outer_stop = time()
+        print("\n#\n#\n#\n#\n#\n#")
+        print(f"Finished {layers=}, time= {round((outer_stop - outer_start)/60)} minutes")
+        print("\n#\n#\n#\n#\n#\n#")
+
 if __name__ == '__main__':
+    #run_standard_iterated()
+
     run_standard(show_results=False)
+
