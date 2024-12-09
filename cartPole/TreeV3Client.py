@@ -59,7 +59,7 @@ else:
 
 
 if SEMI_DETERMINISTIC > 1:
-    seeds= list(range(SEMI_DETERMINISTIC))
+    seeds = list(range(SEMI_DETERMINISTIC))
 else:
     seeds = [5]
 
