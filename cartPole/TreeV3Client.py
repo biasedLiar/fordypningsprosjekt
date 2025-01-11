@@ -44,7 +44,7 @@ if GAMMA != 0.8:
     sigma_path = f"{str(GAMMA)}-sigma\\"
 else:
     sigma_path = ""
-path = f"plots\\treeV3\\{sigma_path}{str(LAYERS_CHECKED)}-layer\\{CUTOFFPOINT}_gens"
+path = f"mplots\\treeV3\\{sigma_path}{str(LAYERS_CHECKED)}-layer\\{CUTOFFPOINT}_gens"
 fileHelper.createDirIfNotExist(path)
 
 if SHOW_GAMES:

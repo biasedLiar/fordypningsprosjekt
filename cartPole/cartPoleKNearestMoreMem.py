@@ -33,7 +33,7 @@ SHORT_TERM_MEM_LENGTH = 3
 DETERMINISTIC = False
 ########### End constants #################
 
-path = f"plots\\kNearestMem\\{ANGLE}_angle\\{SHORT_TERM_MEM_LENGTH}_mem_len\\{CUTOFFPOINT}_gens"
+path = f"mplots\\kNearestMem\\{ANGLE}_angle\\{SHORT_TERM_MEM_LENGTH}_mem_len\\{CUTOFFPOINT}_gens"
 fileHelper.createDirIfNotExist(path)
 
 if SHOW_GAMES:

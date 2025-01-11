@@ -37,7 +37,7 @@ SEMI_DETERMINISTIC = 3
 START_STRATEGY = BALANCED
 ########### End constants #################
 
-path = f"plots\\discrete_tree\\{'deterministic' if DETERMINISTIC else 'non-deterministic'}\\{STEPS_PER_NODE}-discrete\\{CUTOFFPOINT}_gens"
+path = f"mplots\\discrete_tree\\{'deterministic' if DETERMINISTIC else 'non-deterministic'}\\{STEPS_PER_NODE}-discrete\\{CUTOFFPOINT}_gens"
 fileHelper.createDirIfNotExist(path)
 
 if SHOW_GAMES:

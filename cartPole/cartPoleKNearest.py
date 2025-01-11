@@ -29,7 +29,7 @@ K_STEP = 2
 
 ########### End constants #################
 
-path = f"plots\\kNearest\\{ANGLE}_angle\\{CUTOFFPOINT}_gens"
+path = f"mplots\\kNearest\\{ANGLE}_angle\\{CUTOFFPOINT}_gens"
 fileHelper.createDirIfNotExist(path)
 
 if SHOW_GAMES:

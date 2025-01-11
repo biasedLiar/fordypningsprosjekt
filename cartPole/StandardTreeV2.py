@@ -39,7 +39,7 @@ DETERMINISTIC = True
 SEMI_DETERMINISTIC = 10
 ########### End constants #################
 
-path = f"plots\\treeV2\\{'deterministic' if DETERMINISTIC else 'non-deterministic'}\\{STEPS_PER_NODE}-discrete\\{CUTOFFPOINT}_gens"
+path = f"mplots\\treeV2\\{'deterministic' if DETERMINISTIC else 'non-deterministic'}\\{STEPS_PER_NODE}-discrete\\{CUTOFFPOINT}_gens"
 fileHelper.createDirIfNotExist(path)
 
 if SHOW_GAMES:
