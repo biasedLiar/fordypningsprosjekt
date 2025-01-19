@@ -149,8 +149,8 @@ class TreeV3:
             else:
                 distances = np.linalg.norm(self.state_actions_linalg[i] - state.obs, axis=1)
                 enumerated = enumerate(distances)
-                if len(self.state_actions[i]) > self.num_nodes_checked:
-                    enumerated = nsmallest(self.num_nodes_checked, enumerated, key=lambda r: r[1])
+                #length1 = sum(1 for _, __ in enumerated)
+                enumerated = nsmallest(self.num_nodes_checked, enumerated, key=lambda r: r[1])
                 max_distance = max(enumerated, key=lambda r: r[1])[1]
                 nodes = [self.state_actions[i][j[0]] for j in enumerated]
                 destination = self.new_state_from_average(state, nodes, i)
@@ -211,12 +211,20 @@ class TreeV3:
             end = node.children[action].state.obs
             delta = end - start
             deltas += delta
+        if len(nodes) == 0:
+            print("Test")
+            input()
         deltas /= len(nodes)
         destination = State(state.obs + deltas)
         return destination
 
-
-
+    def get_linalg_action_rewards(self):
+        ordered_action_rewards = []
+        for observation in self.nodes_array_linalg:
+            state = State(observation)
+            node = self.nodes[state]
+            ordered_action_rewards.append((node.most_recent_action, node.ev))
+        return ordered_action_rewards
 
 
 

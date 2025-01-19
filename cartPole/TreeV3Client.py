@@ -6,7 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 from time import time
-
+from sklearn.cluster import KMeans
 
 import helper.plotHelper as plotHelper
 import helper.KNearestNeighbor as kNearest
@@ -16,11 +16,11 @@ from classes.TreeV3 import *
 
 
 ############### Constants ###################
-CUTOFFPOINT = 250
+CUTOFFPOINT = 5
 SHOW_GAMES = False
 START_STRATEGY = EXPLORE
-LAYERS_CHECKED = 3
-NEIGHBORS = 15
+LAYERS_CHECKED = 2
+NEIGHBORS = 10
 GAMMA = 0.8
 
 
@@ -35,9 +35,6 @@ ANGLE = 0.2095
 K_START = 1
 K_END = 1
 K_STEP = 1
-
-DETERMINISTIC = False
-SEMI_DETERMINISTIC = 10
 ########### End constants #################
 
 if GAMMA != 0.8:
@@ -58,14 +55,6 @@ else:
     window_width = MANUAL_ROLLING_AVERAGE
 
 
-if SEMI_DETERMINISTIC > 1:
-    seeds = list(range(SEMI_DETERMINISTIC))
-else:
-    seeds = [5]
-
-if DETERMINISTIC:
-    seeds = [1]
-
 use_multiple_neighbors = False
 if NEIGHBORS > 1:
     use_multiple_neighbors = True
@@ -77,7 +66,6 @@ def run_standard(show_results=True, save_results=True, neighbors=NEIGHBORS, laye
     np.random.seed(0)
     random.seed(0)
 
-    current_seed = seeds[0]
     observation, info = env.reset(seed=0)
     steps_alive = 0
     actionstring = ""
@@ -100,13 +88,7 @@ def run_standard(show_results=True, save_results=True, neighbors=NEIGHBORS, laye
 
         if terminated or truncated:
             tree.finished_round(not truncated)
-
-            if DETERMINISTIC:
-                random.shuffle(seeds)
-                current_seed = seeds[0]
-                observation, info = env.reset(seed=current_seed)
-            else:
-                observation, info = env.reset()
+            observation, info = env.reset()
 
             print(f"{iterations}: Steps alive: {steps_alive}, Nodes: {tree.get_num_nodes()}, String: {actionstring}")
 

@@ -4,8 +4,11 @@ class State:
 
     def __eq__(self, other):
         if isinstance(other, State):
-            return self.obs == other.obs
-        return NotImplemented
+            for i in range(4):
+                if self.obs[i] != other.obs[i]:
+                    return False
+            return True
+        return False
 
     def add(self, other_state):
         for i in range(4):
