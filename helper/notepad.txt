@@ -1,11 +1,56 @@
-0: Steps alive: 10, Nodes: 10, String: 00000000000
-1: Steps alive: 9, Nodes: 20, String: 1111111111
-2: Steps alive: 30, Nodes: 51, String: 0101010101010101010110101010110
-3: Steps alive: 11, Nodes: 63, String: 111110101000
-4: Steps alive: 13, Nodes: 77, String: 01000001010110
+C:\Python310\python.exe C:\Users\elelm\OneDrive\Dokumenter\programmeringSkole\Fordypningsprosjekt\genericClients\kMeansClient.py
+rewards: 11.0
+rewards: 10.0
+rewards: 15.0
+rewards: 25.0
+rewards: 44.0
+rewards: 26.0
+rewards: 40.0
+rewards: 55.0
+rewards: 44.0
+rewards: 48.0
+rewards: 34.0
+rewards: 53.0
+rewards: 31.0
+rewards: 112.0
+rewards: 26.0
+Calculating kmeans centers...
+Finished calculating kmeans centers
+rewards: 87.0
+rewards: 79.0
+rewards: 65.0
+rewards: 63.0
+rewards: 60.0
+rewards: 53.0
+rewards: 57.0
+rewards: 69.0
+rewards: 51.0
+rewards: 57.0
+rewards: 34.0
+rewards: 63.0
+rewards: 84.0
+rewards: 54.0
+rewards: 91.0
+rewards: 66.0
+rewards: 61.0
+rewards: 58.0
+rewards: 64.0
+rewards: 45.0
+rewards: 54.0
+rewards: 80.0
+rewards: 71.0
+rewards: 83.0
+rewards: 61.0
+rewards: 60.0
+rewards: 57.0
+rewards: 58.0
+rewards: 48.0
+rewards: 58.0
+rewards: 77.0
+rewards: 63.0
+rewards: 60.0
+rewards: 60.0
+rewards: 39.0
+rewards: 69.0
 
-0: Steps alive: 10, Nodes: 10, String: 00000000000
-1: Steps alive: 9, Nodes: 20, String: 1111111111
-2: Steps alive: 30, Nodes: 51, String: 0101010101010101010110101010110
-3: Steps alive: 11, Nodes: 63, String: 111110101000
-4: Steps alive: 13, Nodes: 77, String: 01000001010110
+Process finished with exit code 0

@@ -22,8 +22,8 @@ CUTOFFPOINT = 100
 START_KMEANS_POINT = 200
 SHOW_GAMES = False
 START_STRATEGY = EXPLORE
-LAYERS_CHECKED = 3
-NEIGHBORS = 20
+LAYERS_CHECKED = 2
+NEIGHBORS = 15
 GAMMA = 0.8
 K_MEANS_K = 60
 
@@ -319,7 +319,7 @@ def run_only_kmeans(tree, env, show_results=True, save_results=True, neighbors=N
     plt.xlabel("Iterations")
     plt.ylabel("Steps")
     plt.legend(loc="upper left")
-    plt.title(f"{layers_checked}-layer {neighbors}-Neighbor {GAMMA}-gamma V0 threshold")
+    plt.title(f"{layers_checked}-layer {neighbors}-Neighbor {K}K-{G}G avg:{avg} V0 threshold")
 
     plot_name = local_path + f"\\{layers_checked}L-{neighbors}N-{K}K-{G}G-plot-v0.png"
     if save_results:
@@ -365,8 +365,10 @@ def run_Kmeans_tests(show_results=False):
     max_g = -1
     max_k = -1
     max_avg = -1
-    gaussian_widths = [0.02, 0.05, 0.1, 0.2, 0.5, 1]
-    k_means_ks = [5, 7, 10, 20, 50, 70, 100]
+    k_means_ks = [5, 7, 10, 20, 50, 70, 100, 200, 500, 1000]
+    gaussian_widths = [0.005, 0.01, 0.02, 0.03, 0.04, 0.05]
+
+    avg_list = []
     for k_mean in k_means_ks:
         outer_start = time()
         for g_width in gaussian_widths:
@@ -383,6 +385,7 @@ def run_Kmeans_tests(show_results=False):
             print("------------------------------\n\n\n")
             inner_start = time()
             avg = run_only_kmeans(tree, env, show_results=False, layers_checked=LAYERS_CHECKED, neighbors=NEIGHBORS, local_path=path, G=g_width, K=k_mean)
+            avg_list.append(avg)
             if avg > max_avg:
                 max_avg = avg
                 max_k = k_mean
@@ -394,9 +397,12 @@ def run_Kmeans_tests(show_results=False):
 
         outer_stop = time()
         print("\n#\n#\n#\n#\n#\n#")
-        print(f"Finished {g_width=}, time= {round((outer_stop - outer_start) / 60)} minutes")
+        print(f"Finished {k_mean=}, time= {round((outer_stop - outer_start) / 60)} minutes")
         print("\n#\n#\n#\n#\n#\n#")
 
+    for i in range(len(avg_list)):
+        print(f"{i}: {avg_list[i]=}")
+    print("\n")
     print(f"Highest avg: {max_avg} at K{max_k}, G{max_g}")
 
 if __name__ == '__main__':
