@@ -1,13 +1,17 @@
 import gymnasium
 import pygame
 import numpy as np
+import matplotlib.pyplot as plt
 
 from classes.genericBasic import *
+import helper.fileHelper as fileHelper
+import helper.plotHelper as plotHelper
 
 render_mode = None  # Set to None to run without graphics
 game_mode = "CartPole-v1"
 #game_mode = "LunarLander-v2"
 env = gymnasium.make(game_mode, render_mode=render_mode)
+seed = 0
 seed = 0
 env.action_space.seed(seed)
 np.random.seed(seed)
@@ -22,8 +26,14 @@ gaussian_width = 0.3  # Sets the width of the Gaussian function that controls ho
 exploration_rate = 0.1  # Controls when actions with little data should be chosen, 0: never, 1: always
 
 
-STANDARD_RUNNING_LENGTH = 15
-KMEANS_RUNNING_LENGTH = 50
+STANDARD_RUNNING_LENGTH = 50
+KMEANS_RUNNING_LENGTH = 100
+KMEANS_TYPE = STANDARD
+
+
+
+path = f"mplots\\generic\\{game_mode}\\{KMEANS_TYPE}-kmeans\\{gaussian_width}g"
+fileHelper.createDirIfNotExist(path)
 
 
 class Model:
@@ -45,7 +55,7 @@ states = []  # Episode states
 state, info = env.reset(seed=seed)
 states.append(state)
 episodes = 0
-
+data = []
 while True:
     if render_mode == "human":
         for event in pygame.event.get():
@@ -53,7 +63,7 @@ while True:
                 env.close()
                 exit()
 
-    if episodes <= STANDARD_RUNNING_LENGTH:
+    if episodes < STANDARD_RUNNING_LENGTH:
         action = model.get_action_without_kmeans(state)
     else:
         action = model.get_action_kmeans(state)
@@ -66,6 +76,8 @@ while True:
 
     if terminated or truncated:
         print(f"rewards: {rewards}")
+        if episodes >= STANDARD_RUNNING_LENGTH:
+            data.append(rewards)
         for i, state in enumerate(states):
             model.states = np.vstack((model.states, state))
             model.rewards = np.hstack((model.rewards, np.power(discount_factor, len(states) - 1 - i) * rewards))
@@ -84,5 +96,24 @@ while True:
             print("Calculating kmeans centers...")
             model.calc_standard_kmeans()
             print("Finished calculating kmeans centers")
-        if episodes > KMEANS_RUNNING_LENGTH:
+        if episodes == KMEANS_RUNNING_LENGTH + STANDARD_RUNNING_LENGTH:
             break
+
+window_width = 5
+rolling_avg = plotHelper.rolling_average(data, window_width)
+
+avg = np.sum(data)/len(data)
+#avg_plot = np.full((KMEANS_RUNNING_LENGTH), 195)
+plt.plot(data, label="Steps")
+plt.plot(rolling_avg, label=f"{window_width}-step avg")
+#plt.plot(avg_plot, label=f"CartPole-v0 threshold")
+
+plt.xlabel("Iterations")
+plt.ylabel("Steps")
+plt.legend(loc="upper left")
+plt.title(f"{20}K-{gaussian_width}G avg:{avg} V0 threshold")
+
+plot_name = path + f"\\{STANDARD_RUNNING_LENGTH}_then_{KMEANS_RUNNING_LENGTH}_plot.png"
+plt.savefig(plot_name)
+plt.clf()
+
