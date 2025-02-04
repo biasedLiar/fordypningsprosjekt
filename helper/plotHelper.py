@@ -32,6 +32,14 @@ def get_upper_lower_error_bounds(data, avg_reward):
     min_data = avg_reward - np.min(np_data, axis=0)
     return [min_data, max_data]
 
+def average_max_min_diagrams(data):
+    np_data = np.asarray(data)
+    avg_data = np.mean(np_data, axis=0)
+    max_data = np.max(np_data, axis=0)
+    min_data = np.min(np_data, axis=0)
+    return avg_data, max_data, min_data
+
+
 
 
 

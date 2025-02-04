@@ -23,6 +23,7 @@ DISCOUNT_FACTOR = 0.99999  # Low discount penalize longer episodes.
 GAUSSIAN_WIDTH = 0.3  # Sets the width of the Gaussian function that controls how much far away states should influence the action choice
 EXPLORATION_RATE = 0.1  # Controls when actions with little data should be chosen, 0: never, 1: always
 
+K_MEANS_K = 20
 
 STANDARD_RUNNING_LENGTH = 50
 KMEANS_RUNNING_LENGTH = 100
@@ -30,19 +31,19 @@ KMEANS_TYPE = STANDARD
 
 
 path = f"mplots\\generic\\{GAME_MODE}\\{KMEANS_TYPE}-kmeans\\{GAUSSIAN_WIDTH}g"
-fileHelper.createDirIfNotExist(path)
+
 
 
 def run_program(seed=SEED, discount_factor=DISCOUNT_FACTOR, gaussian_width=GAUSSIAN_WIDTH,
                 exploration_rate=EXPLORATION_RATE, standard_episodes=STANDARD_RUNNING_LENGTH,
                 kmeans_episodes=KMEANS_RUNNING_LENGTH, kmeans_type=KMEANS_TYPE, render_mode=RENDER_MODE,
-                game_mode=GAME_MODE, save_plot=True):
+                game_mode=GAME_MODE, k=K_MEANS_K, save_plot=True):
 
     env = gymnasium.make(game_mode, render_mode=render_mode)
     env.action_space.seed(seed)
     np.random.seed(seed)
 
-    model = GenericModel(env, gaussian_width, exploration_rate)
+    model = GenericModel(env, gaussian_width, exploration_rate, K=k)
 
     rewards = 0.  # Accumulative episode rewards
     actions = []  # Episode actions
@@ -146,5 +147,6 @@ def run_program_with_different_seeds(seed_count=3, discount_factor=DISCOUNT_FACT
 
 
 if __name__ == '__main__':
+    fileHelper.createDirIfNotExist(path)
     #run_program_with_different_seeds(seed_count=SEED_COUNT)
     run_program(3)
