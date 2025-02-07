@@ -6,56 +6,40 @@ import helper.plotHelper as plotHelper
 import time
 import genericClients.kMeansClient as kMeansClient
 
-SEED_COUNT = 10
+SEED_COUNT = 30
 
 
-GAUSSIANS = [0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.8, 1]
+GAUSSIANS = [0.515, 0.535, 0.55, 0.565, 0.58]
+GAUSSIANS = [0.55]
 
-K_VALUES = [20, 35, 50, 70, 100, 150, 200]
+K_VALUES = [200, 250, 300, 350, 400]
+K_VALUES = [250]
 
 EXPLORATION_RATES = [0.1]
-#gw0.5-200
+
+
+
+RUN_KMEANS_UNWEIGHTED = True
+RUN_BASIC = True
+RUN_KMEANS_WEIGHTED = True
+RUN_KMEANS_VECTOR = False
+#gw0.55-250
 
 def run_program_with_different_seeds(plot_name, plot_title, seed_count=3,
                 discount_factor=kMeansClient.DISCOUNT_FACTOR, gaussian_width=kMeansClient.GAUSSIAN_WIDTH,
                 exploration_rate=kMeansClient.EXPLORATION_RATE, standard_episodes=kMeansClient.STANDARD_RUNNING_LENGTH,
-                kmeans_episodes=kMeansClient.KMEANS_RUNNING_LENGTH, kmeans_type=kMeansClient.KMEANS_TYPE, render_mode=kMeansClient.RENDER_MODE,
-                game_mode=kMeansClient.GAME_MODE, k=kMeansClient.K_MEANS_K, save_plot=True):
+                kmeans_episodes=kMeansClient.KMEANS_RUNNING_LENGTH, weighted_kmeans=True, render_mode=kMeansClient.RENDER_MODE,
+                game_mode=kMeansClient.GAME_MODE, k=kMeansClient.K_MEANS_K, save_plot=True, ignore_kmeans=False):
     datas = []
     for seed in range(seed_count):
         data = kMeansClient.run_program(seed=seed, discount_factor=discount_factor, gaussian_width=gaussian_width,
                 exploration_rate=exploration_rate, standard_episodes=standard_episodes,
-                kmeans_episodes=kmeans_episodes, kmeans_type=kmeans_type, render_mode=render_mode,
-                game_mode=game_mode, k=k, save_plot=False)
+                kmeans_episodes=kmeans_episodes, weighted_kmeans=weighted_kmeans, render_mode=render_mode,
+                game_mode=game_mode, k=k, save_plot=False, ignore_kmeans=ignore_kmeans)
         datas.append(data)
     datas = np.asarray(datas)
-    '''
-    bucket_data = plotHelper.average_every_n(datas, list_of_list=True, n=5)
-    avg_reward = plotHelper.average_of_diff_seeds(bucket_data)
-    error_bounds = plotHelper.get_upper_lower_error_bounds(bucket_data, avg_reward)
-    
-    
-    x = np.arange(0, len(data), 5)
-
-    #avg_reward = np.ones_like(avg_reward)*50
-    #error_bounds = [avg_reward - avg_reward*0.5, avg_reward*2 - avg_reward]
-
-    plt.errorbar(x, avg_reward, yerr=error_bounds, fmt='-o')
-    '''
-
-    avg_data, max_data, min_data = plotHelper.average_max_min_diagrams(datas)
-
-    plt.plot(max_data, label='max_steps')
-    plt.plot(avg_data, label='avg_steps')
-    plt.plot(min_data, label='min_steps')
-    plt.xlabel("Iterations")
-    plt.ylabel("Steps")
-    plt.legend(loc="lower right")
-    plt.title(plot_title)
-    plt.savefig(plot_name)
-    plt.show()
-    plt.clf()
-
+    plotHelper.plot_with_max_min_mean_std(datas, plot_name, plot_title)
+    return datas
 
 
 def run_gaussian_k():
@@ -64,20 +48,64 @@ def run_gaussian_k():
         start = time.time()
         for k in K_VALUES:
             start_2 = time.time()
+            labels = []
+            datas_list = []
+            if RUN_KMEANS_UNWEIGHTED:
+                path = f"mplots\\generic\\{kMeansClient.GAME_MODE}\\{gaussian_width}g\\{k}k"
+                fileHelper.createDirIfNotExist(path)
+                name = path + f"\\{SEED_COUNT}seed__{kMeansClient.STANDARD_RUNNING_LENGTH}_then_{kMeansClient.KMEANS_RUNNING_LENGTH}__unweighted_plot.png"
 
-            path = f"mplots\\generic\\{kMeansClient.GAME_MODE}\\{gaussian_width}g\\{k}k"
-            fileHelper.createDirIfNotExist(path)
-            name = path + f"\\{SEED_COUNT}seed__{kMeansClient.STANDARD_RUNNING_LENGTH}_then_{kMeansClient.KMEANS_RUNNING_LENGTH}_plot.png"
+                title = f"gw={gaussian_width}, k={k} avg{SEED_COUNT} unweighted-kmeans plot"
+                datas = run_program_with_different_seeds(name, title, seed_count=SEED_COUNT, gaussian_width=gaussian_width, k=k, weighted_kmeans=False)
+                datas_list.append(datas)
+                labels.append("unweighted")
 
-            title = f"gw={gaussian_width}, k={k} avg{SEED_COUNT} plot"
-            run_program_with_different_seeds(name, title, seed_count=SEED_COUNT, gaussian_width=gaussian_width, k=k)
+            if RUN_KMEANS_WEIGHTED:
+                path = f"mplots\\generic\\{kMeansClient.GAME_MODE}\\{gaussian_width}g\\{k}k"
+                fileHelper.createDirIfNotExist(path)
+                name = path + f"\\{SEED_COUNT}seed__{kMeansClient.STANDARD_RUNNING_LENGTH}_then_{kMeansClient.KMEANS_RUNNING_LENGTH}__weighted_plot.png"
 
-            end_2 =time.time()
-            print(f"\n\n{gaussian_width=}, {k=}: time:{end_2-start_2}")
+                title = f"gw={gaussian_width}, k={k} avg{SEED_COUNT} weighted-kmeans plot"
+                datas = run_program_with_different_seeds(name, title, seed_count=SEED_COUNT,
+                                                         gaussian_width=gaussian_width, k=k, weighted_kmeans=True)
+                datas_list.append(datas)
+                labels.append("weighted")
+
+            if RUN_BASIC and k == K_VALUES[0]:
+                path = f"mplots\\generic\\{kMeansClient.GAME_MODE}\\{gaussian_width}g\\basic"
+                fileHelper.createDirIfNotExist(path)
+                name = path + f"\\{SEED_COUNT}seed__{kMeansClient.STANDARD_RUNNING_LENGTH}_then_{kMeansClient.KMEANS_RUNNING_LENGTH}__weighted_plot.png"
+
+                title = f"gw={gaussian_width}, avg{SEED_COUNT} nearest neighbor plot"
+                basic_datas = run_program_with_different_seeds(name, title, seed_count=SEED_COUNT, gaussian_width=gaussian_width, k=k, weighted_kmeans=False, ignore_kmeans=True)
+                datas_list.append(basic_datas)
+                labels.append("basic")
+            else:
+                datas_list.append(basic_datas)
+                labels.append("basic")
+
+            end_2 = time.time()
+            print(f"\n\n{gaussian_width=}, {k=}: time:{end_2 - start_2}")
+            if len(labels) > 1:
+                path = f"mplots\\generic\\{kMeansClient.GAME_MODE}\\aggregate\\{gaussian_width}g\\{k}k"
+                fileHelper.createDirIfNotExist(path)
+
+                types =  f"{'_weighted' if RUN_KMEANS_WEIGHTED else ''}{'_unweighted' if RUN_KMEANS_UNWEIGHTED else ''}{'_vector' if RUN_KMEANS_VECTOR else ''}{'_basic' if RUN_BASIC else ''}"
+                name = path + f"\\{SEED_COUNT}seed__{kMeansClient.STANDARD_RUNNING_LENGTH}_then_{kMeansClient.KMEANS_RUNNING_LENGTH}" \
+                              f"{types}.png"
+                title = f"gw={gaussian_width}, k={k} avg{SEED_COUNT}{types} plot"
+
+                plotHelper.plot_multiple_graph_types(datas_list, labels, name, title, show_std=False)
+                name = path + f"\\{SEED_COUNT}seed__{kMeansClient.STANDARD_RUNNING_LENGTH}_then_{kMeansClient.KMEANS_RUNNING_LENGTH}" \
+                              f"{types}_std.png"
+                plotHelper.plot_multiple_graph_types(datas_list, labels, name, title, show_std=True)
             time.sleep(2)
         end = time.time()
         print(f"\n\n\n\n{gaussian_width=}: time:{end - start}")
         time.sleep(5)
 
 if __name__ == '__main__':
+    total_start = time.time()
     run_gaussian_k()
+    total_end = time.time()
+    print(f"\n\n\n\nComplete program time: {total_end-total_start}")

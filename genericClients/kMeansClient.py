@@ -30,20 +30,20 @@ KMEANS_RUNNING_LENGTH = 100
 KMEANS_TYPE = STANDARD
 
 
-path = f"mplots\\generic\\{GAME_MODE}\\{KMEANS_TYPE}-kmeans\\{GAUSSIAN_WIDTH}g"
+path = f"mplots\\generic\\{GAME_MODE}\\single\\{GAUSSIAN_WIDTH}g"
 
 
 
 def run_program(seed=SEED, discount_factor=DISCOUNT_FACTOR, gaussian_width=GAUSSIAN_WIDTH,
                 exploration_rate=EXPLORATION_RATE, standard_episodes=STANDARD_RUNNING_LENGTH,
-                kmeans_episodes=KMEANS_RUNNING_LENGTH, kmeans_type=KMEANS_TYPE, render_mode=RENDER_MODE,
-                game_mode=GAME_MODE, k=K_MEANS_K, save_plot=True):
+                kmeans_episodes=KMEANS_RUNNING_LENGTH, weighted_kmeans=True, render_mode=RENDER_MODE,
+                game_mode=GAME_MODE, k=K_MEANS_K, save_plot=True, ignore_kmeans=False):
 
     env = gymnasium.make(game_mode, render_mode=render_mode)
     env.action_space.seed(seed)
     np.random.seed(seed)
 
-    model = GenericModel(env, gaussian_width, exploration_rate, K=k)
+    model = GenericModel(env, gaussian_width, exploration_rate, K=k, weighted_kmeans=weighted_kmeans)
 
     rewards = 0.  # Accumulative episode rewards
     actions = []  # Episode actions
@@ -59,7 +59,7 @@ def run_program(seed=SEED, discount_factor=DISCOUNT_FACTOR, gaussian_width=GAUSS
                     env.close()
                     exit()
 
-        if episodes < standard_episodes:
+        if episodes < standard_episodes or ignore_kmeans:
             action = model.get_action_without_kmeans(state)
         else:
             #print("REached")
@@ -72,7 +72,7 @@ def run_program(seed=SEED, discount_factor=DISCOUNT_FACTOR, gaussian_width=GAUSS
         rewards += float(reward)
 
         if terminated or truncated:
-            print(f"rewards: {rewards}")
+            print(f"{seed=}, {episodes=}, rewards: {rewards}")
             if episodes >= standard_episodes:
                 data.append(rewards)
             for i, state in enumerate(states):
@@ -89,7 +89,7 @@ def run_program(seed=SEED, discount_factor=DISCOUNT_FACTOR, gaussian_width=GAUSS
             state, info = env.reset()
             states.append(state)
             episodes += 1
-            if episodes == standard_episodes:
+            if episodes == standard_episodes and not ignore_kmeans:
                 print("Calculating kmeans centers...")
                 model.calc_standard_kmeans()
                 print("Finished calculating kmeans centers")

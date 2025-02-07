@@ -10,16 +10,19 @@ from matplotlib.ticker import NullFormatter
 
 
 class GenericModel:
-    def __init__(self, env, gaussian_width, exploration_rate, kmeans_type=STANDARD, split_kmeans=False, K=20, no_learning=True):
+    def __init__(self, env, gaussian_width, exploration_rate, weighted_kmeans=True,
+                 use_vectors=False, split_kmeans=False, K=20, no_learning=True, use_kmeans=True):
         self.gaussian_width = gaussian_width
         self.action_space_size = env.action_space.n
         self.observation_space_size = env.observation_space.shape[0]
         self.exploration_rate = exploration_rate
-        self.kmeans_type = kmeans_type
+        self.weighted_kmeans = weighted_kmeans
         self.split_kmeans = split_kmeans
+        self.use_vectors = use_vectors
         self.K = K
         self.no_learning = no_learning
         self.delta = 10**-8
+        self.use_kmeans = use_kmeans
 
         self.states: np.ndarray = np.empty((0, env.observation_space.shape[0]))  # States are stored here
         self.rewards: np.ndarray = np.empty(0)  # Value for each state index
@@ -119,12 +122,16 @@ class GenericModel:
 
     def calc_standard_kmeans(self, run_tsne=False):
         self.num_states_when_ran_kmeans= len(self.states)
-        self.weights = self.get_kmeans_weights()
+        if self.weighted_kmeans:
+            self.weights = self.get_kmeans_weights()
+        else:
+            self.weights = np.ones_like(self.rewards)
         self.scaler = preprocessing.StandardScaler().fit(self.states)
         self.standardized_states = self.scaler.transform(self.states)
         self.kmeans_centers = KMeans(n_clusters=self.K, random_state=0, n_init='auto').fit(self.standardized_states, sample_weight=self.weights).cluster_centers_
         if run_tsne:
             self.tsne()
+        self.calc_kmeans_center_vector(self.kmeans_centers)
         self.kmeans_action_reward_list, self.kmeans_action_weight_list = self.calc_kmeans_center_rewards(self.kmeans_centers)
 
     def get_kmeans_weights(self):
@@ -144,39 +151,6 @@ class GenericModel:
                 dist = standardized_state - self.kmeans_centers
                 weight = np.exp(-np.sum(np.square(dist), axis=1) / self.gaussian_width) + self.delta
                 weight_sums[action] = np.sum(weight)
-                if weight_sums[action] == 0:
-                    self.tsne(after_kmeans=True)
-                    print("Kmeans centers: \n(husk at de er basert på punkter standardiserte så snitt=0 og standardavik=1)")
-                    print(self.kmeans_centers)
-                    print(self.states[:, 0])
-                    print(np.max(self.states[:, 0]))
-                    print("Current state: (Standardisert)")
-                    print(standardized_state)
-                    print("\n\n")
-                    print("Raw states:")
-                    print(self.states)
-                    print("Raw current state")
-                    print(state)
-                    print(f"{len(self.states)=}")
-                    input()
-                    print("test")
-                    print()
-                    print(dist)
-                    print()
-                    print(np.square(dist))
-                    print()
-                    print(-np.sum(np.square(dist), axis=1))
-                    print()
-                    print(-np.sum(np.square(dist), axis=1) / self.gaussian_width)
-                    print()
-                    print(np.exp(-np.sum(np.square(dist), axis=1)))
-                    print(self.gaussian_width)
-                    print(np.exp(-np.sum(np.square(dist), axis=1)[0]/0.4))
-                    print()
-                    print(np.exp(-np.sum(np.square(dist), axis=1) / self.gaussian_width))
-                    print()
-                    print(np.sum(weight))
-                    input()
                 action_rewards[action] = np.sum(weight * self.kmeans_action_reward_list[action]) / weight_sums[action]
                 #action_rewards[action] = np.sum(weight * self.rewards[self.state_action_transitions_to[action]]) / weight_sums[action]
 
@@ -220,9 +194,11 @@ class GenericModel:
                     dist = kmean - self.standardized_states[self.state_action_transitions_from[action]]
                     weight = np.exp(-np.sum(np.square(dist), axis=1) / self.gaussian_width)
                     weight_sums[action] = np.sum(weight)
-                    action_vectors[action] = np.sum(weight * self.states[self.state_action_transitions_to[action]], axis=0) / \
-                                             weight_sums[action]
+                    vectors = self.states[self.state_action_transitions_to[action]] - self.states[self.state_action_transitions_from[action]]
+                    action_vectors[action] = vectors.transpose().dot(weight) / weight_sums[action]
             action_vector_list.append(action_vectors)
             weight_sums_list.append(weight_sums)
-
+        print(action_vectors)
+        print("\n\n\n")
+        print(action_vector_list)
         return action_vector_list, weight_sums_list
