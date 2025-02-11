@@ -37,13 +37,15 @@ path = f"mplots\\generic\\{GAME_MODE}\\single\\{GAUSSIAN_WIDTH}g"
 def run_program(seed=SEED, discount_factor=DISCOUNT_FACTOR, gaussian_width=GAUSSIAN_WIDTH,
                 exploration_rate=EXPLORATION_RATE, standard_episodes=STANDARD_RUNNING_LENGTH,
                 kmeans_episodes=KMEANS_RUNNING_LENGTH, weighted_kmeans=True, render_mode=RENDER_MODE,
-                game_mode=GAME_MODE, k=K_MEANS_K, save_plot=True, ignore_kmeans=False):
+                game_mode=GAME_MODE, k=K_MEANS_K, save_plot=True, ignore_kmeans=False, use_vectors=False, learn=True,
+                vector_type=1):
 
     env = gymnasium.make(game_mode, render_mode=render_mode)
     env.action_space.seed(seed)
     np.random.seed(seed)
 
-    model = GenericModel(env, gaussian_width, exploration_rate, K=k, weighted_kmeans=weighted_kmeans)
+    model = GenericModel(env, gaussian_width, exploration_rate, K=k, weighted_kmeans=weighted_kmeans,
+                         use_vectors=use_vectors, vector_type=vector_type)
 
     rewards = 0.  # Accumulative episode rewards
     actions = []  # Episode actions
@@ -61,6 +63,8 @@ def run_program(seed=SEED, discount_factor=DISCOUNT_FACTOR, gaussian_width=GAUSS
 
         if episodes < standard_episodes or ignore_kmeans:
             action = model.get_action_without_kmeans(state)
+        elif use_vectors:
+            action = model.get_action_with_vector(state)
         else:
             #print("REached")
             action = model.get_action_kmeans(state)
@@ -75,13 +79,14 @@ def run_program(seed=SEED, discount_factor=DISCOUNT_FACTOR, gaussian_width=GAUSS
             print(f"{seed=}, {episodes=}, rewards: {rewards}")
             if episodes >= standard_episodes:
                 data.append(rewards)
-            for i, state in enumerate(states):
-                model.states = np.vstack((model.states, state))
-                model.rewards = np.hstack((model.rewards, np.power(discount_factor, len(states) - 1 - i) * rewards))
-                if i > 0:
-                    model.state_action_transitions[actions[i - 1]].append((len(model.states) - 2, len(model.states) - 1))
-                    model.state_action_transitions_from[actions[i - 1]].append(len(model.states) - 2)
-                    model.state_action_transitions_to[actions[i - 1]].append(len(model.states) - 1)
+            if learn or episodes < standard_episodes:
+                for i, state in enumerate(states):
+                    model.states = np.vstack((model.states, state))
+                    model.rewards = np.hstack((model.rewards, np.power(discount_factor, len(states) - 1 - i) * rewards))
+                    if i > 0:
+                        model.state_action_transitions[actions[i - 1]].append((len(model.states) - 2, len(model.states) - 1))
+                        model.state_action_transitions_from[actions[i - 1]].append(len(model.states) - 2)
+                        model.state_action_transitions_to[actions[i - 1]].append(len(model.states) - 1)
 
             rewards = 0.
             actions.clear()

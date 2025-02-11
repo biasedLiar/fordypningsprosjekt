@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-color_list = ['blue', 'red', 'green', 'yellow', 'pink', 'orange', 'purple', 'cyan']
+color_list = ['blue', 'red', 'green', 'pink', 'orange', 'purple', 'cyan', 'yellow']
 
 # https://stackoverflow.com/questions/11352047/finding-moving-average-from-data-points-in-python
 def rolling_average(data, window_width):
