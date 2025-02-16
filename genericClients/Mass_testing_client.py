@@ -10,8 +10,8 @@ SEED_COUNT = 30
 
 
 GAUSSIANS = [0.515, 0.535, 0.55, 0.565, 0.58]
-GAUSSIANS = [0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
-GAUSSIANS = [0.4]
+GAUSSIANS = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6]
+GAUSSIANS = [0.55]
 
 K_VALUES = [200, 250, 300, 350, 400]
 K_VALUES = [100, 150, 200, 250, 300, 350, 400]
@@ -42,6 +42,7 @@ RUN_BASIC_NO_LEARN = False
 
 #gw0.55-250
 #gw0.4-250
+
 def run_program_with_different_seeds(plot_name, plot_title, seed_count=3,
                 discount_factor=kMeansClient.DISCOUNT_FACTOR, gaussian_width=kMeansClient.GAUSSIAN_WIDTH,
                 exploration_rate=kMeansClient.EXPLORATION_RATE, standard_episodes=kMeansClient.STANDARD_RUNNING_LENGTH,
@@ -51,10 +52,10 @@ def run_program_with_different_seeds(plot_name, plot_title, seed_count=3,
     datas = []
     for seed in range(seed_count):
         data = kMeansClient.run_program(seed=seed, discount_factor=discount_factor, gaussian_width=gaussian_width,
-                exploration_rate=exploration_rate, standard_episodes=standard_episodes,
-                kmeans_episodes=kmeans_episodes, weighted_kmeans=weighted_kmeans, render_mode=render_mode,
-                game_mode=game_mode, k=k, save_plot=False, ignore_kmeans=ignore_kmeans, use_vectors=use_vectors,
-                vector_type=vector_type, learn=learn)
+                                        exploration_rate=exploration_rate, standard_episodes=standard_episodes,
+                                        kmeans_episodes=kmeans_episodes, weighted_kmeans=weighted_kmeans, render_mode=render_mode,
+                                        game_mode=game_mode, k=k, save_plot=False, ignore_kmeans=ignore_kmeans, use_vectors=use_vectors,
+                                        vector_type=vector_type, learn=learn, do_standardize=True)
         datas.append(data)
     datas = np.asarray(datas)
     plotHelper.plot_with_max_min_mean_std(datas, plot_name, plot_title)

@@ -38,14 +38,14 @@ def run_program(seed=SEED, discount_factor=DISCOUNT_FACTOR, gaussian_width=GAUSS
                 exploration_rate=EXPLORATION_RATE, standard_episodes=STANDARD_RUNNING_LENGTH,
                 kmeans_episodes=KMEANS_RUNNING_LENGTH, weighted_kmeans=True, render_mode=RENDER_MODE,
                 game_mode=GAME_MODE, k=K_MEANS_K, save_plot=True, ignore_kmeans=False, use_vectors=False, learn=True,
-                vector_type=1):
+                vector_type=1, do_standardize=True):
 
     env = gymnasium.make(game_mode, render_mode=render_mode)
     env.action_space.seed(seed)
     np.random.seed(seed)
 
     model = GenericModel(env, gaussian_width, exploration_rate, K=k, weighted_kmeans=weighted_kmeans,
-                         use_vectors=use_vectors, vector_type=vector_type)
+                         use_vectors=use_vectors, vector_type=vector_type, do_standardize=do_standardize)
 
     rewards = 0.  # Accumulative episode rewards
     actions = []  # Episode actions
@@ -70,8 +70,11 @@ def run_program(seed=SEED, discount_factor=DISCOUNT_FACTOR, gaussian_width=GAUSS
             action = model.get_action_kmeans(state)
 
         actions.append(action)
+        old_state = state
         state, reward, terminated, truncated, info = env.step(action)
         states.append(state)
+        if use_vectors and episodes >= standard_episodes and False:
+            model.check_vector(old_state, state)
 
         rewards += float(reward)
 
