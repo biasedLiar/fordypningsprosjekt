@@ -1,11 +1,17 @@
 import numpy as np
+import sklearn.utils
+
 from helper.K_MeansTypes import *
+from helper.kmeans_model import *
 from sklearn.cluster import KMeans
 from sklearn import preprocessing
 from scipy.special import softmax
 import matplotlib.pyplot as plt
 from sklearn import datasets, manifold
 from matplotlib.ticker import NullFormatter
+
+from helper.special_plot import Plot
+from sklearn.utils import gen_even_slices
 
 
 
@@ -54,6 +60,12 @@ class GenericModel:
 
         self.split_kmeans_clusters: list[list[np.ndarray]] = [[] for _ in range(self.action_space_size)]
         self.split_kmeans_clusters: list[list[float]] = [[] for _ in range(self.action_space_size)]
+
+
+
+        self.num_batches_analyzed = 600
+        self.use_special_kmeans = True
+        self.show_special = False
 
 
     def get_action_without_kmeans(self, state):
@@ -134,8 +146,42 @@ class GenericModel:
         plt.show()
         print("Finished TSNE!")
 
+    def get_batches(self, data, batch_size):
+        np.random.shuffle(data)
+        num_batches = int(np.floor(data.shape[0]/batch_size))
+        batch_slices = list(gen_even_slices(data.shape[0], num_batches))
+        batches = [data[batch_slice] for batch_slice in batch_slices]
+        return batches
+        #Continue creating batches.
+
+
+    def get_centers_special_kmeans(self, data):
+        print(f"{data.shape=}")
+        data_length = data.shape[0]
+        self.gaussian_width = 0.1
+        model = Model(K=50, D=4, sigma=self.gaussian_width, lambda_=0.5, learning_rate=0.02)
+        model.mu -= 0.5
+        if self.show_special:
+            plot = Plot(model, xlim=(-2.5, 2.5), ylim=(-2.5, 2.5))
+        i = 0
+        while i < self.num_batches_analyzed:
+            batches = self.get_batches(data, 100)
+            for batch in batches:
+                for x in batch:
+                    model.update(x)
+                # Update
+                # Check if updates are finished
+                if self.show_special:
+                    plot.draw_frame_no_label(batch=batch)
+                i += 1
+            print(i)
+        if self.show_special:
+            plot.clf()
+        return model.mu
+
 
     def calc_standard_kmeans(self, run_tsne=False):
+
         self.num_states_when_ran_kmeans= len(self.states)
         if self.weighted_kmeans:
             self.weights = self.get_kmeans_weights()
@@ -147,13 +193,26 @@ class GenericModel:
             self.standardized_states = self.scaler.transform(self.states)
         else:
             self.standardized_states = self.states
-        self.kmeans_centers = KMeans(n_clusters=self.K, random_state=0, n_init='auto').fit(self.standardized_states, sample_weight=self.weights).cluster_centers_
-        if run_tsne:
+
+
+        if self.use_special_kmeans:
+            self.kmeans_centers = self.get_centers_special_kmeans(self.standardized_states)
+        else:
+            self.kmeans_centers = KMeans(n_clusters=self.K, random_state=0, n_init='auto').fit(self.standardized_states, sample_weight=self.weights).cluster_centers_
+
+
+        if run_tsne or True:
             self.tsne()
         if self.use_vectors:
             self.center_vectors = self.calc_kmeans_center_vector(self.kmeans_centers)
         self.kmeans_action_reward_list, self.kmeans_action_weight_list = self.calc_kmeans_center_rewards(self.kmeans_centers)
         self.center_max_rewards = np.max(self.kmeans_action_reward_list, axis=0)
+
+
+    def get_special_kmeans_centers(self):
+
+        print("Test")
+
 
     def get_kmeans_weights(self):
         formatted_input = np.asarray(self.rewards) / (max(np.abs(self.rewards)))

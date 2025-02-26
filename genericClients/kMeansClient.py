@@ -99,7 +99,9 @@ def run_program(seed=SEED, discount_factor=DISCOUNT_FACTOR, gaussian_width=GAUSS
             episodes += 1
             if episodes == standard_episodes and not ignore_kmeans:
                 print("Calculating kmeans centers...")
+                print(f"{model.states.shape=}")
                 model.calc_standard_kmeans()
+                print(f"{model.states.shape=}")
                 print("Finished calculating kmeans centers")
             if episodes == kmeans_episodes + standard_episodes:
                 break

@@ -6,7 +6,7 @@ import helper.plotHelper as plotHelper
 import time
 import genericClients.kMeansClient as kMeansClient
 
-SEED_COUNT = 30
+SEED_COUNT = 10
 
 
 GAUSSIANS = [0.515, 0.535, 0.55, 0.565, 0.58]
@@ -24,14 +24,14 @@ EXPLORATION_RATES = [0.1]
 RUN_KMEANS_UNWEIGHTED = True
 RUN_KMEANS_UNWEIGHTED = False
 
-RUN_KMEANS_WEIGHTED = True
 RUN_KMEANS_WEIGHTED = False
+RUN_KMEANS_WEIGHTED = True
 
-RUN_KMEANS_VECTOR = False
 RUN_KMEANS_VECTOR = True
+RUN_KMEANS_VECTOR = False
 
-RUN_KMEANS_VECTOR2 = False
 RUN_KMEANS_VECTOR2 = True
+RUN_KMEANS_VECTOR2 = False
 
 RUN_BASIC = True
 RUN_BASIC = False
