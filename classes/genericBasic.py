@@ -18,7 +18,7 @@ from sklearn.utils import gen_even_slices
 class GenericModel:
     def __init__(self, env, gaussian_width, exploration_rate, weighted_kmeans=True,
                  use_vectors=False, split_kmeans=False, K=20, no_learning=True, use_kmeans=True, vector_type=1,
-                 do_standardize=True):
+                 do_standardize=True, use_special_kmeans=False):
         self.gaussian_width = gaussian_width
         self.gaussian_width_vector = gaussian_width
         self.action_space_size = env.action_space.n
@@ -63,8 +63,8 @@ class GenericModel:
 
 
 
-        self.num_batches_analyzed = 600
-        self.use_special_kmeans = True
+        self.num_batches_analyzed = 300
+        self.use_special_kmeans = use_special_kmeans
         self.show_special = False
 
 
@@ -135,15 +135,17 @@ class GenericModel:
             random_state=0,
             perplexity=perplexity,
         ).fit_transform(X)
-        print(f"({self.num_states_when_ran_kmeans}-{state_length-self.num_states_when_ran_kmeans}-{len(Y)})")
-        plt.title(label=f"Perplexity={perplexity}, K={self.K}, Middle={after_kmeans}")
-        plt.scatter(Y[self.num_states_when_ran_kmeans: state_length, 0], Y[self.num_states_when_ran_kmeans: state_length, 1], c="b")
+        print(f"({self.num_states_when_ran_kmeans}-{state_length - self.num_states_when_ran_kmeans}-{len(Y)})")
+        plt.title(label=f"Perplexity={perplexity}, K={self.K}, gaussian={self.gaussian_width}")
+        plt.scatter(Y[self.num_states_when_ran_kmeans: state_length, 0],
+                    Y[self.num_states_when_ran_kmeans: state_length, 1], c="b")
         plt.scatter(Y[:self.num_states_when_ran_kmeans, 0], Y[:self.num_states_when_ran_kmeans, 1], c="g")
         plt.scatter(Y[state_length:, 0], Y[state_length:, 1], c="r")
-        #ax.xaxis.set_major_formatter(NullFormatter())
-        #ax.yaxis.set_major_formatter(NullFormatter())
-        #ax.axis("tight")
+        # ax.xaxis.set_major_formatter(NullFormatter())
+        # ax.yaxis.set_major_formatter(NullFormatter())
+        # ax.axis("tight")
         plt.show()
+        plt.clf()
         print("Finished TSNE!")
 
     def get_batches(self, data, batch_size):
@@ -158,8 +160,7 @@ class GenericModel:
     def get_centers_special_kmeans(self, data):
         print(f"{data.shape=}")
         data_length = data.shape[0]
-        self.gaussian_width = 0.1
-        model = Model(K=50, D=4, sigma=self.gaussian_width, lambda_=0.5, learning_rate=0.02)
+        model = Model(K=self.K, D=4, sigma=self.gaussian_width, lambda_=0.5, learning_rate=0.02)
         model.mu -= 0.5
         if self.show_special:
             plot = Plot(model, xlim=(-2.5, 2.5), ylim=(-2.5, 2.5))
@@ -201,7 +202,7 @@ class GenericModel:
             self.kmeans_centers = KMeans(n_clusters=self.K, random_state=0, n_init='auto').fit(self.standardized_states, sample_weight=self.weights).cluster_centers_
 
 
-        if run_tsne or True:
+        if run_tsne:
             self.tsne()
         if self.use_vectors:
             self.center_vectors = self.calc_kmeans_center_vector(self.kmeans_centers)

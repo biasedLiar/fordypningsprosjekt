@@ -32,8 +32,9 @@ class Model:
         diff = self.f(x).reshape(-1, 1) * (x - self.mu) - (2.0 * self.lambda_ *
                                                            (self.mu[self.j] - self.mu[self.i]) * self.f(self.mu[self.j], self.i).reshape(-1, 1)).reshape(
                                                                -1, self.K - 1, self.mu.shape[1]).sum(axis=1)
-
-        self.mu += vekting*self.learning_rate * diff / self.sigma
+        # TODO
+        #self.mu += vekting*self.learning_rate * diff / self.sigma
+        self.mu += self.learning_rate * diff / self.sigma
         # Snitt vekting er på 1.
 
     def f_min(self) -> float:
