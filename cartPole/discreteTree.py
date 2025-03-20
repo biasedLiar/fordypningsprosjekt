@@ -119,7 +119,7 @@ def run_k_nearest(k=-1, show_results=True, save_results=True):
 
 
             if current_seed == 0 and its_before_finished > 2000:
-                test = current_seed #TODO why is bad stuff happening
+                test = current_seed
 
             visited_nodes = []
             visited_observations = []

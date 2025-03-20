@@ -48,7 +48,7 @@ class OldCartPoleTreeNode:
         else:
             i = self.most_recent_choice
             self.max_depth[i] = self.average_max_depth(self.children[1])
-            self.max_unexplored_depth[i] = self.average_max_unexplored_depth(self.children[1]) #TODO check if this is correct
+            self.max_unexplored_depth[i] = self.average_max_unexplored_depth(self.children[1])
             self.holes_beneath[i] = self.average_holes_beneath(self.children[i])
         self.visited += 1
         self.risk_weighted_score = self.update_risk_weighted_score()

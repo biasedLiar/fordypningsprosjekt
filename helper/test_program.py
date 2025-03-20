@@ -2,8 +2,6 @@ import numpy as np
 
 
 print("Hello World")
-arr = np.arange(9).reshape((3, 3))
-print(arr)
-print()
-np.random.shuffle(arr)
-print(arr)
+arr = np.array([1, 2, 3, 4, 5])
+arr2 = np.zeros((3, 1))
+print(arr2+arr)

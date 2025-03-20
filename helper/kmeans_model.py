@@ -28,13 +28,16 @@ class Model:
             return np.exp(-np.square(x - self.mu[i]).sum() / self.sigma)
         return np.exp(-np.square(x - self.mu[i]).sum(axis=1) / self.sigma)
 
-    def update(self, x: np.ndarray):
-        diff = self.f(x).reshape(-1, 1) * (x - self.mu) - (2.0 * self.lambda_ *
-                                                           (self.mu[self.j] - self.mu[self.i]) * self.f(self.mu[self.j], self.i).reshape(-1, 1)).reshape(
-                                                               -1, self.K - 1, self.mu.shape[1]).sum(axis=1)
-        # TODO
-        #self.mu += vekting*self.learning_rate * diff / self.sigma
-        self.mu += self.learning_rate * diff / self.sigma
+    def update(self, x: np.ndarray, weighted=False, weight=None):
+        diff = self.f(x).reshape(-1, 1) * (x - self.mu) - \
+                (2.0 * self.lambda_ *(self.mu[self.j] - self.mu[self.i])
+                 * self.f(self.mu[self.j], self.i).reshape(-1, 1)).reshape(
+                -1, self.K - 1, self.mu.shape[1]).sum(axis=1)
+
+        if weighted:
+            self.mu += weight * self.learning_rate * diff / self.sigma
+        else:
+            self.mu += self.learning_rate * diff / self.sigma
         # Snitt vekting er på 1.
 
     def f_min(self) -> float:

@@ -22,7 +22,6 @@ STEPS_PER_NODE = 1
 NEIGHBORS = 4
 
 
-# TODO steps 5 neighbors 1 why
 
 
 # Set to -1 for automatic rolling average generation.

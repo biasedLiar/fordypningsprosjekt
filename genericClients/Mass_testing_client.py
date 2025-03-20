@@ -10,13 +10,13 @@ SEED_COUNT = 30
 
 
 GAUSSIANS = [0.515, 0.535, 0.55, 0.565, 0.58]
-GAUSSIANS = [0.1]
 GAUSSIANS = [0.2, 0.3, 0.4, 0.5, 0.6, 0.7]
+GAUSSIANS = [0.5]
 
 K_VALUES = [200, 250, 300, 350, 400]
 K_VALUES = [100, 150, 200, 250, 300, 350, 400]
-K_VALUES = [20]
 K_VALUES = [20, 50, 100, 250]
+K_VALUES = [17]
 
 EXPLORATION_RATES = [0.1]
 
@@ -42,6 +42,9 @@ RUN_BASIC_NO_LEARN = False
 
 RUN_SPECIAL_KMEANS = False
 RUN_SPECIAL_KMEANS = True
+
+RUN_WEIGHTED_SPECIAL_KMEANS = True
+RUN_WEIGHTED_SPECIAL_KMEANS = False
 
 
 #gw0.55-250
@@ -136,7 +139,6 @@ def run_gaussian_k():
                     datas_list.append(basic_datas)
                     labels.append("basic")
 
-
             if RUN_SPECIAL_KMEANS:
                 path = f"mplots\\generic\\{kMeansClient.GAME_MODE}\\{gaussian_width}g\\{k}k"
                 fileHelper.createDirIfNotExist(path)
@@ -149,6 +151,19 @@ def run_gaussian_k():
                                                                use_vectors=False, use_special_kmeans=True)
                 datas_list.append(basic_datas)
                 labels.append("special_kmeans")
+
+            if RUN_WEIGHTED_SPECIAL_KMEANS:
+                path = f"mplots\\generic\\{kMeansClient.GAME_MODE}\\{gaussian_width}g\\{k}k"
+                fileHelper.createDirIfNotExist(path)
+                name = path + f"\\{SEED_COUNT}seed__{kMeansClient.STANDARD_RUNNING_LENGTH}_then_{kMeansClient.KMEANS_RUNNING_LENGTH}__weighted_special_kmeans_plot.png"
+
+                title = f"gw={gaussian_width}, k={k}, avg{SEED_COUNT} weighted_special_kmeans plot"
+                basic_datas = run_program_with_different_seeds(name, title, seed_count=SEED_COUNT,
+                                                               gaussian_width=gaussian_width, k=k,
+                                                               weighted_kmeans=True, ignore_kmeans=False,
+                                                               use_vectors=False, use_special_kmeans=True)
+                datas_list.append(basic_datas)
+                labels.append("weighted_special_kmeans")
 
             if RUN_BASIC_NO_LEARN:
                 if k == K_VALUES[0]:

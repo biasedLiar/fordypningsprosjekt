@@ -165,12 +165,14 @@ class GenericModel:
         if self.show_special:
             plot = Plot(model, xlim=(-2.5, 2.5), ylim=(-2.5, 2.5))
         i = 0
+        hashable_standardized_states = [tuple(state) for state in self.standardized_states.tolist()]
+        weight_dict = dict(zip(hashable_standardized_states, (self.weights*self.weights.shape[0])))
         while i < self.num_batches_analyzed:
             batches = self.get_batches(data, 100)
             for batch in batches:
                 for x in batch:
-                    model.update(x)
-                # Update
+                    model.update(x, weighted=self.weighted_kmeans, weight=weight_dict[tuple(x)])
+                # TODO update wiehgts so they are normalized
                 # Check if updates are finished
                 if self.show_special:
                     plot.draw_frame_no_label(batch=batch)
@@ -178,6 +180,8 @@ class GenericModel:
             print(i)
         if self.show_special:
             plot.clf()
+
+
         return model.mu
 
 
@@ -198,11 +202,12 @@ class GenericModel:
 
         if self.use_special_kmeans:
             self.kmeans_centers = self.get_centers_special_kmeans(self.standardized_states)
+            self.remove_unecessary_centers()
         else:
             self.kmeans_centers = KMeans(n_clusters=self.K, random_state=0, n_init='auto').fit(self.standardized_states, sample_weight=self.weights).cluster_centers_
 
 
-        if run_tsne:
+        if run_tsne or True:
             self.tsne()
         if self.use_vectors:
             self.center_vectors = self.calc_kmeans_center_vector(self.kmeans_centers)
@@ -210,9 +215,16 @@ class GenericModel:
         self.center_max_rewards = np.max(self.kmeans_action_reward_list, axis=0)
 
 
-    def get_special_kmeans_centers(self):
+    def remove_unecessary_centers(self):
+        a, c = self.kmeans_centers.shape
+        b, c = self.standardized_states.shape
+        expanded_centers = self.kmeans_centers + np.zeros((b, 1, 1))
+        expanded_states = self.standardized_states[:, np.newaxis, :] + np.zeros((1, a, 1))
+        expanded_centers = np.sum(np.square(expanded_states - expanded_centers), axis=2)
+        closest = np.unique(expanded_centers.argmin(axis=1))
+        self.kmeans_centers = self.kmeans_centers[closest, :]
+        print(f"{self.kmeans_centers.shape=}")
 
-        print("Test")
 
 
     def get_kmeans_weights(self):
