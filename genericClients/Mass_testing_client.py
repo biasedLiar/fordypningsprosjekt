@@ -6,7 +6,9 @@ import helper.plotHelper as plotHelper
 import time
 import genericClients.kMeansClient as kMeansClient
 
-SEED_COUNT = 30
+LINUX = True
+
+SEED_COUNT = 10
 
 
 GAUSSIANS = [0.515, 0.535, 0.55, 0.565, 0.58]
@@ -16,7 +18,7 @@ GAUSSIANS = [0.5]
 K_VALUES = [200, 250, 300, 350, 400]
 K_VALUES = [100, 150, 200, 250, 300, 350, 400]
 K_VALUES = [20, 50, 100, 250]
-K_VALUES = [17]
+K_VALUES = [31]
 
 EXPLORATION_RATES = [0.1]
 
@@ -80,6 +82,7 @@ def run_gaussian_k():
                 path = f"mplots\\generic\\{kMeansClient.GAME_MODE}\\{gaussian_width}g\\{k}k"
                 fileHelper.createDirIfNotExist(path)
                 name = path + f"\\{SEED_COUNT}seed__{kMeansClient.STANDARD_RUNNING_LENGTH}_then_{kMeansClient.KMEANS_RUNNING_LENGTH}__unweighted_plot.png"
+                name = fileHelper.osFormat(name, LINUX)
 
                 title = f"gw={gaussian_width}, k={k} avg{SEED_COUNT} unweighted-kmeans plot"
                 datas = run_program_with_different_seeds(name, title, seed_count=SEED_COUNT, gaussian_width=gaussian_width, k=k, weighted_kmeans=False, use_vectors=False)
@@ -90,6 +93,7 @@ def run_gaussian_k():
                 path = f"mplots\\generic\\{kMeansClient.GAME_MODE}\\{gaussian_width}g\\{k}k"
                 fileHelper.createDirIfNotExist(path)
                 name = path + f"\\{SEED_COUNT}seed__{kMeansClient.STANDARD_RUNNING_LENGTH}_then_{kMeansClient.KMEANS_RUNNING_LENGTH}__weighted_plot.png"
+                name = fileHelper.osFormat(name, LINUX)
 
                 title = f"gw={gaussian_width}, k={k} avg{SEED_COUNT} weighted-kmeans plot"
                 datas = run_program_with_different_seeds(name, title, seed_count=SEED_COUNT,
@@ -102,6 +106,7 @@ def run_gaussian_k():
                 path = f"mplots\\generic\\{kMeansClient.GAME_MODE}\\{gaussian_width}g\\{k}k"
                 fileHelper.createDirIfNotExist(path)
                 name = path + f"\\{SEED_COUNT}seed__{kMeansClient.STANDARD_RUNNING_LENGTH}_then_{kMeansClient.KMEANS_RUNNING_LENGTH}__vector_plot.png"
+                name = fileHelper.osFormat(name, LINUX)
 
                 title = f"gw={gaussian_width}, k={k} avg{SEED_COUNT} vector-kmeans plot"
                 datas = run_program_with_different_seeds(name, title, seed_count=SEED_COUNT,
@@ -114,6 +119,7 @@ def run_gaussian_k():
                 path = f"mplots\\generic\\{kMeansClient.GAME_MODE}\\{gaussian_width}g\\{k}k"
                 fileHelper.createDirIfNotExist(path)
                 name = path + f"\\{SEED_COUNT}seed__{kMeansClient.STANDARD_RUNNING_LENGTH}_then_{kMeansClient.KMEANS_RUNNING_LENGTH}__vector2_plot.png"
+                name = fileHelper.osFormat(name, LINUX)
 
                 title = f"gw={gaussian_width}, k={k} avg{SEED_COUNT} vector2-kmeans plot"
                 datas = run_program_with_different_seeds(name, title, seed_count=SEED_COUNT,
@@ -127,6 +133,7 @@ def run_gaussian_k():
                     path = f"mplots\\generic\\{kMeansClient.GAME_MODE}\\{gaussian_width}g\\basic"
                     fileHelper.createDirIfNotExist(path)
                     name = path + f"\\{SEED_COUNT}seed__{kMeansClient.STANDARD_RUNNING_LENGTH}_then_{kMeansClient.KMEANS_RUNNING_LENGTH}__basic_plot.png"
+                    name = fileHelper.osFormat(name, LINUX)
 
                     title = f"gw={gaussian_width}, avg{SEED_COUNT} basic plot"
                     basic_datas = run_program_with_different_seeds(name, title, seed_count=SEED_COUNT,
@@ -143,6 +150,7 @@ def run_gaussian_k():
                 path = f"mplots\\generic\\{kMeansClient.GAME_MODE}\\{gaussian_width}g\\{k}k"
                 fileHelper.createDirIfNotExist(path)
                 name = path + f"\\{SEED_COUNT}seed__{kMeansClient.STANDARD_RUNNING_LENGTH}_then_{kMeansClient.KMEANS_RUNNING_LENGTH}__special_kmeans_plot.png"
+                name = fileHelper.osFormat(name, LINUX)
 
                 title = f"gw={gaussian_width}, k={k}, avg{SEED_COUNT} special_kmeans plot"
                 basic_datas = run_program_with_different_seeds(name, title, seed_count=SEED_COUNT,
@@ -156,6 +164,7 @@ def run_gaussian_k():
                 path = f"mplots\\generic\\{kMeansClient.GAME_MODE}\\{gaussian_width}g\\{k}k"
                 fileHelper.createDirIfNotExist(path)
                 name = path + f"\\{SEED_COUNT}seed__{kMeansClient.STANDARD_RUNNING_LENGTH}_then_{kMeansClient.KMEANS_RUNNING_LENGTH}__weighted_special_kmeans_plot.png"
+                name = fileHelper.osFormat(name, LINUX)
 
                 title = f"gw={gaussian_width}, k={k}, avg{SEED_COUNT} weighted_special_kmeans plot"
                 basic_datas = run_program_with_different_seeds(name, title, seed_count=SEED_COUNT,
@@ -170,6 +179,7 @@ def run_gaussian_k():
                     path = f"mplots\\generic\\{kMeansClient.GAME_MODE}\\{gaussian_width}g\\basic"
                     fileHelper.createDirIfNotExist(path)
                     name = path + f"\\{SEED_COUNT}seed__{kMeansClient.STANDARD_RUNNING_LENGTH}_then_{kMeansClient.KMEANS_RUNNING_LENGTH}__basic_no_learn_plot.png"
+                    name = fileHelper.osFormat(name, LINUX)
 
                     title = f"gw={gaussian_width}, avg{SEED_COUNT} basic-no_learn plot"
                     basic_NL_datas = run_program_with_different_seeds(name, title, seed_count=SEED_COUNT,
@@ -191,11 +201,16 @@ def run_gaussian_k():
                 types =  f"{'_weighted' if RUN_KMEANS_WEIGHTED else ''}{'_unweighted' if RUN_KMEANS_UNWEIGHTED else ''}{'_vector' if RUN_KMEANS_VECTOR else ''}{'_basic' if RUN_BASIC else ''}"
                 name = path + f"\\{SEED_COUNT}seed__{kMeansClient.STANDARD_RUNNING_LENGTH}_then_{kMeansClient.KMEANS_RUNNING_LENGTH}" \
                               f"{types}.png"
+                name = fileHelper.osFormat(name, LINUX)
+
                 title = f"gw={gaussian_width}, k={k} avg{SEED_COUNT}{types} plot"
 
                 plotHelper.plot_multiple_graph_types(datas_list, labels, name, title, show_std=False)
                 name = path + f"\\{SEED_COUNT}seed__{kMeansClient.STANDARD_RUNNING_LENGTH}_then_{kMeansClient.KMEANS_RUNNING_LENGTH}" \
                               f"{types}_std.png"
+                name = fileHelper.osFormat(name, LINUX)
+
+
                 plotHelper.plot_multiple_graph_types(datas_list, labels, name, title, show_std=True)
             time.sleep(2)
         end = time.time()

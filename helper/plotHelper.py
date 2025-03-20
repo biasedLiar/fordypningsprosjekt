@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from helper import fileHelper
 
 
 color_list = ['blue', 'red', 'green', 'pink', 'orange', 'purple', 'cyan', 'yellow']
@@ -57,6 +58,7 @@ def plot_with_max_min_mean_std(datas, plot_name, plot_title):
     plt.legend(loc="lower right")
     plt.title(plot_title + f", {avg_num=}")
     plt.ylim(0, 525)
+    #fileHelper.createDirIfNotExist(plot_name)
     plt.savefig(plot_name)
     plt.show()
     plt.clf()

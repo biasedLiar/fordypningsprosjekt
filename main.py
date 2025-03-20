@@ -7,6 +7,10 @@
 def print_hi(name):
     # Use a breakpoint in the code line below to debug your script.
     print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
+    s1 = f"sdf\\sdf\\sdf"
+    print(s1)
+    s2 = s1.replace(f"\\", "/")
+    print(s2)
 
 
 # Press the green button in the gutter to run the script.

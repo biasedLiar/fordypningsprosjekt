@@ -123,6 +123,7 @@ def run_program(seed=SEED, discount_factor=DISCOUNT_FACTOR, gaussian_width=GAUSS
         plt.title(f"{20}K-{gaussian_width}G avg:{avg} V0 threshold")
 
         plot_name = path + f"\\{STANDARD_RUNNING_LENGTH}_then_{KMEANS_RUNNING_LENGTH}_plot.png"
+
         plt.savefig(plot_name)
         plt.clf()
     return data
