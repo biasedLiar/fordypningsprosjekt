@@ -47,7 +47,8 @@ def get_std_deviation(datas):
 
 def plot_with_max_min_mean_std(datas, plot_name, plot_title):
     avg_data, max_data, min_data = average_max_min_diagrams(datas)
-    avg_num = np.round(np.mean(avg_data), 2)
+    avg_num = np.round(np.mean(avg_data), 2).item()
+
     std = datas.std(axis=0)
     plt.plot(max_data, label='max_steps')
     plt.plot(avg_data, label='avg_steps')

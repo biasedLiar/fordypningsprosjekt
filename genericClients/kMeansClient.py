@@ -13,7 +13,7 @@ RENDER_MODE = None  # Set to None to run without graphics
 GAME_MODE = "CartPole-v1"
 #game_mode = "LunarLander-v2"
 
-DISCOUNT_FACTOR = 1.0  # Low discount penalize longer episodes.
+DISCOUNT_FACTOR = 0.99999  # Low discount penalize longer episodes.
 # For example, shorter paths to the goal will receive higher reward than longer paths,
 # even though the rewards from the environment are the same.
 # Not necessarily applicable to every environment, such as cart pole, where the goal is to stay alive as long as possible,

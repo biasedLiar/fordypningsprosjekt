@@ -1,20 +1,22 @@
 # This is a sample Python script.
-
+from multiprocessing import Pool, cpu_count
 # Press Shift+F10 to execute it or replace it with your code.
 # Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
+import time
+import numpy as np
+
+def print_cube(num):
+    time.sleep(num)
+    print(f"hello from process{num}")
+    aa1 = num * num * num
+    time.sleep(2)
+    return aa1
 
 
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
-    s1 = f"sdf\\sdf\\sdf"
-    print(s1)
-    s2 = s1.replace(f"\\", "/")
-    print(s2)
+def main():
+    mat = np.arange(1, 10).reshape(3, 3)
+    print(np.round(mat/7, 2))
 
 
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    print_hi('PyCharm')
-
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+if __name__ == "__main__":
+    main()

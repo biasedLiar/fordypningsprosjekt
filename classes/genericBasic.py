@@ -207,7 +207,7 @@ class GenericModel:
             self.kmeans_centers = KMeans(n_clusters=self.K, random_state=0, n_init='auto').fit(self.standardized_states, sample_weight=self.weights).cluster_centers_
 
 
-        if run_tsne or True:
+        if run_tsne:
             self.tsne()
         if self.use_vectors:
             self.center_vectors = self.calc_kmeans_center_vector(self.kmeans_centers)
