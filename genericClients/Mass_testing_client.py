@@ -8,7 +8,7 @@ import helper.plotHelper as plotHelper
 import time
 import genericClients.kMeansClient as kMeansClient
 
-LINUX = True
+LINUX = False
 
 SEED_COUNT = 10
 
@@ -133,7 +133,7 @@ def run_gaussian_k():
             if RUN_KMEANS_WEIGHTED:
                 path = f"mplots\\generic\\{kMeansClient.GAME_MODE}\\{gaussian_width}g\\{k}k"
                 fileHelper.createDirIfNotExist(path)
-                name = path + f"\\{SEED_COUNT}seed__{kMeansClient.STANDARD_RUNNING_LENGTH}_then_{kMeansClient.KMEANS_RUNNING_LENGTH}__weighted_plot.png"
+                name = path + f"\\w{SEED_COUNT}seed__{kMeansClient.STANDARD_RUNNING_LENGTH}_then_{kMeansClient.KMEANS_RUNNING_LENGTH}__weighted_plot.png"
                 name = fileHelper.osFormat(name, LINUX)
 
                 title = f"gw={gaussian_width}, k={k} avg{SEED_COUNT} weighted-kmeans plot"
@@ -236,7 +236,7 @@ def run_gaussian_k():
             end_2 = time.time()
             print(f"\n\n{gaussian_width=}, {k=}: time:{end_2 - start_2}")
             if len(labels) > 1:
-                path = f"mplots\\generic\\{kMeansClient.GAME_MODE}\\aggregate\\{gaussian_width}g\\{k}k"
+                path = f"plots\\generic\\{kMeansClient.GAME_MODE}\\aggregate\\{gaussian_width}g\\{k}k"
                 fileHelper.createDirIfNotExist(path)
 
                 types =  f"{'_weighted' if RUN_KMEANS_WEIGHTED else ''}{'_unweighted' if RUN_KMEANS_UNWEIGHTED else ''}{'_vector' if RUN_KMEANS_VECTOR else ''}{'_basic' if RUN_BASIC else ''}"
