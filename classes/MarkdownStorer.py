@@ -25,13 +25,13 @@ class MarkdownStorer:
     def create_markdown(self, LINUX):
         print("Starting writing to file...")
         date = datetime.today().strftime('%Y-%m-%d-%H-%M')
-        title = date + f"__{self.run_count}x{self.max_seeds}seeds"
+        title = date + f"__{self.run_count}x{self.max_seeds}seeds.md"
         file_name = "markdown" + ("/" if LINUX else "\\") + title
 
         with open(file_name, 'ab+') as f:
             f.write(f'# Tests run at {date}.\n'.encode())
             f.write(f'## {self.run_count} tests run at with {len(self.datas.keys())} types.\n'.encode())
-            f.write(f'## Best avg reward {self.best_results} achieved with {self.best_run_stats.mode} gw: {self.best_run_stats.gw}, k: {self.best_run_stats.k}.\n\n'.encode())
+            f.write(f'## Best avg reward {self.best_results} achieved with {self.best_run_stats.mode} gw: {self.best_run_stats.gw}, k: {self.best_run_stats.k} over {self.best_run_stats.seeds} seeds..\n\n'.encode())
 
 
             for mode in self.datas:

@@ -10,7 +10,7 @@ from classes.RunStat import *
 import time
 import genericClients.kMeansClient as kMeansClient
 
-LINUX = False
+LINUX = True
 
 SEED_COUNT = 3
 
