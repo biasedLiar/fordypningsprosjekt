@@ -5,17 +5,25 @@ from multiprocessing import Pool, cpu_count
 import time
 import numpy as np
 
-def print_cube(num):
-    time.sleep(num)
-    print(f"hello from process{num}")
-    aa1 = num * num * num
-    time.sleep(2)
-    return aa1
+import markdown as md
 
 
 def main():
-    mat = np.arange(1, 10).reshape(3, 3)
-    print(np.round(mat/7, 2))
+    layers = [1, 2, 3]
+    lr = 2
+    dir = 'result'
+
+    with open('markdown\\readme.md', 'ab+') as f:
+        f.write('## Layer sizes\n'.encode())
+
+        for layer in layers:
+            f.write(f'* {layer}\n'.encode())
+
+        f.write(f'## Learning rate is {lr}\n'.encode())
+        f.write('## Init\n'.encode())
+        f.write('Add note about init\n'.encode())
+
+    #md.markdownFromFile(input=open('markdown\\readme.md', "rb"), output=open('markdown_out\\out.md', "wb+"))
 
 
 if __name__ == "__main__":

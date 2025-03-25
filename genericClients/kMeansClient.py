@@ -8,7 +8,7 @@ import helper.fileHelper as fileHelper
 import helper.plotHelper as plotHelper
 
 SEED = 1
-SEED_COUNT = 10
+SEED_COUNT = 30
 RENDER_MODE = None  # Set to None to run without graphics
 GAME_MODE = "CartPole-v1"
 #game_mode = "LunarLander-v2"
@@ -68,8 +68,16 @@ def run_program(seed=SEED, discount_factor=DISCOUNT_FACTOR, gaussian_width=GAUSS
             action = model.get_action_with_vector(state)
         else:
             #print("REached")
+
+            if episodes >= standard_episodes and rewards == -100:
+                action = model.get_action_kmeans(state, debug=True)
+                print(f"{action=}")
+                input()
             action = model.get_action_kmeans(state)
 
+        if episodes >= standard_episodes and False:
+            print(f"\n{rewards=}: {action=}")
+            print(f"{state=}")
         actions.append(action)
         old_state = state
         state, reward, terminated, truncated, info = env.step(action)

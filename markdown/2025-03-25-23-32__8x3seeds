@@ -1,0 +1,16 @@
+# Tests run at 2025-03-25-23-32.
+## 8 tests run at with 2 types.
+## Best avg reward 352.46666666666664 achieved with gw: 0.55, k: 100.
+
+
+## kmeans_unweighted tests
+151.56 reward for k:100, gw:0.2 over 3 seeds.
+352.46666666666664 reward for k:100, gw:0.55 over 3 seeds.
+132.79 reward for k:200, gw:0.2 over 3 seeds.
+267.01666666666665 reward for k:200, gw:0.55 over 3 seeds.
+
+## kmeans_weighted tests
+132.10666666666665 reward for k:100, gw:0.2 over 3 seeds.
+323.0466666666667 reward for k:100, gw:0.55 over 3 seeds.
+115.73666666666666 reward for k:200, gw:0.2 over 3 seeds.
+341.1666666666667 reward for k:200, gw:0.55 over 3 seeds.

@@ -232,7 +232,7 @@ class GenericModel:
         softmaxed_rewards = softmax(formatted_input)
         return softmaxed_rewards
 
-    def get_action_kmeans(self, state):
+    def get_action_kmeans(self, state, debug=False):
         standardized_state = self.standardize(state)
 
         action_rewards = [0. for _ in self.state_action_transitions]
@@ -247,14 +247,23 @@ class GenericModel:
                 action_rewards[action] = np.sum(weight * self.kmeans_action_reward_list[action]) / weight_sums[action]
                 #action_rewards[action] = np.sum(weight * self.rewards[self.state_action_transitions_to[action]]) / weight_sums[action]
 
+        if debug:
+            print(f"{standardized_state=}")
+            print(f"\n{action_rewards=}")
+            print(f"\n{weight_sums=}")
+
         if self.no_learning:
             return np.argmax(action_rewards)
+
 
         for action, _ in enumerate(self.state_action_transitions):
             if weight_sums[action] == 0:
                 return action  # Return action that has never been chosen before
             if weight_sums[action] / np.max(weight_sums) < self.exploration_rate:
                 return action  # Return action that has little data for the current state
+
+
+
         return np.argmax(action_rewards)
 
     def check_vector(self, old_state, new_real_state):
