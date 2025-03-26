@@ -88,7 +88,7 @@ def run_program(seed=SEED, discount_factor=DISCOUNT_FACTOR, gaussian_width=GAUSS
         rewards += float(reward)
 
         if terminated or truncated:
-            print(f"{seed=}, {episodes=}, rewards: {rewards}")
+            #print(f"{seed=}, {episodes=}, rewards: {rewards}")
             if episodes >= standard_episodes:
                 data.append(rewards)
             if learn or episodes < standard_episodes:

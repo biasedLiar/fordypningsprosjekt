@@ -4,7 +4,7 @@ from multiprocessing import Pool, cpu_count
 # Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
 import time
 import numpy as np
-
+from helper.fileHelper import *
 import markdown as md
 
 
@@ -25,6 +25,9 @@ def main():
 
     #md.markdownFromFile(input=open('markdown\\readme.md', "rb"), output=open('markdown_out\\out.md', "wb+"))
 
+
+def write_file():
+    path =""
 
 if __name__ == "__main__":
     main()

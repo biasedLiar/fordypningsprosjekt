@@ -1,5 +1,6 @@
 from classes.RunStat import *
 from datetime import datetime
+import helper.fileHelper as fileHelper
 
 class MarkdownStorer:
     def __init__(self):
@@ -22,11 +23,13 @@ class MarkdownStorer:
         print("Data stored...")
 
 
-    def create_markdown(self, LINUX):
+    def create_markdown(self, LINUX, PREFIX):
         print("Starting writing to file...")
         date = datetime.today().strftime('%Y-%m-%d-%H-%M')
         title = date + f"__{self.run_count}x{self.max_seeds}seeds.md"
-        file_name = "markdown" + ("/" if LINUX else "\\") + title
+        file_name = f"{PREFIX}markdown\\" + title
+
+        file_name = fileHelper.osFormat(file_name, LINUX)
 
         with open(file_name, 'ab+') as f:
             f.write(f'# Tests run at {date}.\n'.encode())

@@ -1,4 +1,15 @@
 import matplotlib.pyplot as plt
+import os
+import sys
+#dir_path = os.path.dirname(os.path.realpath(__file__))
+dir_path = os.getcwd()
+
+print(dir_path)
+print("\n\n\n")
+
+sys.path.append('/home/eliaseb/PycharmProjects/fordypningsprosjekt')
+num_arguments = len(sys.argv)
+RUN_FROM_SCRIPT = (num_arguments > 1)
 
 from multiprocessing import Pool, cpu_count
 from classes.genericBasic import *
@@ -12,23 +23,23 @@ import genericClients.kMeansClient as kMeansClient
 
 LINUX = True
 
-SEED_COUNT = 3
+SEED_COUNT = 100
 
 
 GAUSSIANS = [0.515, 0.535, 0.55, 0.565, 0.58]
-GAUSSIANS = [0.2, 0.3, 0.4, 0.5, 0.6, 0.7]
 GAUSSIANS = [0.55]
+GAUSSIANS = [0.01, 0.03, 0.07, 0.1, 0.15, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7]
 GAUSSIANS = [0.2, 0.55]
 
 K_VALUES = [200, 250, 300, 350, 400]
-K_VALUES = [100, 150, 200, 250, 300, 350, 400]
 K_VALUES = [20, 50, 100, 250]
 K_VALUES = [200]
+K_VALUES = [100, 150, 200, 250, 300, 350, 400, 600, 800]
 K_VALUES = [100, 200]
 
 EXPLORATION_RATES = [0.1]
 
-MULTITHREADING=False
+MULTITHREADING=True
 
 
 RUN_KMEANS_UNWEIGHTED = False
@@ -60,6 +71,7 @@ RUN_WEIGHTED_SPECIAL_KMEANS = False
 #gw0.4-250
 
 WRITE_MARKDOWN = True
+PATH_PREFIX = ("fordypningsprosjekt\\" if RUN_FROM_SCRIPT else "")
 
 def run_program_with_different_seeds(plot_name, plot_title, seed_count=3,
                 discount_factor=kMeansClient.DISCOUNT_FACTOR, gaussian_width=kMeansClient.GAUSSIAN_WIDTH,
@@ -94,7 +106,7 @@ def run_program_with_different_seeds(plot_name, plot_title, seed_count=3,
             datas.append(data)
         datas = np.asarray(datas)
 
-    plot_title = ("M" if MULTITHREADING else "") + plot_title
+    plot_title = ("" if MULTITHREADING else "") + plot_title
     plotHelper.plot_with_max_min_mean_std(datas, plot_name, plot_title)
     avg = np.round(np.mean(datas), 2).item()
     if markdownStorer != None:
@@ -113,10 +125,11 @@ def run_gaussian_k():
             labels = []
             datas_list = []
             if RUN_KMEANS_UNWEIGHTED:
-                path = f"mplots\\generic\\{kMeansClient.GAME_MODE}\\{gaussian_width}g\\{k}k"
-                fileHelper.createDirIfNotExist(path)
+                path = f"{PATH_PREFIX}mplots\\generic\\{kMeansClient.GAME_MODE}\\{gaussian_width}g\\{k}k"
+                fileHelper.createDirIfNotExist(path, linux=LINUX)
                 name = path + f"\\{SEED_COUNT}seed__{kMeansClient.STANDARD_RUNNING_LENGTH}_then_{kMeansClient.KMEANS_RUNNING_LENGTH}__unweighted_plot.png"
                 name = fileHelper.osFormat(name, LINUX)
+                print(f"'{name}'")
 
                 title = f"gw={gaussian_width}, k={k} avg{SEED_COUNT} unweighted-kmeans plot"
                 datas = run_program_with_different_seeds(name, title, seed_count=SEED_COUNT, gaussian_width=gaussian_width,
@@ -126,9 +139,9 @@ def run_gaussian_k():
                 labels.append("unweighted")
 
             if RUN_KMEANS_WEIGHTED:
-                path = f"mplots\\generic\\{kMeansClient.GAME_MODE}\\{gaussian_width}g\\{k}k"
-                fileHelper.createDirIfNotExist(path)
-                name = path + f"\\w{SEED_COUNT}seed__{kMeansClient.STANDARD_RUNNING_LENGTH}_then_{kMeansClient.KMEANS_RUNNING_LENGTH}__weighted_plot.png"
+                path = f"{PATH_PREFIX}mplots\\generic\\{kMeansClient.GAME_MODE}\\{gaussian_width}g\\{k}k"
+                fileHelper.createDirIfNotExist(path, linux=LINUX)
+                name = path + f"\\{SEED_COUNT}seed__{kMeansClient.STANDARD_RUNNING_LENGTH}_then_{kMeansClient.KMEANS_RUNNING_LENGTH}__weighted_plot.png"
                 name = fileHelper.osFormat(name, LINUX)
 
                 title = f"gw={gaussian_width}, k={k} avg{SEED_COUNT} weighted-kmeans plot"
@@ -139,8 +152,8 @@ def run_gaussian_k():
                 labels.append("weighted")
 
             if RUN_KMEANS_VECTOR:
-                path = f"mplots\\generic\\{kMeansClient.GAME_MODE}\\{gaussian_width}g\\{k}k"
-                fileHelper.createDirIfNotExist(path)
+                path = f"{PATH_PREFIX}mplots\\generic\\{kMeansClient.GAME_MODE}\\{gaussian_width}g\\{k}k"
+                fileHelper.createDirIfNotExist(path, linux=LINUX)
                 name = path + f"\\{SEED_COUNT}seed__{kMeansClient.STANDARD_RUNNING_LENGTH}_then_{kMeansClient.KMEANS_RUNNING_LENGTH}__vector_plot.png"
                 name = fileHelper.osFormat(name, LINUX)
 
@@ -152,8 +165,8 @@ def run_gaussian_k():
                 labels.append("vector")
 
             if RUN_KMEANS_VECTOR2:
-                path = f"mplots\\generic\\{kMeansClient.GAME_MODE}\\{gaussian_width}g\\{k}k"
-                fileHelper.createDirIfNotExist(path)
+                path = f"{PATH_PREFIX}mplots\\generic\\{kMeansClient.GAME_MODE}\\{gaussian_width}g\\{k}k"
+                fileHelper.createDirIfNotExist(path, linux=LINUX)
                 name = path + f"\\{SEED_COUNT}seed__{kMeansClient.STANDARD_RUNNING_LENGTH}_then_{kMeansClient.KMEANS_RUNNING_LENGTH}__vector2_plot.png"
                 name = fileHelper.osFormat(name, LINUX)
 
@@ -166,8 +179,8 @@ def run_gaussian_k():
 
             if RUN_BASIC:
                 if k == K_VALUES[0]:
-                    path = f"mplots\\generic\\{kMeansClient.GAME_MODE}\\{gaussian_width}g\\basic"
-                    fileHelper.createDirIfNotExist(path)
+                    path = f"{PATH_PREFIX}mplots\\generic\\{kMeansClient.GAME_MODE}\\{gaussian_width}g\\basic"
+                    fileHelper.createDirIfNotExist(path, linux=LINUX)
                     name = path + f"\\{SEED_COUNT}seed__{kMeansClient.STANDARD_RUNNING_LENGTH}_then_{kMeansClient.KMEANS_RUNNING_LENGTH}__basic_plot.png"
                     name = fileHelper.osFormat(name, LINUX)
 
@@ -183,8 +196,8 @@ def run_gaussian_k():
                     labels.append("basic")
 
             if RUN_SPECIAL_KMEANS:
-                path = f"mplots\\generic\\{kMeansClient.GAME_MODE}\\{gaussian_width}g\\{k}k"
-                fileHelper.createDirIfNotExist(path)
+                path = f"{PATH_PREFIX}mplots\\generic\\{kMeansClient.GAME_MODE}\\{gaussian_width}g\\{k}k"
+                fileHelper.createDirIfNotExist(path, linux=LINUX)
                 name = path + f"\\{SEED_COUNT}seed__{kMeansClient.STANDARD_RUNNING_LENGTH}_then_{kMeansClient.KMEANS_RUNNING_LENGTH}__special_kmeans_plot.png"
                 name = fileHelper.osFormat(name, LINUX)
 
@@ -197,8 +210,8 @@ def run_gaussian_k():
                 labels.append("special_kmeans")
 
             if RUN_WEIGHTED_SPECIAL_KMEANS:
-                path = f"mplots\\generic\\{kMeansClient.GAME_MODE}\\{gaussian_width}g\\{k}k"
-                fileHelper.createDirIfNotExist(path)
+                path = f"{PATH_PREFIX}mplots\\generic\\{kMeansClient.GAME_MODE}\\{gaussian_width}g\\{k}k"
+                fileHelper.createDirIfNotExist(path, linux=LINUX)
                 name = path + f"\\{SEED_COUNT}seed__{kMeansClient.STANDARD_RUNNING_LENGTH}_then_{kMeansClient.KMEANS_RUNNING_LENGTH}__weighted_special_kmeans_plot.png"
                 name = fileHelper.osFormat(name, LINUX)
 
@@ -212,8 +225,8 @@ def run_gaussian_k():
 
             if RUN_BASIC_NO_LEARN:
                 if k == K_VALUES[0]:
-                    path = f"mplots\\generic\\{kMeansClient.GAME_MODE}\\{gaussian_width}g\\basic"
-                    fileHelper.createDirIfNotExist(path)
+                    path = f"{PATH_PREFIX}mplots\\generic\\{kMeansClient.GAME_MODE}\\{gaussian_width}g\\basic"
+                    fileHelper.createDirIfNotExist(path, linux=LINUX)
                     name = path + f"\\{SEED_COUNT}seed__{kMeansClient.STANDARD_RUNNING_LENGTH}_then_{kMeansClient.KMEANS_RUNNING_LENGTH}__basic_no_learn_plot.png"
                     name = fileHelper.osFormat(name, LINUX)
 
@@ -232,7 +245,7 @@ def run_gaussian_k():
             print(f"\n\n{gaussian_width=}, {k=}: time:{end_2 - start_2}")
             if len(labels) > 1:
                 path = f"plots\\generic\\{kMeansClient.GAME_MODE}\\aggregate\\{gaussian_width}g\\{k}k"
-                fileHelper.createDirIfNotExist(path)
+                fileHelper.createDirIfNotExist(path, linux=LINUX)
 
                 types =  f"{'_weighted' if RUN_KMEANS_WEIGHTED else ''}{'_unweighted' if RUN_KMEANS_UNWEIGHTED else ''}{'_vector' if RUN_KMEANS_VECTOR else ''}{'_basic' if RUN_BASIC else ''}"
                 name = path + f"\\{SEED_COUNT}seed__{kMeansClient.STANDARD_RUNNING_LENGTH}_then_{kMeansClient.KMEANS_RUNNING_LENGTH}" \
@@ -253,7 +266,7 @@ def run_gaussian_k():
         print(f"\n\n\n\n{gaussian_width=}: time:{end - start}")
         time.sleep(5)
     if markdownStorer != None:
-        markdownStorer.create_markdown(LINUX)
+        markdownStorer.create_markdown(LINUX, PATH_PREFIX)
 
 if __name__ == '__main__':
     total_start = time.time()
