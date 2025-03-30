@@ -6,7 +6,7 @@ import helper.fileHelper as fileHelper
 import numpy as np
 
 class MarkdownStorer:
-    def __init__(self, Ks = None, GWs = None):
+    def __init__(self, Ks = None, GWs = None, comment=None):
         self.datas = {}
         self.run_count = 0
         self.max_seeds = 0
@@ -15,6 +15,7 @@ class MarkdownStorer:
         self.Ks = Ks
         self.GWs = GWs
         self.start_time = time.time()
+        self.comment = comment
 
     def add_data_point(self, mode, data, plot_string, gw, k, seeds):
         if not mode in self.datas.keys():
@@ -46,6 +47,8 @@ class MarkdownStorer:
         with open(file_name, 'ab+') as f:
             date2 = datetime.today().strftime('%Y.%m.%d %H:%M')
             f.write(f'# Tests finished at {date2} after {hours} hours and {minutes} minutes.\n'.encode())
+            if self.comment != None:
+                f.write(f'# {self.comment}\n'.encode())
             f.write(f'## {self.run_count} tests run at with {len(self.datas.keys())} types.\n'.encode())
 
             if self.Ks != None:
@@ -67,11 +70,11 @@ class MarkdownStorer:
                         best_run_stat = runStat
 
                 f.write(
-                    f'Best avg reward: {best_run_stat.data} for {best_run_stat.mode} gw: {best_run_stat.gw}, k: {best_run_stat.k} over {best_run_stat.seeds} seeds.\n\n'.encode())
+                    f'### Best avg reward: {best_run_stat.data} for {best_run_stat.mode} gw: {best_run_stat.gw}, k: {best_run_stat.k} over {best_run_stat.seeds} seeds.\n\n'.encode())
 
                 for runStat in self.datas[mode]:
                     f.write(
-                        f'{runStat.data} reward for k:{runStat.k}, gw:{runStat.gw} over {runStat.seeds} seeds.\n'.encode())
+                        f'{runStat.data} reward for k:{runStat.k}, gw:{runStat.gw} over {runStat.seeds} seeds.\n\n'.encode())
 
             f.write(f'\n# Data unformatted:\n\n\n'.encode())
 
