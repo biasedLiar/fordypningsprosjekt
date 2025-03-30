@@ -119,8 +119,10 @@ def run_program_with_different_seeds(plot_name, plot_title, seed_count=3,
 
 
 def run_gaussian_k():
-    markdownStorer = (MarkdownStorer(Ks=K_VALUES, GWs=GAUSSIANS, learn_length=kMeansClient.STANDARD_RUNNING_LENGTH) if WRITE_MARKDOWN else None)
-    print((markdownStorer != None))
+    if WRITE_MARKDOWN:
+        markdownStorer = MarkdownStorer(Ks=K_VALUES, GWs=GAUSSIANS, learn_length=kMeansClient.STANDARD_RUNNING_LENGTH, comment=COMMENT)
+    else:
+        markdownStorer = None
     for k in K_VALUES:
         print(f"Starting k: {k}.")
         start = time.time()

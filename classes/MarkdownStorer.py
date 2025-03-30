@@ -6,7 +6,7 @@ import helper.fileHelper as fileHelper
 import numpy as np
 
 class MarkdownStorer:
-    def __init__(self, Ks = None, GWs = None, learn_length=None):
+    def __init__(self, Ks = None, GWs = None, learn_length=None, comment=None):
         self.datas = {}
         self.run_count = 0
         self.max_seeds = 0
