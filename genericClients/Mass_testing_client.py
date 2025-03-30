@@ -28,14 +28,14 @@ SEED_COUNT = 100
 COMMENT = ""
 GAUSSIANS = [0.515, 0.535, 0.55, 0.565, 0.58]
 GAUSSIANS = [0.01, 0.03, 0.07, 0.1, 0.15, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7]
-GAUSSIANS = [0.3, 0.55, 0.6, 0.65, 0.7]
 GAUSSIANS = [0.55, 0.6]
+GAUSSIANS = [0.3, 0.55, 0.6, 0.65, 0.7]
 
 K_VALUES = [200, 250, 300, 350, 400]
 K_VALUES = [20, 50, 100, 250]
 K_VALUES = [100, 150, 200, 250, 300, 350, 400, 600, 800]
-K_VALUES = [1000, 1250, 1500, 1750, 2000]
 K_VALUES = [100, 200]
+K_VALUES = [1000, 1250, 1500, 1750, 2000]
 
 EXPLORATION_RATES = [0.1]
 
@@ -119,7 +119,7 @@ def run_program_with_different_seeds(plot_name, plot_title, seed_count=3,
 
 
 def run_gaussian_k():
-    markdownStorer = (MarkdownStorer(Ks=K_VALUES, GWs=GAUSSIANS) if WRITE_MARKDOWN else None)
+    markdownStorer = (MarkdownStorer(Ks=K_VALUES, GWs=GAUSSIANS, learn_length=kMeansClient.STANDARD_RUNNING_LENGTH) if WRITE_MARKDOWN else None)
     print((markdownStorer != None))
     for k in K_VALUES:
         print(f"Starting k: {k}.")
