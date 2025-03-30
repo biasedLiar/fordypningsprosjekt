@@ -5,7 +5,7 @@ class configHolder:
                 exploration_rate=kMeansClient.EXPLORATION_RATE, standard_episodes=kMeansClient.STANDARD_RUNNING_LENGTH,
                 kmeans_episodes=kMeansClient.KMEANS_RUNNING_LENGTH, weighted_kmeans=True, render_mode=kMeansClient.RENDER_MODE,
                 game_mode=kMeansClient.GAME_MODE, k=kMeansClient.K_MEANS_K, save_plot=True, ignore_kmeans=False,
-                use_vectors=False, vector_type=1, learn=True, use_special_kmeans=False, do_standardize=True):
+                use_vectors=False, vector_type=1, learn=True, use_special_kmeans=False, do_standardize=True, write_logs=True):
         self.discount_factor=discount_factor
         self.gaussian_width=gaussian_width
         self.exploration_rate = exploration_rate
@@ -22,6 +22,8 @@ class configHolder:
         self.learn= learn
         self.use_special_kmeans = use_special_kmeans
         self.do_standardize = do_standardize
+        self.write_logs=write_logs
+
 
     def run_with_seed(self, seed):
         data = kMeansClient.run_program(seed=seed, discount_factor=self.discount_factor, gaussian_width=self.gaussian_width,
@@ -32,5 +34,5 @@ class configHolder:
                                         use_vectors=self.use_vectors,
                                         vector_type=self.vector_type, learn=self.learn,
                                         use_special_kmeans=self.use_special_kmeans,
-                                        do_standardize=self.do_standardize)
+                                        do_standardize=self.do_standardize, write_logs=self.write_logs)
         return data

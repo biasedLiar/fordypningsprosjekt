@@ -157,8 +157,9 @@ class GenericModel:
         #Continue creating batches.
 
 
-    def get_centers_special_kmeans(self, data):
-        print(f"{data.shape=}")
+    def get_centers_special_kmeans(self, data, write_logs=True):
+        if write_logs:
+            print(f"{data.shape=}")
         data_length = data.shape[0]
         model = Model(K=self.K, D=4, sigma=self.gaussian_width, lambda_=0.5, learning_rate=0.02)
         model.mu -= 0.5
@@ -177,7 +178,8 @@ class GenericModel:
                 if self.show_special:
                     plot.draw_frame_no_label(batch=batch)
                 i += 1
-            print(i)
+            if write_logs:
+                print(i)
         if self.show_special:
             plot.clf()
 
@@ -185,7 +187,7 @@ class GenericModel:
         return model.mu
 
 
-    def calc_standard_kmeans(self, run_tsne=False):
+    def calc_standard_kmeans(self, run_tsne=False, write_logs=True):
 
         self.num_states_when_ran_kmeans= len(self.states)
         if self.weighted_kmeans:
@@ -201,8 +203,8 @@ class GenericModel:
 
 
         if self.use_special_kmeans:
-            self.kmeans_centers = self.get_centers_special_kmeans(self.standardized_states)
-            self.remove_unecessary_centers()
+            self.kmeans_centers = self.get_centers_special_kmeans(self.standardized_states, write_logs=write_logs)
+            self.remove_unecessary_centers(write_logs=write_logs)
         else:
             self.kmeans_centers = KMeans(n_clusters=self.K, random_state=0, n_init='auto').fit(self.standardized_states, sample_weight=self.weights).cluster_centers_
 
@@ -215,7 +217,7 @@ class GenericModel:
         self.center_max_rewards = np.max(self.kmeans_action_reward_list, axis=0)
 
 
-    def remove_unecessary_centers(self):
+    def remove_unecessary_centers(self, write_logs=True):
         a, c = self.kmeans_centers.shape
         b, c = self.standardized_states.shape
         expanded_centers = self.kmeans_centers + np.zeros((b, 1, 1))
@@ -223,7 +225,8 @@ class GenericModel:
         expanded_centers = np.sum(np.square(expanded_states - expanded_centers), axis=2)
         closest = np.unique(expanded_centers.argmin(axis=1))
         self.kmeans_centers = self.kmeans_centers[closest, :]
-        print(f"{self.kmeans_centers.shape=}")
+        if write_logs:
+            print(f"{self.kmeans_centers.shape=}")
 
 
 

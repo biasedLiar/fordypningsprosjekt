@@ -38,7 +38,7 @@ def run_program(seed=SEED, discount_factor=DISCOUNT_FACTOR, gaussian_width=GAUSS
                 exploration_rate=EXPLORATION_RATE, standard_episodes=STANDARD_RUNNING_LENGTH,
                 kmeans_episodes=KMEANS_RUNNING_LENGTH, weighted_kmeans=True, render_mode=RENDER_MODE,
                 game_mode=GAME_MODE, k=K_MEANS_K, save_plot=True, ignore_kmeans=False, use_vectors=False, learn=True,
-                vector_type=1, do_standardize=True, use_special_kmeans=False):
+                vector_type=1, do_standardize=True, use_special_kmeans=False, write_logs=True):
 
     env = gymnasium.make(game_mode, render_mode=render_mode)
     env.action_space.seed(seed)
@@ -68,16 +68,8 @@ def run_program(seed=SEED, discount_factor=DISCOUNT_FACTOR, gaussian_width=GAUSS
             action = model.get_action_with_vector(state)
         else:
             #print("REached")
-
-            if episodes >= standard_episodes and rewards == -100:
-                action = model.get_action_kmeans(state, debug=True)
-                print(f"{action=}")
-                input()
             action = model.get_action_kmeans(state)
 
-        if episodes >= standard_episodes and False:
-            print(f"\n{rewards=}: {action=}")
-            print(f"{state=}")
         actions.append(action)
         old_state = state
         state, reward, terminated, truncated, info = env.step(action)
@@ -107,11 +99,13 @@ def run_program(seed=SEED, discount_factor=DISCOUNT_FACTOR, gaussian_width=GAUSS
             states.append(state)
             episodes += 1
             if episodes == standard_episodes and not ignore_kmeans:
-                print("Calculating kmeans centers...")
-                print(f"{model.states.shape=}")
-                model.calc_standard_kmeans()
-                print(f"{model.states.shape=}")
-                print("Finished calculating kmeans centers")
+                if write_logs:
+                    print("Calculating kmeans centers...")
+                    print(f"{model.states.shape=}")
+                model.calc_standard_kmeans(write_logs=write_logs)
+                if write_logs:
+                    print(f"{model.states.shape=}")
+                    print("Finished calculating kmeans centers")
             if episodes == kmeans_episodes + standard_episodes:
                 break
 
@@ -134,6 +128,8 @@ def run_program(seed=SEED, discount_factor=DISCOUNT_FACTOR, gaussian_width=GAUSS
 
         plt.savefig(plot_name)
         plt.clf()
+    if use_special_kmeans:
+        print(f"Finished seed {seed}")
     return data
 
 
