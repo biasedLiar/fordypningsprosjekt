@@ -6,7 +6,7 @@ import helper.fileHelper as fileHelper
 import numpy as np
 
 class MarkdownStorer:
-    def __init__(self, Ks = None, GWs = None):
+    def __init__(self, Ks = None, GWs = None, learn_length=None):
         self.datas = {}
         self.run_count = 0
         self.max_seeds = 0
@@ -15,6 +15,7 @@ class MarkdownStorer:
         self.Ks = Ks
         self.GWs = GWs
         self.start_time = time.time()
+        self.learn_length = learn_length
 
     def add_data_point(self, mode, data, plot_string, gw, k, seeds):
         if not mode in self.datas.keys():
@@ -47,6 +48,10 @@ class MarkdownStorer:
             date2 = datetime.today().strftime('%Y.%m.%d %H:%M')
             f.write(f'# Tests finished at {date2} after {hours} hours and {minutes} minutes.\n'.encode())
             f.write(f'## {self.run_count} tests run at with {len(self.datas.keys())} types.\n'.encode())
+
+            if self.learn_length != None:
+                f.write(f'# Learn length: {self.learn_length}.\n'.encode())
+
 
             if self.Ks != None:
                 f.write(f'# K values of {str(self.Ks)} tested.\n'.encode())
