@@ -1,6 +1,8 @@
 import matplotlib.pyplot as plt
 import os
 import sys
+
+
 #dir_path = os.path.dirname(os.path.realpath(__file__))
 dir_path = os.getcwd()
 
@@ -25,7 +27,7 @@ LINUX = True
 
 SEED_COUNT = 100
 
-COMMENT = ""
+COMMENT = f"Tested {kMeansClient.STANDARD_RUNNING_LENGTH} episodes of training before start"
 GAUSSIANS = [0.515, 0.535, 0.55, 0.565, 0.58]
 GAUSSIANS = [0.01, 0.03, 0.07, 0.1, 0.15, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7]
 GAUSSIANS = [0.55, 0.6]
