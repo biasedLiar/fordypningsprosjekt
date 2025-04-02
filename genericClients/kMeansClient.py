@@ -28,7 +28,7 @@ K_MEANS_K = 20
 STANDARD_RUNNING_LENGTH = 50
 KMEANS_RUNNING_LENGTH = 100
 KMEANS_TYPE = STANDARD
-TSNE = True
+TSNE = False
 
 
 path = f"mplots\\generic\\{GAME_MODE}\\single\\{GAUSSIAN_WIDTH}g"
@@ -92,7 +92,8 @@ def run_program(seed=SEED, discount_factor=DISCOUNT_FACTOR, gaussian_width=GAUSS
                 if write_logs:
                     print(f"{episodes}: {rewards}  {action_string}")
                     path = np.asarray(path)
-                    model.tsne_of_path(path)
+                    if TSNE:
+                        model.tsne_of_path(path)
                     path=[]
                     path=[]
             if learn or episodes < standard_episodes:
@@ -116,7 +117,8 @@ def run_program(seed=SEED, discount_factor=DISCOUNT_FACTOR, gaussian_width=GAUSS
                 if write_logs:
                     print("Calculating kmeans centers...")
                 model.calc_standard_kmeans(write_logs=write_logs, run_tsne=TSNE)
-                model.tsne_based_on_reward()
+                if TSNE:
+                    model.tsne_based_on_reward()
                 if write_logs:
                     print(f"{model.states.shape=}")
                     print("Finished calculating kmeans centers")
