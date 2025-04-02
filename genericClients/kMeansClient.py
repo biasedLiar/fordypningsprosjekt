@@ -25,9 +25,10 @@ EXPLORATION_RATE = 0.1  # Controls when actions with little data should be chose
 
 K_MEANS_K = 20
 
-STANDARD_RUNNING_LENGTH = 100
+STANDARD_RUNNING_LENGTH = 50
 KMEANS_RUNNING_LENGTH = 100
 KMEANS_TYPE = STANDARD
+TSNE = True
 
 
 path = f"mplots\\generic\\{GAME_MODE}\\single\\{GAUSSIAN_WIDTH}g"
@@ -55,6 +56,8 @@ def run_program(seed=SEED, discount_factor=DISCOUNT_FACTOR, gaussian_width=GAUSS
     states.append(state)
     episodes = 0
     data = []
+    action_string = ""
+    path = []
     while True:
         if render_mode == "human":
             for event in pygame.event.get():
@@ -69,11 +72,14 @@ def run_program(seed=SEED, discount_factor=DISCOUNT_FACTOR, gaussian_width=GAUSS
         else:
             #print("REached")
             action = model.get_action_kmeans(state)
+        action_string += str(action)
+
 
         actions.append(action)
         old_state = state
         state, reward, terminated, truncated, info = env.step(action)
         states.append(state)
+        path.append(state)
         if use_vectors and episodes >= standard_episodes and False:
             model.check_vector(old_state, state)
 
@@ -83,6 +89,12 @@ def run_program(seed=SEED, discount_factor=DISCOUNT_FACTOR, gaussian_width=GAUSS
             #print(f"{seed=}, {episodes=}, rewards: {rewards}")
             if episodes >= standard_episodes:
                 data.append(rewards)
+                if write_logs:
+                    print(f"{episodes}: {rewards}  {action_string}")
+                    path = np.asarray(path)
+                    model.tsne_of_path(path)
+                    path=[]
+                    path=[]
             if learn or episodes < standard_episodes:
                 for i, state in enumerate(states):
                     model.states = np.vstack((model.states, state))
@@ -93,6 +105,8 @@ def run_program(seed=SEED, discount_factor=DISCOUNT_FACTOR, gaussian_width=GAUSS
                         model.state_action_transitions_to[actions[i - 1]].append(len(model.states) - 1)
 
             rewards = 0.
+            action_string = ""
+            path = []
             actions.clear()
             states.clear()
             state, info = env.reset()
@@ -101,8 +115,8 @@ def run_program(seed=SEED, discount_factor=DISCOUNT_FACTOR, gaussian_width=GAUSS
             if episodes == standard_episodes and not ignore_kmeans:
                 if write_logs:
                     print("Calculating kmeans centers...")
-                    print(f"{model.states.shape=}")
-                model.calc_standard_kmeans(write_logs=write_logs)
+                model.calc_standard_kmeans(write_logs=write_logs, run_tsne=TSNE)
+                model.tsne_based_on_reward()
                 if write_logs:
                     print(f"{model.states.shape=}")
                     print("Finished calculating kmeans centers")

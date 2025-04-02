@@ -122,13 +122,20 @@ class GenericModel:
 
         return self.scaler.transform(nodes)
 
-    def tsne(self, after_kmeans=False):
+    def tsne(self, blue_states=[]):
         print("Starting TSNE...")
-        self.standardized_states = self.standardize(self.states)
         state_length = len(self.standardized_states)
+        center_length = len(self.kmeans_centers)
+        print(f"{self.num_states_when_ran_kmeans=}")
+        print(f"{state_length=}")
+        print(f"{center_length=}")
+        print(f"{len(blue_states)=}")
         perplexity = 20
-        X = np.concatenate((self.standardized_states, self.kmeans_centers))
-
+        if len(blue_states) != 0:
+            X = np.concatenate((self.standardized_states, self.kmeans_centers, blue_states))
+        else:
+            X = np.concatenate((self.standardized_states, self.kmeans_centers))
+        print(f"{len(X)=}")
         Y = manifold.TSNE(
             n_components=2,
             init="random",
@@ -137,16 +144,73 @@ class GenericModel:
         ).fit_transform(X)
         print(f"({self.num_states_when_ran_kmeans}-{state_length - self.num_states_when_ran_kmeans}-{len(Y)})")
         plt.title(label=f"Perplexity={perplexity}, K={self.K}, gaussian={self.gaussian_width}")
-        plt.scatter(Y[self.num_states_when_ran_kmeans: state_length, 0],
-                    Y[self.num_states_when_ran_kmeans: state_length, 1], c="b")
-        plt.scatter(Y[:self.num_states_when_ran_kmeans, 0], Y[:self.num_states_when_ran_kmeans, 1], c="g")
-        plt.scatter(Y[state_length:, 0], Y[state_length:, 1], c="r")
+        plt.scatter(Y[:self.num_states_when_ran_kmeans, 0], Y[:self.num_states_when_ran_kmeans, 1], c="black", s=1)
+
+        if len(blue_states) != 0:
+            print(f"{len(X)} - {state_length+center_length} = {len(X)-state_length-center_length}")
+            colors_map = np.arange(len(blue_states))
+            # Starts at blue, ends at red
+            plt.scatter(Y[state_length+center_length:, 0],
+                        Y[state_length+center_length:, 1], c=colors_map, cmap="jet", s=16)
+
+
+        plt.scatter(Y[state_length:state_length+center_length, 0], Y[state_length:state_length+center_length, 1], s=16,
+                    facecolors="none", edgecolors="r")
         # ax.xaxis.set_major_formatter(NullFormatter())
         # ax.yaxis.set_major_formatter(NullFormatter())
         # ax.axis("tight")
         plt.show()
         plt.clf()
         print("Finished TSNE!")
+
+
+    def tsne_based_on_reward(self, blue_states=[]):
+        print("Starting TSNE...")
+        state_length = len(self.standardized_states)
+        center_length = len(self.kmeans_centers)
+        print(f"{self.num_states_when_ran_kmeans=}")
+        print(f"{state_length=}")
+        print(f"{center_length=}")
+        print(f"{len(blue_states)=}")
+        perplexity = 20
+        if len(blue_states) != 0:
+            X = np.concatenate((self.standardized_states, self.kmeans_centers, blue_states))
+        else:
+            X = np.concatenate((self.standardized_states, self.kmeans_centers))
+        print(np.sqrt(self.rewards))
+        print(f"{len(X)=}")
+        Y = manifold.TSNE(
+            n_components=2,
+            init="random",
+            random_state=0,
+            perplexity=perplexity,
+        ).fit_transform(X)
+        print(f"({self.num_states_when_ran_kmeans}-{state_length - self.num_states_when_ran_kmeans}-{len(Y)})")
+        plt.title(label=f"Perplexity={perplexity}, K={self.K}, gaussian={self.gaussian_width}")
+        plt.scatter(Y[:self.num_states_when_ran_kmeans, 0], Y[:self.num_states_when_ran_kmeans, 1],
+                    c=self.rewards, cmap="jet", s=np.sqrt(self.rewards))
+
+
+        plt.scatter(Y[state_length:state_length+center_length, 0], Y[state_length:state_length+center_length, 1], s=16,
+                    facecolors="none", edgecolors="black")
+
+        if len(blue_states) != 0:
+            print(f"{len(X)} - {state_length+center_length} = {len(X)-state_length-center_length}")
+            colors_map = np.arange(len(blue_states))
+            # Starts at blue, ends at red
+            plt.scatter(Y[state_length+center_length:, 0],
+                        Y[state_length+center_length:, 1], c=colors_map, cmap="jet", s=16)
+        # ax.xaxis.set_major_formatter(NullFormatter())
+        # ax.yaxis.set_major_formatter(NullFormatter())
+        # ax.axis("tight")
+        plt.show()
+        plt.clf()
+        print("Finished TSNE!")
+
+    def tsne_of_path(self, path):
+        standardized_path = self.standardize(path)
+        self.tsne(blue_states=standardized_path)
+        print("Done")
 
     def get_batches(self, data, batch_size):
         np.random.shuffle(data)
@@ -204,7 +268,9 @@ class GenericModel:
 
         if self.use_special_kmeans:
             self.kmeans_centers = self.get_centers_special_kmeans(self.standardized_states, write_logs=write_logs)
+            print(f"{self.kmeans_centers.shape} centers before pruning.")
             self.remove_unecessary_centers(write_logs=write_logs)
+            print(f"{self.kmeans_centers.shape} centers after pruning.")
         else:
             self.kmeans_centers = KMeans(n_clusters=self.K, random_state=0, n_init='auto').fit(self.standardized_states, sample_weight=self.weights).cluster_centers_
 
