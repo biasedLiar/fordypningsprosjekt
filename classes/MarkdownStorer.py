@@ -4,6 +4,7 @@ from classes.RunStat import *
 from datetime import datetime
 import helper.fileHelper as fileHelper
 import numpy as np
+import os
 
 class MarkdownStorer:
     def __init__(self, Ks = None, GWs = None, learn_length=None, comment=None):
@@ -15,8 +16,10 @@ class MarkdownStorer:
         self.Ks = Ks
         self.GWs = GWs
         self.start_time = time.time()
+        self.last_update_time = time.time()
         self.comment = comment
         self.learn_length = learn_length
+        self.date = datetime.today().strftime('%Y-%m-%d__%H-%M')
 
     def add_data_point(self, mode, data, plot_string, gw, k, seeds):
         if not mode in self.datas.keys():
@@ -31,23 +34,40 @@ class MarkdownStorer:
         print("Data stored...")
 
 
+    def update_markdown(self, LINUX, PREFIX):
+        if self.run_count > 1 and time.time() - self.last_update_time < 60:
+            return
+        if self.run_count > 1000:
+            print("Trying to delete file")
+            title = self.date + f".md"
+            file_name = f"{PREFIX}markdown\\" + title
+            with open(file_name, "w"):
+                pass
+            #os.remove(file_name)
 
-    def create_markdown(self, LINUX, PREFIX):
+        self.create_markdown(LINUX, PREFIX, is_update=True)
+        self.last_update_time = time.time()
+
+
+    def create_markdown(self, LINUX, PREFIX, is_update=False):
         end_time = time.time()
         minutes = round((end_time-self.start_time)/60)
         hours = np.floor(minutes / 60)
         minutes = minutes % 60
         print("Starting writing to file...")
-        date = datetime.today().strftime('%Y-%m-%d__%H-%M')
-        title = date + f"__{self.run_count}x{self.max_seeds}seeds.md"
+        title = self.date + f".md"
         file_name = f"{PREFIX}markdown\\" + title
 
 
         file_name = fileHelper.osFormat(file_name, LINUX)
 
-        with open(file_name, 'ab+') as f:
+
+        with open(file_name, 'wb+') as f:
             date2 = datetime.today().strftime('%Y.%m.%d %H:%M')
-            f.write(f'# Tests finished at {date2} after {hours} hours and {minutes} minutes.\n'.encode())
+            if is_update:
+                f.write(f'# Tests updated at {date2} after {int(hours)} hours and {minutes} minutes.\n'.encode())
+            else:
+                f.write(f'# Tests finished at {date2} after {int(hours)} hours and {minutes} minutes.\n'.encode())
             if self.comment != None:
                 f.write(f'# {self.comment}\n'.encode())
             f.write(f'## {self.run_count} tests run at with {len(self.datas.keys())} types.\n'.encode())

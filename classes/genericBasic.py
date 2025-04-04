@@ -63,9 +63,11 @@ class GenericModel:
 
 
 
+        self.num_batches_analyzed = 600
         self.num_batches_analyzed = 300
         self.use_special_kmeans = use_special_kmeans
         self.show_special = False
+        self.special_kmeans_gaussian = 0.1
 
 
     def get_action_without_kmeans(self, state):
