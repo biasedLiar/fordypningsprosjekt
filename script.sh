@@ -1,7 +1,7 @@
 #!/bin/sh
 
 #cd /PycharmProjects/fordypningsprosjekt &&
-#python ./genericClients/Mass_testing_client.py
+#python ./genericClients/Mass_expanded_client.py
 
 echo "Script executed from: ${PWD}"
 

@@ -21,28 +21,32 @@ import helper.plotHelper as plotHelper
 from classes.MarkdownStorer import *
 from classes.RunStat import *
 import time
-import genericClients.kMeansClient as kMeansClient
+import genericExpandedClients.kMeansExpandedClient as kMeansClient
 
 LINUX = False
 
-SEED_COUNT = 100
+SEED_COUNT = 3
 
 COMMENT = f"Special kmeans with three times the amount of training"
 GAUSSIANS = [0.515, 0.535, 0.55, 0.565, 0.58]
 GAUSSIANS = [0.01, 0.03, 0.07, 0.1, 0.15, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7]
 GAUSSIANS = [0.3, 0.55, 0.6, 0.65, 0.7]
-GAUSSIANS = [0.05, 0.3, 0.55]
+GAUSSIAN = 0.55
 
 K_VALUES = [200, 250, 300, 350, 400]
 K_VALUES = [100, 150, 200, 250, 300, 350, 400, 600, 800]
 K_VALUES = [1000, 1250, 1500, 1750, 2000]
-K_VALUES = [100, 250, 500]
 K_VALUES = [20, 50, 100, 250]
+K_VALUES = [100, 250, 500]
+K_VALUES = [100]
 
 EXPLORATION_RATES = [0.1]
 
-MULTITHREADING=LINUX
+MULTITHREADING=False
 
+
+SEGMENTS = [3, 4, 5, 6, 7]
+SEGMENTS = [3]
 
 RUN_KMEANS_UNWEIGHTED = False
 RUN_KMEANS_UNWEIGHTED = True
@@ -75,15 +79,15 @@ RUN_WEIGHTED_SPECIAL_KMEANS = False
 WRITE_MARKDOWN = True
 WRITE_LOGS = True
 
-PATH_PREFIX = ("fordypningsprosjekt\\" if RUN_FROM_SCRIPT else None)
+PATH_PREFIX = ("fordypningsprosjekt\\expanded_" if RUN_FROM_SCRIPT else "expanded_")
 
 def run_program_with_different_seeds(plot_name, plot_title, seed_count=3,
-                discount_factor=kMeansClient.DISCOUNT_FACTOR, gaussian_width=kMeansClient.GAUSSIAN_WIDTH,
+                discount_factor=kMeansClient.DISCOUNT_FACTOR, gaussian_width=GAUSSIAN,
                 exploration_rate=kMeansClient.EXPLORATION_RATE, standard_episodes=kMeansClient.STANDARD_RUNNING_LENGTH,
                 kmeans_episodes=kMeansClient.KMEANS_RUNNING_LENGTH, weighted_kmeans=True, render_mode=kMeansClient.RENDER_MODE,
                 game_mode=kMeansClient.GAME_MODE, k=kMeansClient.K_MEANS_K, save_plot=True, ignore_kmeans=False,
                 use_vectors=RUN_KMEANS_VECTOR, vector_type=1, learn=True, use_special_kmeans=False, markdownStorer=None,
-                mode="insert_mode", write_logs=WRITE_LOGS):
+                mode="insert_mode", write_logs=WRITE_LOGS, segments=1):
 
     if MULTITHREADING:
         config_holder = configHolder(discount_factor=discount_factor, gaussian_width=gaussian_width,
@@ -116,7 +120,8 @@ def run_program_with_different_seeds(plot_name, plot_title, seed_count=3,
     plotHelper.plot_with_max_min_mean_std(datas, plot_name, plot_title)
     avg = np.round(np.mean(datas), 2).item()
     if markdownStorer != None:
-        markdownStorer.add_data_point(mode, avg, plot_name, gaussian_width, k, seed_count)
+        markdownStorer.add_data_point(mode, avg, plot_name, gaussian_width, k, seed_count, segments=segments)
+        markdownStorer.update_markdown(LINUX, PATH_PREFIX)
         if LINUX:
             markdownStorer.update_markdown(LINUX, PATH_PREFIX)
     return datas
@@ -125,86 +130,87 @@ def run_program_with_different_seeds(plot_name, plot_title, seed_count=3,
 
 def run_gaussian_k():
     if WRITE_MARKDOWN:
-        markdownStorer = MarkdownStorer(Ks=K_VALUES, GWs=GAUSSIANS, learn_length=kMeansClient.STANDARD_RUNNING_LENGTH, comment=COMMENT)
+        markdownStorer = MarkdownStorer(Ks=K_VALUES, learn_length=kMeansClient.STANDARD_RUNNING_LENGTH, comment=COMMENT)
     else:
         markdownStorer = None
     for k in K_VALUES:
         print(f"Starting k: {k}.")
         start = time.time()
-        for gaussian_width in GAUSSIANS:
-            print(f"Starting gw: {gaussian_width}.")
+        for segment in SEGMENTS:
+            print(f"Starting segments: {segment}.")
             start_2 = time.time()
             labels = []
             datas_list = []
             if RUN_KMEANS_UNWEIGHTED:
                 print("Starting Kmeans Unweighted...")
-                path = f"{PATH_PREFIX}mplots\\generic\\{kMeansClient.GAME_MODE}\\{gaussian_width}g\\{k}k"
+                path = f"{PATH_PREFIX}mplots\\expanded\\{kMeansClient.GAME_MODE}\\{segment}s\\{k}k"
                 fileHelper.createDirIfNotExist(path, linux=LINUX)
                 name = path + f"\\{SEED_COUNT}seed__{kMeansClient.STANDARD_RUNNING_LENGTH}_then_{kMeansClient.KMEANS_RUNNING_LENGTH}__unweighted_plot.png"
                 name = fileHelper.osFormat(name, LINUX)
 
-                title = f"gw={gaussian_width}, k={k} avg{SEED_COUNT} unweighted-kmeans plot"
-                datas = run_program_with_different_seeds(name, title, seed_count=SEED_COUNT, gaussian_width=gaussian_width,
+                title = f"{segment}-segments, k={k} avg{SEED_COUNT} unweighted-kmeans plot"
+                datas = run_program_with_different_seeds(name, title, seed_count=SEED_COUNT,
                                                          k=k, weighted_kmeans=False, use_vectors=False,
-                                                         markdownStorer=markdownStorer, mode="Kmeans Unweighted")
+                                                         markdownStorer=markdownStorer, mode="Kmeans Unweighted",
+                                                         segments=segment)
                 datas_list.append(datas)
                 labels.append("unweighted")
 
             if RUN_KMEANS_WEIGHTED:
                 print("Starting Kmeans Weighted...")
-                path = f"{PATH_PREFIX}mplots\\generic\\{kMeansClient.GAME_MODE}\\{gaussian_width}g\\{k}k"
+                path = f"{PATH_PREFIX}mplots\\expanded\\{kMeansClient.GAME_MODE}\\{segment}s\\{k}k"
                 fileHelper.createDirIfNotExist(path, linux=LINUX)
                 name = path + f"\\{SEED_COUNT}seed__{kMeansClient.STANDARD_RUNNING_LENGTH}_then_{kMeansClient.KMEANS_RUNNING_LENGTH}__weighted_plot.png"
                 name = fileHelper.osFormat(name, LINUX)
 
-                title = f"gw={gaussian_width}, k={k} avg{SEED_COUNT} weighted-kmeans plot"
-                datas = run_program_with_different_seeds(name, title, seed_count=SEED_COUNT,
-                                                         gaussian_width=gaussian_width, k=k, weighted_kmeans=True,
-                                                         use_vectors=False, markdownStorer=markdownStorer, mode="Kmeans Weighted")
+                title = f"{segment}-segments, k={k} avg{SEED_COUNT} weighted-kmeans plot"
+                datas = run_program_with_different_seeds(name, title, seed_count=SEED_COUNT, k=k, weighted_kmeans=True,
+                                                         use_vectors=False, markdownStorer=markdownStorer, mode="Kmeans Weighted",
+                                                         segments=segment)
                 datas_list.append(datas)
                 labels.append("weighted")
 
             if RUN_KMEANS_VECTOR:
                 print("Starting Vector...")
-                path = f"{PATH_PREFIX}mplots\\generic\\{kMeansClient.GAME_MODE}\\{gaussian_width}g\\{k}k"
+                path = f"{PATH_PREFIX}mplots\\expanded\\{kMeansClient.GAME_MODE}\\{segment}s\\{k}k"
                 fileHelper.createDirIfNotExist(path, linux=LINUX)
                 name = path + f"\\{SEED_COUNT}seed__{kMeansClient.STANDARD_RUNNING_LENGTH}_then_{kMeansClient.KMEANS_RUNNING_LENGTH}__vector_plot.png"
                 name = fileHelper.osFormat(name, LINUX)
 
-                title = f"gw={gaussian_width}, k={k} avg{SEED_COUNT} vector-kmeans plot"
-                datas = run_program_with_different_seeds(name, title, seed_count=SEED_COUNT,
-                                                         gaussian_width=gaussian_width, k=k, weighted_kmeans=True,
-                                                         use_vectors=True, markdownStorer=markdownStorer, mode="Kmeans Vector")
+                title = f"{segment}-segments, k={k} avg{SEED_COUNT} vector-kmeans plot"
+                datas = run_program_with_different_seeds(name, title, seed_count=SEED_COUNT, k=k, weighted_kmeans=True,
+                                                         use_vectors=True, markdownStorer=markdownStorer, mode="Kmeans Vector",
+                                                         segments=segment)
                 datas_list.append(datas)
                 labels.append("vector")
 
             if RUN_KMEANS_VECTOR2:
                 print("Starting Vector-2...")
-                path = f"{PATH_PREFIX}mplots\\generic\\{kMeansClient.GAME_MODE}\\{gaussian_width}g\\{k}k"
+                path = f"{PATH_PREFIX}mplots\\expanded\\{kMeansClient.GAME_MODE}\\{segment}s\\{k}k"
                 fileHelper.createDirIfNotExist(path, linux=LINUX)
                 name = path + f"\\{SEED_COUNT}seed__{kMeansClient.STANDARD_RUNNING_LENGTH}_then_{kMeansClient.KMEANS_RUNNING_LENGTH}__vector2_plot.png"
                 name = fileHelper.osFormat(name, LINUX)
 
-                title = f"gw={gaussian_width}, k={k} avg{SEED_COUNT} vector2-kmeans plot"
-                datas = run_program_with_different_seeds(name, title, seed_count=SEED_COUNT,
-                                                         gaussian_width=gaussian_width, k=k, weighted_kmeans=True,
-                                                         use_vectors=True, vector_type=2, markdownStorer=markdownStorer, mode="Kmeans Vector-2")
+                title = f"{segment}-segments, k={k} avg{SEED_COUNT} vector2-kmeans plot"
+                datas = run_program_with_different_seeds(name, title, seed_count=SEED_COUNT, k=k, weighted_kmeans=True,
+                                                         use_vectors=True, vector_type=2, markdownStorer=markdownStorer,
+                                                         mode="Kmeans Vector-2", segments=segment)
                 datas_list.append(datas)
                 labels.append("vector2")
 
             if RUN_BASIC:
                 if k == K_VALUES[0]:
                     print("Starting No Kmeans...")
-                    path = f"{PATH_PREFIX}mplots\\generic\\{kMeansClient.GAME_MODE}\\{gaussian_width}g\\basic"
+                    path = f"{PATH_PREFIX}mplots\\expanded\\{kMeansClient.GAME_MODE}\\{segment}s\\basic"
                     fileHelper.createDirIfNotExist(path, linux=LINUX)
                     name = path + f"\\{SEED_COUNT}seed__{kMeansClient.STANDARD_RUNNING_LENGTH}_then_{kMeansClient.KMEANS_RUNNING_LENGTH}__basic_plot.png"
                     name = fileHelper.osFormat(name, LINUX)
 
-                    title = f"gw={gaussian_width}, avg{SEED_COUNT} basic plot"
-                    basic_datas = run_program_with_different_seeds(name, title, seed_count=SEED_COUNT,
-                                                                   gaussian_width=gaussian_width, k=k,
+                    title = f"{segment}-segments, avg{SEED_COUNT} basic plot"
+                    basic_datas = run_program_with_different_seeds(name, title, seed_count=SEED_COUNT, k=k,
                                                                    weighted_kmeans=False, ignore_kmeans=True,
-                                                                   use_vectors=False, markdownStorer=markdownStorer, mode="No Kmeans")
+                                                                   use_vectors=False, markdownStorer=markdownStorer,
+                                                                   mode="No Kmeans", segments=segment)
                     datas_list.append(basic_datas)
                     labels.append("basic")
                 else:
@@ -213,50 +219,50 @@ def run_gaussian_k():
 
             if RUN_SPECIAL_KMEANS:
                 print("Starting Special Kmeans Unweighted...")
-                path = f"{PATH_PREFIX}mplots\\generic\\{kMeansClient.GAME_MODE}\\{gaussian_width}g\\{k}k"
+                path = f"{PATH_PREFIX}mplots\\expanded\\{kMeansClient.GAME_MODE}\\{segment}s\\{k}k"
                 fileHelper.createDirIfNotExist(path, linux=LINUX)
                 name = path + f"\\{SEED_COUNT}seed__{kMeansClient.STANDARD_RUNNING_LENGTH}_then_{kMeansClient.KMEANS_RUNNING_LENGTH}__special_kmeans_plot.png"
                 name = fileHelper.osFormat(name, LINUX)
 
-                title = f"gw={gaussian_width}, k={k}, avg{SEED_COUNT} special_kmeans plot"
-                basic_datas = run_program_with_different_seeds(name, title, seed_count=SEED_COUNT,
-                                                               gaussian_width=gaussian_width, k=k,
+                title = f"{segment}-segments, k={k}, avg{SEED_COUNT} special_kmeans plot"
+                basic_datas = run_program_with_different_seeds(name, title, seed_count=SEED_COUNT, k=k,
                                                                weighted_kmeans=False, ignore_kmeans=False,
                                                                use_vectors=False, use_special_kmeans=True,
-                                                               markdownStorer=markdownStorer, mode="Special Kmeans")
+                                                               markdownStorer=markdownStorer, mode="Special Kmeans",
+                                                                segments=segment)
                 datas_list.append(basic_datas)
                 labels.append("special_kmeans")
 
             if RUN_WEIGHTED_SPECIAL_KMEANS:
                 print("Starting Special Kmeans Weighted...")
-                path = f"{PATH_PREFIX}mplots\\generic\\{kMeansClient.GAME_MODE}\\{gaussian_width}g\\{k}k"
+                path = f"{PATH_PREFIX}mplots\\expanded\\{kMeansClient.GAME_MODE}\\{segment}s\\{k}k"
                 fileHelper.createDirIfNotExist(path, linux=LINUX)
                 name = path + f"\\{SEED_COUNT}seed__{kMeansClient.STANDARD_RUNNING_LENGTH}_then_{kMeansClient.KMEANS_RUNNING_LENGTH}__weighted_special_kmeans_plot.png"
                 name = fileHelper.osFormat(name, LINUX)
 
-                title = f"gw={gaussian_width}, k={k}, avg{SEED_COUNT} weighted_special_kmeans plot"
-                basic_datas = run_program_with_different_seeds(name, title, seed_count=SEED_COUNT,
-                                                               gaussian_width=gaussian_width, k=k,
+                title = f"{segment}-segments, k={k}, avg{SEED_COUNT} weighted_special_kmeans plot"
+                basic_datas = run_program_with_different_seeds(name, title, seed_count=SEED_COUNT,k=k,
                                                                weighted_kmeans=True, ignore_kmeans=False,
                                                                use_vectors=False, use_special_kmeans=True,
-                                                               markdownStorer=markdownStorer, mode="Special Kmeans Unweighted")
+                                                               markdownStorer=markdownStorer, mode="Special Kmeans Unweighted",
+                                                               segments=segment)
                 datas_list.append(basic_datas)
                 labels.append("weighted_special_kmeans")
 
             if RUN_BASIC_NO_LEARN:
                 if k == K_VALUES[0]:
                     print("Starting Sleeping No Kmeans...")
-                    path = f"{PATH_PREFIX}mplots\\generic\\{kMeansClient.GAME_MODE}\\{gaussian_width}g\\basic"
+                    path = f"{PATH_PREFIX}mplots\\expanded\\{kMeansClient.GAME_MODE}\\{segment}s\\basic"
                     fileHelper.createDirIfNotExist(path, linux=LINUX)
                     name = path + f"\\{SEED_COUNT}seed__{kMeansClient.STANDARD_RUNNING_LENGTH}_then_{kMeansClient.KMEANS_RUNNING_LENGTH}__basic_no_learn_plot.png"
                     name = fileHelper.osFormat(name, LINUX)
 
-                    title = f"gw={gaussian_width}, avg{SEED_COUNT} basic-no_learn plot"
-                    basic_NL_datas = run_program_with_different_seeds(name, title, seed_count=SEED_COUNT,
-                                                                    gaussian_width=gaussian_width, k=k,
+                    title = f"{segment}-segments, avg{SEED_COUNT} basic-no_learn plot"
+                    basic_NL_datas = run_program_with_different_seeds(name, title, seed_count=SEED_COUNT,k=k,
                                                                     weighted_kmeans=False, ignore_kmeans=True,
                                                                     use_vectors=False, learn=False,
-                                                                    markdownStorer=markdownStorer, mode="Sleeping No Kmeans")
+                                                                    markdownStorer=markdownStorer, mode="Sleeping No Kmeans",
+                                                                    segments=segment)
                     datas_list.append(basic_NL_datas)
                     labels.append("basic no-learn")
                 else:
@@ -264,9 +270,9 @@ def run_gaussian_k():
                     labels.append("basic no-learn")
 
             end_2 = time.time()
-            print(f"\n\n{gaussian_width=}, {k=}: time:{end_2 - start_2}")
+            print(f"\n\n{segment=}, {k=}: time:{end_2 - start_2}")
             if len(labels) > 1:
-                path = f"plots\\generic\\{kMeansClient.GAME_MODE}\\aggregate\\{gaussian_width}g\\{k}k"
+                path = f"plots\\expanded\\{kMeansClient.GAME_MODE}\\aggregate\\{segment}s\\{k}k"
                 fileHelper.createDirIfNotExist(path, linux=LINUX)
 
                 types =  f"{'_weighted' if RUN_KMEANS_WEIGHTED else ''}{'_unweighted' if RUN_KMEANS_UNWEIGHTED else ''}{'_vector' if RUN_KMEANS_VECTOR else ''}{'_basic' if RUN_BASIC else ''}"
@@ -274,7 +280,7 @@ def run_gaussian_k():
                               f"{types}.png"
                 name = fileHelper.osFormat(name, LINUX)
 
-                title = f"gw={gaussian_width}, k={k} avg{SEED_COUNT}{types} plot"
+                title = f"{segment}-segments, k={k} avg{SEED_COUNT}{types} plot"
 
                 plotHelper.plot_multiple_graph_types(datas_list, labels, name, title, show_std=False)
                 name = path + f"\\{SEED_COUNT}seed__{kMeansClient.STANDARD_RUNNING_LENGTH}_then_{kMeansClient.KMEANS_RUNNING_LENGTH}" \
@@ -285,7 +291,7 @@ def run_gaussian_k():
                 plotHelper.plot_multiple_graph_types(datas_list, labels, name, title, show_std=True)
             time.sleep(2)
         end = time.time()
-        print(f"\n\n\n\n{gaussian_width=}: time:{end - start}")
+        print(f"\n\n\n\n{k=}: time:{end - start}")
         time.sleep(5)
     if markdownStorer != None:
         markdownStorer.create_markdown(LINUX, PATH_PREFIX)

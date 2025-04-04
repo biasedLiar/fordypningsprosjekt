@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from classes.genericBasic import *
+from classes.stateExpander import *
 import helper.fileHelper as fileHelper
 import helper.plotHelper as plotHelper
 
@@ -23,9 +24,10 @@ DISCOUNT_FACTOR = 0.99999  # Low discount penalize longer episodes.
 GAUSSIAN_WIDTH = 0.3  # Sets the width of the Gaussian function that controls how much far away states should influence the action choice
 EXPLORATION_RATE = 0.1  # Controls when actions with little data should be chosen, 0: never, 1: always
 
+SEGMENTS = 5
 K_MEANS_K = 20
 
-STANDARD_RUNNING_LENGTH = 50
+STANDARD_RUNNING_LENGTH = 100
 KMEANS_RUNNING_LENGTH = 100
 KMEANS_TYPE = STANDARD
 TSNE = False
@@ -34,26 +36,34 @@ TSNE = False
 path = f"mplots\\generic\\{GAME_MODE}\\single\\{GAUSSIAN_WIDTH}g"
 
 
+OBSERVATION_LIMITS = np.asarray([[-2.4, 2.4],
+                                 [-0.9, 0.9],
+                                 [-0.2095, 0.2095],
+                                 [-0.3, 0.3]])
 
 def run_program(seed=SEED, discount_factor=DISCOUNT_FACTOR, gaussian_width=GAUSSIAN_WIDTH,
                 exploration_rate=EXPLORATION_RATE, standard_episodes=STANDARD_RUNNING_LENGTH,
                 kmeans_episodes=KMEANS_RUNNING_LENGTH, weighted_kmeans=True, render_mode=RENDER_MODE,
                 game_mode=GAME_MODE, k=K_MEANS_K, save_plot=True, ignore_kmeans=False, use_vectors=False, learn=True,
-                vector_type=1, do_standardize=True, use_special_kmeans=False, write_logs=True):
+                vector_type=1, do_standardize=True, use_special_kmeans=False, write_logs=True, ):
 
     env = gymnasium.make(game_mode, render_mode=render_mode)
     env.action_space.seed(seed)
     np.random.seed(seed)
 
-    model = GenericModel(env.action_space.n, env.observation_space.shape[0], gaussian_width, exploration_rate, K=k, weighted_kmeans=weighted_kmeans,
+    model = GenericModel(env.action_space.n, env.observation_space.shape[0]*SEGMENTS, gaussian_width, exploration_rate, K=k, weighted_kmeans=weighted_kmeans,
                          use_vectors=use_vectors, vector_type=vector_type, do_standardize=do_standardize,
                          use_special_kmeans=use_special_kmeans)
 
     rewards = 0.  # Accumulative episode rewards
     actions = []  # Episode actions
     states = []  # Episode states
+    expander = StateExpander(env.observation_space.shape[0], OBSERVATION_LIMITS, segments=SEGMENTS)
+
     state, info = env.reset(seed=seed)
-    states.append(state)
+    expanded_state = expander.expand(state)
+    states.append(expanded_state)
+
     episodes = 0
     data = []
     action_string = ""
@@ -66,22 +76,25 @@ def run_program(seed=SEED, discount_factor=DISCOUNT_FACTOR, gaussian_width=GAUSS
                     exit()
 
         if episodes < standard_episodes or ignore_kmeans:
-            action = model.get_action_without_kmeans(state)
+            action = model.get_action_without_kmeans(expanded_state)
         elif use_vectors:
-            action = model.get_action_with_vector(state)
+            action = model.get_action_with_vector(expanded_state)
         else:
             #print("REached")
-            action = model.get_action_kmeans(state)
+            action = model.get_action_kmeans(expanded_state)
         action_string += str(action)
 
 
         actions.append(action)
-        old_state = state
+        old_state = expanded_state
+
         state, reward, terminated, truncated, info = env.step(action)
-        states.append(state)
-        path.append(state)
+        expanded_state = expander.expand(state)
+
+        states.append(expanded_state)
+        path.append(expanded_state)
         if use_vectors and episodes >= standard_episodes and False:
-            model.check_vector(old_state, state)
+            model.check_vector(old_state, expanded_state)
 
         rewards += float(reward)
 
@@ -91,12 +104,10 @@ def run_program(seed=SEED, discount_factor=DISCOUNT_FACTOR, gaussian_width=GAUSS
             if episodes >= standard_episodes:
                 data.append(rewards)
                 if write_logs:
-                    print(f"{episodes}: {rewards}  {action_string}")
+                    #print(f"{episodes}: {rewards}  {action_string}")
                     path = np.asarray(path)
                     if TSNE:
                         model.tsne_of_path(path)
-                    path=[]
-                    path=[]
             if learn or episodes < standard_episodes:
                 for i, state in enumerate(states):
                     model.states = np.vstack((model.states, state))
@@ -112,7 +123,9 @@ def run_program(seed=SEED, discount_factor=DISCOUNT_FACTOR, gaussian_width=GAUSS
             actions.clear()
             states.clear()
             state, info = env.reset()
-            states.append(state)
+            expanded_state = expander.expand(state)
+
+            states.append(expanded_state)
             episodes += 1
             if episodes == standard_episodes and not ignore_kmeans:
                 if write_logs:

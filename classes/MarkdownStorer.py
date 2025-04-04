@@ -7,7 +7,7 @@ import numpy as np
 import os
 
 class MarkdownStorer:
-    def __init__(self, Ks = None, GWs = None, learn_length=None, comment=None):
+    def __init__(self, Ks = None, GWs = None, segments=None, learn_length=None, comment=None):
         self.datas = {}
         self.run_count = 0
         self.max_seeds = 0
@@ -15,16 +15,17 @@ class MarkdownStorer:
         self.best_run_stats = None
         self.Ks = Ks
         self.GWs = GWs
+        self.segments = segments
         self.start_time = time.time()
         self.last_update_time = time.time()
         self.comment = comment
         self.learn_length = learn_length
         self.date = datetime.today().strftime('%Y-%m-%d__%H-%M')
 
-    def add_data_point(self, mode, data, plot_string, gw, k, seeds):
+    def add_data_point(self, mode, data, plot_string, gw, k, seeds, segments=1):
         if not mode in self.datas.keys():
             self.datas[mode] = []
-        runStat = RunStat(mode, data, plot_string, gw, k, seeds)
+        runStat = RunStat(mode, data, plot_string, gw, k, seeds, segments=segments)
         self.datas[mode].append(runStat)
         self.run_count += 1
         self.max_seeds = max(self.max_seeds, seeds)
@@ -37,14 +38,6 @@ class MarkdownStorer:
     def update_markdown(self, LINUX, PREFIX):
         if self.run_count > 1 and time.time() - self.last_update_time < 60:
             return
-        if self.run_count > 1000:
-            print("Trying to delete file")
-            title = self.date + f".md"
-            file_name = f"{PREFIX}markdown\\" + title
-            with open(file_name, "w"):
-                pass
-            #os.remove(file_name)
-
         self.create_markdown(LINUX, PREFIX, is_update=True)
         self.last_update_time = time.time()
 
@@ -74,7 +67,8 @@ class MarkdownStorer:
 
             if self.learn_length != None:
                 f.write(f'# Learn length: {self.learn_length}.\n'.encode())
-
+            if self.segments != None:
+                f.write(f'# Segments: {self.segments}.\n'.encode())
 
             if self.Ks != None:
                 f.write(f'# K values of {str(self.Ks)} tested.\n'.encode())
@@ -98,8 +92,7 @@ class MarkdownStorer:
                     f'### Best avg reward: {best_run_stat.data} for {best_run_stat.mode} gw: {best_run_stat.gw}, k: {best_run_stat.k} over {best_run_stat.seeds} seeds.\n\n'.encode())
 
                 for runStat in self.datas[mode]:
-                    f.write(
-                        f'{runStat.data} reward for k:{runStat.k}, gw:{runStat.gw} over {runStat.seeds} seeds.\n\n'.encode())
+                    f.write(runStat.get_stat_string().encode())
 
             f.write(f'\n# Data unformatted:\n\n\n'.encode())
 

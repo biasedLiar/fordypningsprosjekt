@@ -16,13 +16,13 @@ from sklearn.utils import gen_even_slices
 
 
 class GenericModel:
-    def __init__(self, env, gaussian_width, exploration_rate, weighted_kmeans=True,
+    def __init__(self, action_space_n, observation_space_shape, gaussian_width, exploration_rate, weighted_kmeans=True,
                  use_vectors=False, split_kmeans=False, K=20, no_learning=True, use_kmeans=True, vector_type=1,
                  do_standardize=True, use_special_kmeans=False):
         self.gaussian_width = gaussian_width
         self.gaussian_width_vector = gaussian_width
-        self.action_space_size = env.action_space.n
-        self.observation_space_size = env.observation_space.shape[0]
+        self.action_space_size = action_space_n
+        self.observation_space_size = observation_space_shape
         self.exploration_rate = exploration_rate
         self.weighted_kmeans = weighted_kmeans
         self.split_kmeans = split_kmeans
@@ -34,7 +34,7 @@ class GenericModel:
         self.delta = 10**-8
         self.use_kmeans = use_kmeans
 
-        self.states: np.ndarray = np.empty((0, env.observation_space.shape[0]))  # States are stored here
+        self.states: np.ndarray = np.empty((0, self.observation_space_size))  # States are stored here
         self.rewards: np.ndarray = np.empty(0)  # Value for each state index
 
 
