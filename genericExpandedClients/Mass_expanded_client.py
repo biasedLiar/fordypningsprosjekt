@@ -23,11 +23,10 @@ from classes.RunStat import *
 import time
 import genericExpandedClients.kMeansExpandedClient as kMeansClient
 
-LINUX = False
+LINUX = True
 
-SEED_COUNT = 3
+SEED_COUNT = 100
 
-COMMENT = f"Special kmeans with three times the amount of training"
 GAUSSIANS = [0.515, 0.535, 0.55, 0.565, 0.58]
 GAUSSIANS = [0.01, 0.03, 0.07, 0.1, 0.15, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7]
 GAUSSIANS = [0.3, 0.55, 0.6, 0.65, 0.7]
@@ -37,16 +36,23 @@ K_VALUES = [200, 250, 300, 350, 400]
 K_VALUES = [100, 150, 200, 250, 300, 350, 400, 600, 800]
 K_VALUES = [1000, 1250, 1500, 1750, 2000]
 K_VALUES = [20, 50, 100, 250]
-K_VALUES = [100, 250, 500]
-K_VALUES = [100]
+K_VALUES = [50, 100]
+K_VALUES = [50, 100, 250, 500, 1000, 1500, 2000]
 
 EXPLORATION_RATES = [0.1]
 
-MULTITHREADING=False
+MULTITHREADING=True
 
 
-SEGMENTS = [3, 4, 5, 6, 7]
-SEGMENTS = [3]
+
+SEGMENTS = [8]
+SEGMENTS = [2, 3, 4, 5, 6, 7, 8]
+EXPANDER_GAUSSIAN = 0.5
+
+
+COMMENT = f"Generations of training: {kMeansClient.STANDARD_RUNNING_LENGTH}\n" \
+          f"{GAUSSIAN=}\n" \
+          f"{EXPANDER_GAUSSIAN=}"
 
 RUN_KMEANS_UNWEIGHTED = False
 RUN_KMEANS_UNWEIGHTED = True
@@ -77,7 +83,7 @@ RUN_WEIGHTED_SPECIAL_KMEANS = False
 #gw0.4-250
 
 WRITE_MARKDOWN = True
-WRITE_LOGS = True
+WRITE_LOGS = False
 
 PATH_PREFIX = ("fordypningsprosjekt\\expanded_" if RUN_FROM_SCRIPT else "expanded_")
 
@@ -85,7 +91,7 @@ def run_program_with_different_seeds(plot_name, plot_title, seed_count=3,
                 discount_factor=kMeansClient.DISCOUNT_FACTOR, gaussian_width=GAUSSIAN,
                 exploration_rate=kMeansClient.EXPLORATION_RATE, standard_episodes=kMeansClient.STANDARD_RUNNING_LENGTH,
                 kmeans_episodes=kMeansClient.KMEANS_RUNNING_LENGTH, weighted_kmeans=True, render_mode=kMeansClient.RENDER_MODE,
-                game_mode=kMeansClient.GAME_MODE, k=kMeansClient.K_MEANS_K, save_plot=True, ignore_kmeans=False,
+                game_mode=kMeansClient.GAME_MODE, k=None, save_plot=True, ignore_kmeans=False,
                 use_vectors=RUN_KMEANS_VECTOR, vector_type=1, learn=True, use_special_kmeans=False, markdownStorer=None,
                 mode="insert_mode", write_logs=WRITE_LOGS, segments=1):
 
@@ -97,7 +103,8 @@ def run_program_with_different_seeds(plot_name, plot_title, seed_count=3,
                                      game_mode=game_mode, k=k, save_plot=False, ignore_kmeans=ignore_kmeans,
                                      use_vectors=use_vectors,
                                      vector_type=vector_type, learn=learn, do_standardize=True,
-                                     use_special_kmeans=use_special_kmeans, write_logs=write_logs)
+                                     use_special_kmeans=use_special_kmeans, write_logs=write_logs, segments=segments,
+                                     use_expanded=True, expander_gaussian=EXPANDER_GAUSSIAN)
         datas = []
         pool = Pool(processes=(cpu_count() - 1))
         with Pool((cpu_count() - 1)) as p:
@@ -112,7 +119,7 @@ def run_program_with_different_seeds(plot_name, plot_title, seed_count=3,
                                             kmeans_episodes=kmeans_episodes, weighted_kmeans=weighted_kmeans, render_mode=render_mode,
                                             game_mode=game_mode, k=k, save_plot=False, ignore_kmeans=ignore_kmeans, use_vectors=use_vectors,
                                             vector_type=vector_type, learn=learn, do_standardize=True, use_special_kmeans=use_special_kmeans,
-                                            write_logs=write_logs)
+                                            write_logs=write_logs, segments=segments, expander_gaussian=EXPANDER_GAUSSIAN)
             datas.append(data)
         datas = np.asarray(datas)
 
@@ -122,15 +129,13 @@ def run_program_with_different_seeds(plot_name, plot_title, seed_count=3,
     if markdownStorer != None:
         markdownStorer.add_data_point(mode, avg, plot_name, gaussian_width, k, seed_count, segments=segments)
         markdownStorer.update_markdown(LINUX, PATH_PREFIX)
-        if LINUX:
-            markdownStorer.update_markdown(LINUX, PATH_PREFIX)
     return datas
 
 
 
 def run_gaussian_k():
     if WRITE_MARKDOWN:
-        markdownStorer = MarkdownStorer(Ks=K_VALUES, learn_length=kMeansClient.STANDARD_RUNNING_LENGTH, comment=COMMENT)
+        markdownStorer = MarkdownStorer(Ks=K_VALUES, learn_length=kMeansClient.STANDARD_RUNNING_LENGTH, comment=COMMENT, segments=SEGMENTS)
     else:
         markdownStorer = None
     for k in K_VALUES:

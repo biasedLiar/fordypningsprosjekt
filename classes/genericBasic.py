@@ -274,9 +274,14 @@ class GenericModel:
             self.remove_unecessary_centers(write_logs=write_logs)
             print(f"{self.kmeans_centers.shape} centers after pruning.")
         else:
+            if len(self.states)/2 < self.K:
+                print(f"K too big, reduced.")
+                self.K = int(np.floor(len(self.states)/2))
+                pass
             self.kmeans_centers = KMeans(n_clusters=self.K, random_state=0, n_init='auto').fit(self.standardized_states, sample_weight=self.weights).cluster_centers_
 
-
+        if write_logs:
+            print(f"{self.kmeans_centers.shape} centers for {self.K=}.")
         if run_tsne:
             self.tsne()
         if self.use_vectors:

@@ -11,7 +11,7 @@ class RunStat:
     def get_stat_string(self):
         myString = f'{self.data} reward for k:{self.k}, gw:{self.gw}'
         if self.segments != 1:
-            myString += f", with {self.segments} segments "
+            myString += f", with {self.segments} segments"
         myString += f" over {self.seeds} seeds.\n\n"
         return myString
 

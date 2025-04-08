@@ -1,5 +1,6 @@
 import gymnasium
 import pygame
+import time
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -45,20 +46,21 @@ def run_program(seed=SEED, discount_factor=DISCOUNT_FACTOR, gaussian_width=GAUSS
                 exploration_rate=EXPLORATION_RATE, standard_episodes=STANDARD_RUNNING_LENGTH,
                 kmeans_episodes=KMEANS_RUNNING_LENGTH, weighted_kmeans=True, render_mode=RENDER_MODE,
                 game_mode=GAME_MODE, k=K_MEANS_K, save_plot=True, ignore_kmeans=False, use_vectors=False, learn=True,
-                vector_type=1, do_standardize=True, use_special_kmeans=False, write_logs=True, ):
+                vector_type=1, do_standardize=True, use_special_kmeans=False, write_logs=True, segments=SEGMENTS,
+                expander_gaussian=1):
 
     env = gymnasium.make(game_mode, render_mode=render_mode)
     env.action_space.seed(seed)
     np.random.seed(seed)
 
-    model = GenericModel(env.action_space.n, env.observation_space.shape[0]*SEGMENTS, gaussian_width, exploration_rate, K=k, weighted_kmeans=weighted_kmeans,
+    model = GenericModel(env.action_space.n, env.observation_space.shape[0]*segments, gaussian_width, exploration_rate, K=k, weighted_kmeans=weighted_kmeans,
                          use_vectors=use_vectors, vector_type=vector_type, do_standardize=do_standardize,
                          use_special_kmeans=use_special_kmeans)
 
     rewards = 0.  # Accumulative episode rewards
     actions = []  # Episode actions
     states = []  # Episode states
-    expander = StateExpander(env.observation_space.shape[0], OBSERVATION_LIMITS, segments=SEGMENTS)
+    expander = StateExpander(env.observation_space.shape[0], OBSERVATION_LIMITS, segments=segments, gaussian_width=expander_gaussian)
 
     state, info = env.reset(seed=seed)
     expanded_state = expander.expand(state)
@@ -99,7 +101,8 @@ def run_program(seed=SEED, discount_factor=DISCOUNT_FACTOR, gaussian_width=GAUSS
         rewards += float(reward)
 
         if terminated or truncated:
-            print(f"{episodes}: {rewards}  {action_string}")
+            if write_logs:
+                print(f"{episodes}: {rewards}  {action_string}")
             #print(f"{seed=}, {episodes=}, rewards: {rewards}")
             if episodes >= standard_episodes:
                 data.append(rewards)

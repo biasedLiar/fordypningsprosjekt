@@ -49,8 +49,10 @@ class MarkdownStorer:
         minutes = minutes % 60
         print("Starting writing to file...")
         title = self.date + f".md"
-        file_name = f"{PREFIX}markdown\\" + title
-
+        if is_update:
+            file_name = f"{PREFIX}markdown\\" + title
+        else:
+            file_name = f"{PREFIX}markdown\\" + title + f"__{self.run_count}x{self.max_seeds}"
 
         file_name = fileHelper.osFormat(file_name, LINUX)
 
@@ -77,7 +79,7 @@ class MarkdownStorer:
                 f.write(f'# GW values of {str(self.GWs)} tested.\n'.encode())
 
             f.write(
-                f'\nBest avg reward {self.best_results} achieved with {self.best_run_stats.mode} gw: {self.best_run_stats.gw}, k: {self.best_run_stats.k} over {self.best_run_stats.seeds} seeds.\n\n'.encode())
+                f'\n{self.best_run_stats.get_stat_string()}'.encode())
 
 
             for mode in self.datas:
@@ -89,7 +91,7 @@ class MarkdownStorer:
                         best_run_stat = runStat
 
                 f.write(
-                    f'### Best avg reward: {best_run_stat.data} for {best_run_stat.mode} gw: {best_run_stat.gw}, k: {best_run_stat.k} over {best_run_stat.seeds} seeds.\n\n'.encode())
+                    f'### {best_run_stat.get_stat_string()}'.encode())
 
                 for runStat in self.datas[mode]:
                     f.write(runStat.get_stat_string().encode())
@@ -104,3 +106,4 @@ class MarkdownStorer:
                         f'{runStat.data}\n'.encode())
 
         print("Finished writing to file.")
+
