@@ -25,7 +25,7 @@ EXPLORATION_RATE = 0.1  # Controls when actions with little data should be chose
 
 K_MEANS_K = 20
 
-STANDARD_RUNNING_LENGTH = 50
+STANDARD_RUNNING_LENGTH = 300
 KMEANS_RUNNING_LENGTH = 100
 KMEANS_TYPE = STANDARD
 TSNE = False
@@ -86,7 +86,6 @@ def run_program(seed=SEED, discount_factor=DISCOUNT_FACTOR, gaussian_width=GAUSS
         rewards += float(reward)
 
         if terminated or truncated:
-            print(f"{episodes}: {rewards}  {action_string}")
             #print(f"{seed=}, {episodes=}, rewards: {rewards}")
             if episodes >= standard_episodes:
                 data.append(rewards)

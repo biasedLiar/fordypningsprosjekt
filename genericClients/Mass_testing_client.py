@@ -23,7 +23,7 @@ from classes.RunStat import *
 import time
 import genericClients.kMeansClient as kMeansClient
 
-LINUX = False
+LINUX = True
 
 SEED_COUNT = 100
 
@@ -31,13 +31,14 @@ COMMENT = f"Special kmeans with three times the amount of training"
 GAUSSIANS = [0.515, 0.535, 0.55, 0.565, 0.58]
 GAUSSIANS = [0.01, 0.03, 0.07, 0.1, 0.15, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7]
 GAUSSIANS = [0.3, 0.55, 0.6, 0.65, 0.7]
-GAUSSIANS = [0.05, 0.3, 0.55]
+GAUSSIANS = [0.55]
 
 K_VALUES = [200, 250, 300, 350, 400]
 K_VALUES = [100, 150, 200, 250, 300, 350, 400, 600, 800]
 K_VALUES = [1000, 1250, 1500, 1750, 2000]
 K_VALUES = [100, 250, 500]
 K_VALUES = [20, 50, 100, 250]
+K_VALUES = [50, 100, 250, 500, 1000, 1500, 2000]
 
 EXPLORATION_RATES = [0.1]
 
@@ -73,7 +74,7 @@ RUN_WEIGHTED_SPECIAL_KMEANS = False
 #gw0.4-250
 
 WRITE_MARKDOWN = True
-WRITE_LOGS = True
+WRITE_LOGS = False
 
 PATH_PREFIX = ("fordypningsprosjekt\\" if RUN_FROM_SCRIPT else None)
 

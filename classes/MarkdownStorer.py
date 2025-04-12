@@ -48,11 +48,11 @@ class MarkdownStorer:
         hours = np.floor(minutes / 60)
         minutes = minutes % 60
         print("Starting writing to file...")
-        title = self.date + f".md"
+        title = self.date
         if is_update:
-            file_name = f"{PREFIX}markdown\\" + title
+            file_name = f"{PREFIX}markdown\\" + title + f".md"
         else:
-            file_name = f"{PREFIX}markdown\\" + title + f"__{self.run_count}x{self.max_seeds}"
+            file_name = f"{PREFIX}markdown\\" + title + f"__{self.run_count}x{self.max_seeds}"+ f".md"
 
         file_name = fileHelper.osFormat(file_name, LINUX)
 

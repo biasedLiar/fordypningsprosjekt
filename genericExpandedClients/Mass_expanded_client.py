@@ -47,7 +47,7 @@ MULTITHREADING=True
 
 SEGMENTS = [8]
 SEGMENTS = [2, 3, 4, 5, 6, 7, 8]
-EXPANDER_GAUSSIAN = 0.5
+EXPANDER_GAUSSIAN = 1
 
 
 COMMENT = f"Generations of training: {kMeansClient.STANDARD_RUNNING_LENGTH}\n" \
