@@ -6,13 +6,13 @@ class StateExpander:
         self.observation_space_size = observation_space_size
 
         # These are hardcoded for the environment.
-        # 1th and 3rd set of limits are based on ob-space
+        # 1st and 3rd set of limits are based on ob-space
         # 2nd and 4th set of limits are based on experimentation.
         self.observation_limits = observation_limits
         self.segments = segments
         self.gaussian_width = gaussian_width
         self.delta = 10**-8
-        self.add_vector = np.sum(self.observation_limits, axis=1)
+        self.add_vector = np.average(self.observation_limits, axis=1)
         self.div_vector = (self.observation_limits[:, 1] - self.observation_limits[:, 0]) / (self.segments-1)
 
         self.range_matrix = np.outer(np.ones(self.observation_space_size), np.linspace(-(self.segments-1)/2, (self.segments-1)/2, self.segments))
