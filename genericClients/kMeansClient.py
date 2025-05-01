@@ -25,7 +25,7 @@ EXPLORATION_RATE = 0.1  # Controls when actions with little data should be chose
 
 K_MEANS_K = 20
 
-STANDARD_RUNNING_LENGTH = 300
+STANDARD_RUNNING_LENGTH = 50
 KMEANS_RUNNING_LENGTH = 100
 KMEANS_TYPE = STANDARD
 TSNE = False
@@ -39,7 +39,8 @@ def run_program(seed=SEED, discount_factor=DISCOUNT_FACTOR, gaussian_width=GAUSS
                 exploration_rate=EXPLORATION_RATE, standard_episodes=STANDARD_RUNNING_LENGTH,
                 kmeans_episodes=KMEANS_RUNNING_LENGTH, weighted_kmeans=True, render_mode=RENDER_MODE,
                 game_mode=GAME_MODE, k=K_MEANS_K, save_plot=True, ignore_kmeans=False, use_vectors=False, learn=True,
-                vector_type=1, do_standardize=True, use_special_kmeans=False, write_logs=True):
+                vector_type=1, do_standardize=True, use_special_kmeans=False, write_logs=True, use_search_tree=False,
+                search_tree_depth=-1, save_midway=False):
 
     env = gymnasium.make(game_mode, render_mode=render_mode)
     env.action_space.seed(seed)
@@ -47,7 +48,7 @@ def run_program(seed=SEED, discount_factor=DISCOUNT_FACTOR, gaussian_width=GAUSS
 
     model = GenericModel(env.action_space.n, env.observation_space.shape[0], gaussian_width, exploration_rate, K=k, weighted_kmeans=weighted_kmeans,
                          use_vectors=use_vectors, vector_type=vector_type, do_standardize=do_standardize,
-                         use_special_kmeans=use_special_kmeans)
+                         use_special_kmeans=use_special_kmeans, use_search_tree=use_search_tree, search_tree_depth=search_tree_depth)
 
     rewards = 0.  # Accumulative episode rewards
     actions = []  # Episode actions
@@ -66,7 +67,10 @@ def run_program(seed=SEED, discount_factor=DISCOUNT_FACTOR, gaussian_width=GAUSS
                     exit()
 
         if episodes < standard_episodes or ignore_kmeans:
-            action = model.get_action_without_kmeans(state)
+            if use_search_tree and episodes >= standard_episodes:
+                action = model.get_action_search_tree(state)
+            else:
+                action = model.get_action_without_kmeans(state)
         elif use_vectors:
             action = model.get_action_with_vector(state)
         else:
@@ -113,17 +117,21 @@ def run_program(seed=SEED, discount_factor=DISCOUNT_FACTOR, gaussian_width=GAUSS
             state, info = env.reset()
             states.append(state)
             episodes += 1
-            if episodes == standard_episodes and not ignore_kmeans:
-                if write_logs:
-                    print("Calculating kmeans centers...")
-                model.calc_standard_kmeans(write_logs=write_logs, run_tsne=TSNE)
-                if TSNE:
-                    model.tsne_based_on_reward()
-                if write_logs:
-                    print(f"{model.states.shape=}")
-                    print("Finished calculating kmeans centers")
+            if episodes == standard_episodes:
+                if not ignore_kmeans:
+                    if write_logs:
+                        print("Calculating kmeans centers...")
+                    model.calc_standard_kmeans(write_logs=write_logs, run_tsne=TSNE)
+                    if TSNE:
+                        model.tsne_based_on_reward()
+                    if write_logs:
+                        print(f"{model.states.shape=}")
+                        print("Finished calculating kmeans centers")
+                elif save_midway:
+                    model.calc_search_tree_state_vectors()
             if episodes == kmeans_episodes + standard_episodes:
                 break
+
 
     if save_plot:
         window_width = 5

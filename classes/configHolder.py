@@ -8,7 +8,8 @@ class configHolder:
                 kmeans_episodes=kMeansClient.KMEANS_RUNNING_LENGTH, weighted_kmeans=True, render_mode=kMeansClient.RENDER_MODE,
                 game_mode=kMeansClient.GAME_MODE, k=kMeansClient.K_MEANS_K, save_plot=True, ignore_kmeans=False,
                 use_vectors=False, vector_type=1, learn=True, use_special_kmeans=False, do_standardize=True, write_logs=True,
-                use_expanded=False, segments=1, expander_gaussian=1, trig_expanded=False):
+                use_expanded=False, segments=1, expander_gaussian=1, trig_expanded=False, use_cosine_similarity=False,
+                use_search_tree=False, search_tree_depth=-1, save_midway=False):
         self.discount_factor=discount_factor
         self.gaussian_width=gaussian_width
         self.exploration_rate = exploration_rate
@@ -30,6 +31,10 @@ class configHolder:
         self.segments = segments
         self.expander_gaussian = expander_gaussian
         self.trig_expanded = trig_expanded
+        self.use_cosine_similarity = use_cosine_similarity
+        self.use_search_tree = use_search_tree
+        self.search_tree_depth = search_tree_depth
+        self.save_midway = save_midway
 
 
     def run_with_seed(self, seed):
@@ -46,7 +51,8 @@ class configHolder:
                                             vector_type=self.vector_type, learn=self.learn,
                                             use_special_kmeans=self.use_special_kmeans,
                                             do_standardize=self.do_standardize, write_logs=self.write_logs,
-                                            segments=self.segments, expander_gaussian=self.expander_gaussian)
+                                            segments=self.segments, expander_gaussian=self.expander_gaussian,
+                                            use_cosine_similarity=self.use_cosine_similarity)
         elif self.trig_expanded:
             data = kMeansTrigExpandedClient.run_program(seed=seed, discount_factor=self.discount_factor,
                                             gaussian_width=self.gaussian_width,
@@ -60,7 +66,8 @@ class configHolder:
                                             vector_type=self.vector_type, learn=self.learn,
                                             use_special_kmeans=self.use_special_kmeans,
                                             do_standardize=self.do_standardize, write_logs=self.write_logs,
-                                            segments=self.segments, expander_gaussian=self.expander_gaussian)
+                                            segments=self.segments, expander_gaussian=self.expander_gaussian,
+                                            use_cosine_similarity=self.use_cosine_similarity)
         else:
             data = kMeansClient.run_program(seed=seed, discount_factor=self.discount_factor,
                                             gaussian_width=self.gaussian_width,
@@ -73,6 +80,8 @@ class configHolder:
                                             use_vectors=self.use_vectors,
                                             vector_type=self.vector_type, learn=self.learn,
                                             use_special_kmeans=self.use_special_kmeans,
-                                            do_standardize=self.do_standardize, write_logs=self.write_logs)
+                                            do_standardize=self.do_standardize, write_logs=self.write_logs,
+                                            use_search_tree=self.use_search_tree, search_tree_depth=self.search_tree_depth,
+                                            save_midway=self.save_midway)
 
         return data

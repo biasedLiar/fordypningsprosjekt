@@ -28,11 +28,10 @@ EXPLORATION_RATE = 0.1  # Controls when actions with little data should be chose
 SEGMENTS = 5
 K_MEANS_K = 20
 
-STANDARD_RUNNING_LENGTH = 300
+STANDARD_RUNNING_LENGTH = 50
 KMEANS_RUNNING_LENGTH = 100
 KMEANS_TYPE = STANDARD
 TSNE = False
-
 
 path = f"mplots\\generic\\{GAME_MODE}\\single\\{GAUSSIAN_WIDTH}g"
 
@@ -47,7 +46,7 @@ def run_program(seed=SEED, discount_factor=DISCOUNT_FACTOR, gaussian_width=GAUSS
                 kmeans_episodes=KMEANS_RUNNING_LENGTH, weighted_kmeans=True, render_mode=RENDER_MODE,
                 game_mode=GAME_MODE, k=K_MEANS_K, save_plot=True, ignore_kmeans=False, use_vectors=False, learn=True,
                 vector_type=1, do_standardize=True, use_special_kmeans=False, write_logs=True, segments=SEGMENTS,
-                expander_gaussian=1):
+                expander_gaussian=1, use_cosine_similarity=False):
 
     env = gymnasium.make(game_mode, render_mode=render_mode)
     env.action_space.seed(seed)
@@ -55,7 +54,7 @@ def run_program(seed=SEED, discount_factor=DISCOUNT_FACTOR, gaussian_width=GAUSS
 
     model = GenericModel(env.action_space.n, env.observation_space.shape[0]*segments*2, gaussian_width, exploration_rate, K=k, weighted_kmeans=weighted_kmeans,
                          use_vectors=use_vectors, vector_type=vector_type, do_standardize=do_standardize,
-                         use_special_kmeans=use_special_kmeans)
+                         use_special_kmeans=use_special_kmeans, use_cosine_similarity=use_cosine_similarity)
 
     rewards = 0.  # Accumulative episode rewards
     actions = []  # Episode actions

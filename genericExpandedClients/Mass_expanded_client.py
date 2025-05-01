@@ -47,12 +47,10 @@ MULTITHREADING=True
 
 SEGMENTS = [8]
 SEGMENTS = [2, 3, 4, 5, 6, 7, 8]
-EXPANDER_GAUSSIAN = 1
+EXPANDER_GAUSSIAN = 0.25
 
 
-COMMENT = f"Generations of training: {kMeansClient.STANDARD_RUNNING_LENGTH}\n" \
-          f"{GAUSSIAN=}\n" \
-          f"{EXPANDER_GAUSSIAN=}"
+
 
 RUN_KMEANS_UNWEIGHTED = False
 RUN_KMEANS_UNWEIGHTED = True
@@ -84,8 +82,16 @@ RUN_WEIGHTED_SPECIAL_KMEANS = False
 
 WRITE_MARKDOWN = True
 WRITE_LOGS = False
+COSINE_SIMILARITY = True
 
 PATH_PREFIX = ("fordypningsprosjekt\\expanded_" if RUN_FROM_SCRIPT else "expanded_")
+
+
+COMMENT = f"Generations of training: {kMeansClient.STANDARD_RUNNING_LENGTH}\n" \
+          f"{GAUSSIAN=}\n" \
+          f"{EXPANDER_GAUSSIAN=}\n" \
+          f"{COSINE_SIMILARITY=}" \
+          f"\n\nNothing special, but stuff fixed"
 
 def run_program_with_different_seeds(plot_name, plot_title, seed_count=3,
                 discount_factor=kMeansClient.DISCOUNT_FACTOR, gaussian_width=GAUSSIAN,
@@ -93,7 +99,7 @@ def run_program_with_different_seeds(plot_name, plot_title, seed_count=3,
                 kmeans_episodes=kMeansClient.KMEANS_RUNNING_LENGTH, weighted_kmeans=True, render_mode=kMeansClient.RENDER_MODE,
                 game_mode=kMeansClient.GAME_MODE, k=None, save_plot=True, ignore_kmeans=False,
                 use_vectors=RUN_KMEANS_VECTOR, vector_type=1, learn=True, use_special_kmeans=False, markdownStorer=None,
-                mode="insert_mode", write_logs=WRITE_LOGS, segments=1):
+                mode="insert_mode", write_logs=WRITE_LOGS, segments=1, use_cosine_similarity=COSINE_SIMILARITY):
 
     if MULTITHREADING:
         config_holder = configHolder(discount_factor=discount_factor, gaussian_width=gaussian_width,
@@ -104,7 +110,8 @@ def run_program_with_different_seeds(plot_name, plot_title, seed_count=3,
                                      use_vectors=use_vectors,
                                      vector_type=vector_type, learn=learn, do_standardize=True,
                                      use_special_kmeans=use_special_kmeans, write_logs=write_logs, segments=segments,
-                                     use_expanded=True, expander_gaussian=EXPANDER_GAUSSIAN)
+                                     use_expanded=True, expander_gaussian=EXPANDER_GAUSSIAN,
+                                     use_cosine_similarity=use_cosine_similarity)
         datas = []
         pool = Pool(processes=(cpu_count() - 1))
         with Pool((cpu_count() - 1)) as p:
@@ -119,7 +126,8 @@ def run_program_with_different_seeds(plot_name, plot_title, seed_count=3,
                                             kmeans_episodes=kmeans_episodes, weighted_kmeans=weighted_kmeans, render_mode=render_mode,
                                             game_mode=game_mode, k=k, save_plot=False, ignore_kmeans=ignore_kmeans, use_vectors=use_vectors,
                                             vector_type=vector_type, learn=learn, do_standardize=True, use_special_kmeans=use_special_kmeans,
-                                            write_logs=write_logs, segments=segments, expander_gaussian=EXPANDER_GAUSSIAN)
+                                            write_logs=write_logs, segments=segments, expander_gaussian=EXPANDER_GAUSSIAN,
+                                            use_cosine_similarity=use_cosine_similarity)
             datas.append(data)
         datas = np.asarray(datas)
 

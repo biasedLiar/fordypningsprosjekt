@@ -21,7 +21,7 @@ import helper.plotHelper as plotHelper
 from classes.MarkdownStorer import *
 from classes.RunStat import *
 import time
-import genericExpandedClients.kMeansTrigExpandedClient as kMeansClient
+import genericExpandedClients.kMeansTrigExpandedClient as trigK_MeansClient
 
 LINUX = True
 
@@ -50,9 +50,7 @@ SEGMENTS = [1, 2, 3, 4, 5, 6, 7, 8]
 EXPANDER_GAUSSIAN = 1
 
 
-COMMENT = f"Generations of training: {kMeansClient.STANDARD_RUNNING_LENGTH}\n" \
-          f"{GAUSSIAN=}\n" \
-          f"{EXPANDER_GAUSSIAN=}"
+
 
 RUN_KMEANS_UNWEIGHTED = False
 RUN_KMEANS_UNWEIGHTED = True
@@ -84,6 +82,15 @@ RUN_WEIGHTED_SPECIAL_KMEANS = False
 
 WRITE_MARKDOWN = True
 WRITE_LOGS = False
+COSINE_SIMILARITY = True
+
+
+COMMENT = f"Generations of training: {trigK_MeansClient.STANDARD_RUNNING_LENGTH}\n" \
+          f"{GAUSSIAN=}\n" \
+          f"{EXPANDER_GAUSSIAN=}\n" \
+          f"{COSINE_SIMILARITY=}"
+
+
 
 PATH_PREFIX = ("fordypningsprosjekt\\trig_expanded_" if RUN_FROM_SCRIPT else "trig_expanded_")
 
@@ -93,7 +100,7 @@ def run_program_with_different_seeds(plot_name, plot_title, seed_count=3,
                 kmeans_episodes=kMeansClient.KMEANS_RUNNING_LENGTH, weighted_kmeans=True, render_mode=kMeansClient.RENDER_MODE,
                 game_mode=kMeansClient.GAME_MODE, k=None, save_plot=True, ignore_kmeans=False,
                 use_vectors=RUN_KMEANS_VECTOR, vector_type=1, learn=True, use_special_kmeans=False, markdownStorer=None,
-                mode="insert_mode", write_logs=WRITE_LOGS, segments=1):
+                mode="insert_mode", write_logs=WRITE_LOGS, segments=1, use_cosine_similarity=COSINE_SIMILARITY):
 
     if MULTITHREADING:
         config_holder = configHolder(discount_factor=discount_factor, gaussian_width=gaussian_width,
@@ -104,7 +111,8 @@ def run_program_with_different_seeds(plot_name, plot_title, seed_count=3,
                                      use_vectors=use_vectors,
                                      vector_type=vector_type, learn=learn, do_standardize=True,
                                      use_special_kmeans=use_special_kmeans, write_logs=write_logs, segments=segments,
-                                     use_expanded=False, expander_gaussian=EXPANDER_GAUSSIAN, trig_expanded=True)
+                                     use_expanded=False, expander_gaussian=EXPANDER_GAUSSIAN, trig_expanded=True,
+                                     use_cosine_similarity=use_cosine_similarity)
         datas = []
         pool = Pool(processes=(cpu_count() - 1))
         with Pool((cpu_count() - 1)) as p:
@@ -114,7 +122,7 @@ def run_program_with_different_seeds(plot_name, plot_title, seed_count=3,
     else:
         datas = []
         for seed in range(seed_count):
-            data = kMeansClient.run_program(seed=seed, discount_factor=discount_factor, gaussian_width=gaussian_width,
+            data = trigK_MeansClient.run_program(seed=seed, discount_factor=discount_factor, gaussian_width=gaussian_width,
                                             exploration_rate=exploration_rate, standard_episodes=standard_episodes,
                                             kmeans_episodes=kmeans_episodes, weighted_kmeans=weighted_kmeans, render_mode=render_mode,
                                             game_mode=game_mode, k=k, save_plot=False, ignore_kmeans=ignore_kmeans, use_vectors=use_vectors,
@@ -135,7 +143,7 @@ def run_program_with_different_seeds(plot_name, plot_title, seed_count=3,
 
 def run_gaussian_k():
     if WRITE_MARKDOWN:
-        markdownStorer = MarkdownStorer(Ks=K_VALUES, learn_length=kMeansClient.STANDARD_RUNNING_LENGTH, comment=COMMENT, segments=SEGMENTS)
+        markdownStorer = MarkdownStorer(Ks=K_VALUES, learn_length=trigK_MeansClient.STANDARD_RUNNING_LENGTH, comment=COMMENT, segments=SEGMENTS)
     else:
         markdownStorer = None
     for k in K_VALUES:

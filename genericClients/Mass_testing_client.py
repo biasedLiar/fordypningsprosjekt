@@ -29,9 +29,9 @@ SEED_COUNT = 100
 
 COMMENT = f"Special kmeans with three times the amount of training"
 GAUSSIANS = [0.515, 0.535, 0.55, 0.565, 0.58]
-GAUSSIANS = [0.01, 0.03, 0.07, 0.1, 0.15, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7]
 GAUSSIANS = [0.3, 0.55, 0.6, 0.65, 0.7]
 GAUSSIANS = [0.55]
+GAUSSIANS = [0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]
 
 K_VALUES = [200, 250, 300, 350, 400]
 K_VALUES = [100, 150, 200, 250, 300, 350, 400, 600, 800]
@@ -39,17 +39,24 @@ K_VALUES = [1000, 1250, 1500, 1750, 2000]
 K_VALUES = [100, 250, 500]
 K_VALUES = [20, 50, 100, 250]
 K_VALUES = [50, 100, 250, 500, 1000, 1500, 2000]
+K_VALUES = [1]
+
 
 EXPLORATION_RATES = [0.1]
 
-MULTITHREADING=LINUX
+MULTITHREADING = True
+WRITE_LOGS = False
 
 
-RUN_KMEANS_UNWEIGHTED = False
 RUN_KMEANS_UNWEIGHTED = True
+RUN_KMEANS_UNWEIGHTED = False
 
 RUN_KMEANS_WEIGHTED = True
 RUN_KMEANS_WEIGHTED = False
+
+
+RUN_SEARCH_TREE = False
+RUN_SEARCH_TREE = True
 
 RUN_KMEANS_VECTOR = True
 RUN_KMEANS_VECTOR = False
@@ -74,7 +81,8 @@ RUN_WEIGHTED_SPECIAL_KMEANS = False
 #gw0.4-250
 
 WRITE_MARKDOWN = True
-WRITE_LOGS = False
+
+SEARCH_TREE_DEPTH = 0
 
 PATH_PREFIX = ("fordypningsprosjekt\\" if RUN_FROM_SCRIPT else None)
 
@@ -84,7 +92,7 @@ def run_program_with_different_seeds(plot_name, plot_title, seed_count=3,
                 kmeans_episodes=kMeansClient.KMEANS_RUNNING_LENGTH, weighted_kmeans=True, render_mode=kMeansClient.RENDER_MODE,
                 game_mode=kMeansClient.GAME_MODE, k=kMeansClient.K_MEANS_K, save_plot=True, ignore_kmeans=False,
                 use_vectors=RUN_KMEANS_VECTOR, vector_type=1, learn=True, use_special_kmeans=False, markdownStorer=None,
-                mode="insert_mode", write_logs=WRITE_LOGS):
+                mode="insert_mode", write_logs=WRITE_LOGS, use_search_tree=False, search_tree_depth=-1, save_midway=False):
 
     if MULTITHREADING:
         config_holder = configHolder(discount_factor=discount_factor, gaussian_width=gaussian_width,
@@ -94,7 +102,9 @@ def run_program_with_different_seeds(plot_name, plot_title, seed_count=3,
                                      game_mode=game_mode, k=k, save_plot=False, ignore_kmeans=ignore_kmeans,
                                      use_vectors=use_vectors,
                                      vector_type=vector_type, learn=learn, do_standardize=True,
-                                     use_special_kmeans=use_special_kmeans, write_logs=write_logs)
+                                     use_special_kmeans=use_special_kmeans, write_logs=write_logs,
+                                     search_tree_depth=search_tree_depth, use_search_tree=use_search_tree,
+                                     save_midway=save_midway)
         datas = []
         pool = Pool(processes=(cpu_count() - 1))
         with Pool((cpu_count() - 1)) as p:
@@ -109,7 +119,8 @@ def run_program_with_different_seeds(plot_name, plot_title, seed_count=3,
                                             kmeans_episodes=kmeans_episodes, weighted_kmeans=weighted_kmeans, render_mode=render_mode,
                                             game_mode=game_mode, k=k, save_plot=False, ignore_kmeans=ignore_kmeans, use_vectors=use_vectors,
                                             vector_type=vector_type, learn=learn, do_standardize=True, use_special_kmeans=use_special_kmeans,
-                                            write_logs=write_logs)
+                                            write_logs=write_logs, use_search_tree=use_search_tree, search_tree_depth=search_tree_depth,
+                                            save_midway=save_midway)
             datas.append(data)
         datas = np.asarray(datas)
 
@@ -164,6 +175,28 @@ def run_gaussian_k():
                                                          use_vectors=False, markdownStorer=markdownStorer, mode="Kmeans Weighted")
                 datas_list.append(datas)
                 labels.append("weighted")
+
+            if RUN_SEARCH_TREE:
+                if k == K_VALUES[0]:
+                    print("Starting Search Tree...")
+                    path = f"{PATH_PREFIX}mplots\\generic\\{kMeansClient.GAME_MODE}\\{gaussian_width}g\\search_tree"
+                    fileHelper.createDirIfNotExist(path, linux=LINUX)
+                    name = path + f"\\{SEED_COUNT}seed__{kMeansClient.STANDARD_RUNNING_LENGTH}_then_{kMeansClient.KMEANS_RUNNING_LENGTH}__tree_plot.png"
+                    name = fileHelper.osFormat(name, LINUX)
+
+                    title = f"gw={gaussian_width}, avg{SEED_COUNT} tree plot"
+                    basic_datas = run_program_with_different_seeds(name, title, seed_count=SEED_COUNT,
+                                                                   gaussian_width=gaussian_width,
+                                                                   weighted_kmeans=False, ignore_kmeans=True,
+                                                                   use_vectors=False, markdownStorer=markdownStorer,
+                                                                   mode="Search Tree", use_search_tree=True,
+                                                                   search_tree_depth=SEARCH_TREE_DEPTH, save_midway=True,
+                                                                   learn=False)
+                    datas_list.append(basic_datas)
+                    labels.append("tree")
+                else:
+                    datas_list.append(basic_datas)
+                    labels.append("tree")
 
             if RUN_KMEANS_VECTOR:
                 print("Starting Vector...")
