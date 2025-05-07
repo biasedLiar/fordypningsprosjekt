@@ -22,15 +22,15 @@ class MarkdownStorer:
         self.learn_length = learn_length
         self.date = datetime.today().strftime('%Y-%m-%d__%H-%M')
 
-    def add_data_point(self, mode, data, plot_string, gw, k, seeds, segments=1):
+    def add_data_point(self, mode, avg, std, plot_string, gw, k, seeds, segments=1):
         if not mode in self.datas.keys():
             self.datas[mode] = []
-        runStat = RunStat(mode, data, plot_string, gw, k, seeds, segments=segments)
+        runStat = RunStat(mode, avg, std, plot_string, gw=gw, k=k, seeds=seeds, segments=segments)
         self.datas[mode].append(runStat)
         self.run_count += 1
         self.max_seeds = max(self.max_seeds, seeds)
-        if self.best_results == None or self.best_results < data:
-            self.best_results = data
+        if self.best_results == None or self.best_results < avg:
+            self.best_results = avg
             self.best_run_stats = runStat
         print("Data stored...")
 
@@ -52,7 +52,7 @@ class MarkdownStorer:
         if is_update:
             file_name = f"{PREFIX}markdown\\" + title + f".md"
         else:
-            file_name = f"{PREFIX}markdown\\" + title + f"__{self.run_count}x{self.max_seeds}"+ f".md"
+            file_name = f"{PREFIX}results\\" + title + f"__{self.run_count}x{self.max_seeds}"+ f".md"
 
         file_name = fileHelper.osFormat(file_name, LINUX)
 
@@ -87,7 +87,7 @@ class MarkdownStorer:
 
                 best_run_stat = None
                 for runStat in self.datas[mode]:
-                    if best_run_stat == None or runStat.data > best_run_stat.data:
+                    if best_run_stat == None or runStat.avg > best_run_stat.avg:
                         best_run_stat = runStat
 
                 f.write(
@@ -99,11 +99,16 @@ class MarkdownStorer:
             f.write(f'\n# Data unformatted:\n\n\n'.encode())
 
             for mode in self.datas:
-                f.write(f'\n## {mode} tests\n'.encode())
+                f.write(f'\n## {mode} tests\navg:\n'.encode())
 
                 for runStat in self.datas[mode]:
                     f.write(
-                        f'{runStat.data}\n'.encode())
+                        f'{runStat.avg}\n'.encode())
+
+                f.write(f'\nstd:\n'.encode())
+                for runStat in self.datas[mode]:
+                    f.write(
+                        f'{runStat.std}\n'.encode())
 
         print("Finished writing to file.")
 

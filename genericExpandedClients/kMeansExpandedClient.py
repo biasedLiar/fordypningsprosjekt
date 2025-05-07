@@ -47,7 +47,8 @@ def run_program(seed=SEED, discount_factor=DISCOUNT_FACTOR, gaussian_width=GAUSS
                 kmeans_episodes=KMEANS_RUNNING_LENGTH, weighted_kmeans=True, render_mode=RENDER_MODE,
                 game_mode=GAME_MODE, k=K_MEANS_K, save_plot=True, ignore_kmeans=False, use_vectors=False, learn=True,
                 vector_type=1, do_standardize=True, use_special_kmeans=False, write_logs=True, segments=SEGMENTS,
-                expander_gaussian=1, use_cosine_similarity=False):
+                expander_gaussian=1, use_cosine_similarity=False, use_search_tree=False,
+                search_tree_depth=-1, save_midway=False):
 
     env = gymnasium.make(game_mode, render_mode=render_mode)
     env.action_space.seed(seed)
@@ -55,7 +56,7 @@ def run_program(seed=SEED, discount_factor=DISCOUNT_FACTOR, gaussian_width=GAUSS
 
     model = GenericModel(env.action_space.n, env.observation_space.shape[0]*segments, gaussian_width, exploration_rate, K=k, weighted_kmeans=weighted_kmeans,
                          use_vectors=use_vectors, vector_type=vector_type, do_standardize=do_standardize,
-                         use_special_kmeans=use_special_kmeans, use_cosine_similarity=use_cosine_similarity)
+                         use_special_kmeans=use_special_kmeans, use_cosine_similarity=use_cosine_similarity, use_search_tree=use_search_tree, search_tree_depth=search_tree_depth)
 
     rewards = 0.  # Accumulative episode rewards
     actions = []  # Episode actions
@@ -78,7 +79,10 @@ def run_program(seed=SEED, discount_factor=DISCOUNT_FACTOR, gaussian_width=GAUSS
                     exit()
 
         if episodes < standard_episodes or ignore_kmeans:
-            action = model.get_action_without_kmeans(expanded_state)
+            if use_search_tree and episodes >= standard_episodes:
+                action = model.get_action_search_tree(expanded_state)
+            else:
+                action = model.get_action_without_kmeans(expanded_state)
         elif use_vectors:
             action = model.get_action_with_vector(expanded_state)
         else:
@@ -139,6 +143,9 @@ def run_program(seed=SEED, discount_factor=DISCOUNT_FACTOR, gaussian_width=GAUSS
                 if write_logs:
                     print(f"{model.states.shape=}")
                     print("Finished calculating kmeans centers")
+
+            elif episodes == standard_episodes and save_midway:
+                model.calc_search_tree_state_vectors()
             if episodes == kmeans_episodes + standard_episodes:
                 break
 

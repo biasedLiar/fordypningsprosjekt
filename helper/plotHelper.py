@@ -45,6 +45,16 @@ def get_std_deviation(datas):
     sigma1 = datas.std(axis=0)
     return sigma1
 
+def get_rewards(reward_list, gamma):
+    num = len(reward_list)
+    out_list = np.zeros(num)
+    for i in range(num):
+        reward = reward_list[num - i -1]
+        if i != 0:
+            reward += gamma * out_list[num - i]
+        out_list[num - i - 1] = reward
+    return out_list
+
 def plot_with_max_min_mean_std(datas, plot_name, plot_title):
     avg_data, max_data, min_data = average_max_min_diagrams(datas)
     avg_num = np.round(np.mean(avg_data), 2).item()

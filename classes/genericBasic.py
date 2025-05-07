@@ -1,3 +1,5 @@
+import time
+
 import numpy as np
 import sklearn.utils
 
@@ -19,7 +21,7 @@ class GenericModel:
     def __init__(self, action_space_n, observation_space_shape, gaussian_width, exploration_rate, weighted_kmeans=True,
                  use_vectors=False, split_kmeans=False, K=20, no_learning=True, use_kmeans=True, vector_type=1,
                  do_standardize=True, use_special_kmeans=False, use_cosine_similarity=False, use_search_tree=False,
-                 search_tree_depth=-1):
+                 search_tree_depth=-1, tree_ignore_kmeans=True):
         self.gaussian_width = gaussian_width
         self.gaussian_width_vector = gaussian_width
         self.action_space_size = action_space_n
@@ -63,7 +65,7 @@ class GenericModel:
         self.scaler = None
         self.standardized_states = []
         self.kmeans_centers: list[np.ndarray] = []
-        self.kmeans_action_reward_list: list[list[float]] = []
+        self.center_action_reward_list: list[list[float]] = []
         self.kmeans_action_weight_list: list[list[float]] = []
         self.center_vectors = []
         self.center_max_rewards = []
@@ -84,6 +86,9 @@ class GenericModel:
 
         self.use_search_tree = use_search_tree
         self.search_tree_depth = search_tree_depth
+        self.tree_ignore_kmeans = tree_ignore_kmeans
+
+        self.midway = False
 
 
     def get_action_without_kmeans(self, state):
@@ -121,11 +126,11 @@ class GenericModel:
                     action_rewards[action] = np.sum(weight * self.rewards[self.state_action_transitions_to[action]]) / weight_sums[action]
 
         for action, _ in enumerate(self.state_action_transitions):
-            if weight_sums[action] == 0:
+            if weight_sums[action] == 0 and not self.midway:
                 return action  # Return action that has never been chosen before
             if np.max(weight_sums) == 0:
                 print(f"{weight_sums=}")
-            if weight_sums[action] / np.max(weight_sums) < self.exploration_rate:
+            if weight_sums[action] / np.max(weight_sums) < self.exploration_rate and not self.midway:
                 return action  # Return action that has little data for the current state
         return np.argmax(action_rewards)
 
@@ -281,11 +286,10 @@ class GenericModel:
             plot.clf()
         return model.mu
 
-    def calc_search_tree_state_vectors(self):
+    def calc_search_tree_state_vectors(self, ignore_kmeans=True):
         if self.do_standardize:
             self.scaler = preprocessing.StandardScaler().fit(self.states)
             self.standardized_states = self.scaler.transform(self.states)
-            # elif self.use_cosine_similarity:
         else:
             self.standardized_states = self.states
 
@@ -296,6 +300,70 @@ class GenericModel:
         for i in range(self.action_space_size):
             self.state_vectors[i] = self.standardized_states[self.state_action_transitions_to[i]] - self.standardized_states[
                     self.state_action_transitions_from[i]]
+
+    def calc_search_tree_kmeans(self, run_tsne=False, write_logs=True):
+
+        self.num_states_when_ran_kmeans = len(self.states)
+        if self.weighted_kmeans:
+            self.weights = self.get_kmeans_weights()
+        else:
+            self.weights = np.ones_like(self.rewards)
+
+
+        if self.use_cosine_similiarity:
+            raise NotImplementedError
+
+        if self.use_special_kmeans:
+            self.kmeans_centers = self.get_centers_special_kmeans(self.standardized_states, write_logs=write_logs)
+            print(f"{self.kmeans_centers.shape} centers before pruning.")
+            self.remove_unecessary_centers(write_logs=write_logs)
+            print(f"{self.kmeans_centers.shape} centers after pruning.")
+        else:
+            if len(self.states) / 2 < self.K:
+                print(f"K too big, reduced.")
+                self.K = int(np.floor(len(self.states) / 2))
+            self.kmeans_centers = KMeans(n_clusters=self.K, random_state=0, n_init='auto').fit(self.standardized_states,
+                                                                                               sample_weight=self.weights).cluster_centers_
+
+        if self.use_cosine_similiarity:
+            raise NotImplementedError
+
+        if write_logs:
+            print(f"{self.kmeans_centers.shape} centers for {self.K=}.")
+        if run_tsne:
+            self.tsne()
+        self.center_vectors = self.calc_tree_kmeans_center_vectors(self.kmeans_centers)
+
+        self.center_action_reward_list, self.kmeans_action_weight_list = self.calc_kmeans_center_rewards(
+            self.kmeans_centers)
+        self.center_max_rewards = np.max(self.center_action_reward_list, axis=0)
+
+
+    def calc_tree_kmeans_center_vectors(self, centers):
+        action_vector_list = []
+        for kmean in centers:
+            action_vectors = np.empty((self.action_space_size, self.observation_space_size))
+            for action, _ in enumerate(self.state_action_transitions):
+                if len(self.state_action_transitions_from[action]) > 0:
+                    dist = kmean - self.standardized_states[self.state_action_transitions_from[action]]
+                    weight = np.exp(-np.sum(np.square(dist), axis=1) / self.gaussian_width_vector) + self.delta
+                    weight_sums = np.sum(weight)
+                    vectors = self.state_vectors[action]
+                    '''
+                    print(vectors[0, :])
+
+                    from_stand = self.scaler.transform([self.states[self.state_action_transitions_from[action]][0]])
+                    to_stand = self.scaler.transform([self.states[self.state_action_transitions_to[action]][0]])
+                    print(to_stand - from_stand)
+                    input()
+                    '''
+                    action_vectors[action] = vectors.transpose().dot(weight) / weight_sums
+
+            action_vector_list.append(action_vectors)
+        np_vector_list = np.asarray(action_vector_list)
+
+        np_vector_list = np.transpose(np_vector_list, axes=[1, 0, 2])
+        return np_vector_list
 
     def calc_standard_kmeans(self, run_tsne=False, write_logs=True):
 
@@ -339,9 +407,8 @@ class GenericModel:
             self.tsne()
         if self.use_vectors:
             self.center_vectors = self.calc_kmeans_center_vector(self.kmeans_centers)
-        self.kmeans_action_reward_list, self.kmeans_action_weight_list = self.calc_kmeans_center_rewards(self.kmeans_centers)
-        self.center_max_rewards = np.max(self.kmeans_action_reward_list, axis=0)
-
+        self.center_action_reward_list, self.kmeans_action_weight_list = self.calc_kmeans_center_rewards(self.kmeans_centers)
+        self.center_max_rewards = np.max(self.center_action_reward_list, axis=0)
 
     def remove_unecessary_centers(self, write_logs=True):
         a, c = self.kmeans_centers.shape
@@ -378,13 +445,13 @@ class GenericModel:
                     cosine_similarity = 1 - dist + self.delta
 
                     weight_sums[action] = np.sum(cosine_similarity)
-                    action_rewards[action] = np.sum(cosine_similarity * self.kmeans_action_reward_list[action]) / weight_sums[
+                    action_rewards[action] = np.sum(cosine_similarity * self.center_action_reward_list[action]) / weight_sums[
                         action]
                 else:
                     dist = standardized_state - self.kmeans_centers
                     weight = np.exp(-np.sum(np.square(dist), axis=1) / self.gaussian_width) + self.delta
                     weight_sums[action] = np.sum(weight)
-                    action_rewards[action] = np.sum(weight * self.kmeans_action_reward_list[action]) / weight_sums[action]
+                    action_rewards[action] = np.sum(weight * self.center_action_reward_list[action]) / weight_sums[action]
                 #action_rewards[action] = np.sum(weight * self.rewards[self.state_action_transitions_to[action]]) / weight_sums[action]
 
         if debug:
@@ -406,7 +473,8 @@ class GenericModel:
 
         return np.argmax(action_rewards)
 
-    def get_state_value(self, state):
+    def get_state_value(self, state, ignore_kmeans=True):
+        raise NotImplementedError
         states_mean = np.array([0.])  # Used to normalize the state space
 
         states_std = np.array([1.])  # Used to normalize the state space
@@ -421,71 +489,118 @@ class GenericModel:
         weight_sums = [0. for _ in self.saved_state_action_transitions]
         if self.use_cosine_similiarity:
             raise NotImplementedError
-        for action in self.actions:
-            if len(self.saved_state_action_transitions_from[action]) > 0:
-                dist = state - self.standardized_states[self.saved_state_action_transitions_from[action]]
-                weight = np.exp(-np.sum(np.square(dist), axis=1) / self.gaussian_width) + self.delta
-                weight_sums[action] = np.sum(weight)
-                action_rewards[action] = np.sum(weight * self.rewards[self.saved_state_action_transitions_to[action]]) / \
-                                         weight_sums[action]
+
+
+        if ignore_kmeans:
+            for action in self.actions:
+                if len(self.saved_state_action_transitions_from[action]) > 0:
+                    dist = state - self.standardized_states[self.saved_state_action_transitions_from[action]]
+                    weight = np.exp(-np.sum(np.square(dist), axis=1) / self.gaussian_width) + self.delta
+                    weight_sums[action] = np.sum(weight)
+                    action_rewards[action] = np.sum(weight * self.rewards[self.saved_state_action_transitions_to[action]]) / \
+                                             weight_sums[action]
+        else:
+            for action in self.actions:
+                if len(self.saved_state_action_transitions_from[action]) > 0:
+                    dist = state - self.kmeans_centers
+                    weight = np.exp(-np.sum(np.square(dist), axis=1) / self.gaussian_width) + self.delta
+                    weight_sums[action] = np.sum(weight)
+                    action_rewards[action] = np.sum(weight * self.center_action_reward_list[action]) / \
+                                             weight_sums[action]
+
 
         for action, _ in enumerate(self.saved_state_action_transitions):
             if weight_sums[action] == 0:
                 return action  # Return action that has never been chosen before
             if np.max(weight_sums) == 0:
-                print(f"{weight_sums=}")
+                print(f"sdfsdf{weight_sums=}")
             if weight_sums[action] / np.max(weight_sums) < self.exploration_rate:
                 return action  # Return action that has little data for the current state
         return np.argmax(action_rewards)
 
-    def estimate_resulting_states(self, origin_state):
+    def estimate_resulting_states(self, origin_state, ignore_kmeans=True):
         new_standardized_states = []
+        if ignore_kmeans:
+            for action, _ in enumerate(self.saved_state_action_transitions):
+                if len(self.saved_state_action_transitions_from[action]) > 0:
+                    #print(f"{action=}")
+                    #print(f"{self.saved_state_action_transitions_from[action]=}")
+                    #print(f"{self.standardized_states[self.saved_state_action_transitions_from[action]]=}")
+                    dist = origin_state - self.standardized_states[self.saved_state_action_transitions_from[action]]
+                    weight = np.exp(-np.sum(np.square(dist), axis=1) / self.gaussian_width) + self.delta
+                    weight_sum = np.sum(weight)
+                    vectors = self.state_vectors[action]
+                    vector = vectors.transpose().dot(weight) / weight_sum
+                    new_standardized_states.append(origin_state + vector)
+                else:
+                    new_standardized_states.append(origin_state)
+        else:
+            for action, _ in enumerate(self.saved_state_action_transitions):
+                if len(self.saved_state_action_transitions_from[action]) > 0:
+                    #print(f"{action=}")
+                    #print(f"{self.saved_state_action_transitions_from[action]=}")
+                    #print(f"{self.standardized_states[self.saved_state_action_transitions_from[action]]=}")
+                    dist = origin_state - self.kmeans_centers
+                    weight = np.exp(-np.sum(np.square(dist), axis=1) / self.gaussian_width) + self.delta
+                    weight_sum = np.sum(weight)
+                    vectors = self.center_vectors[action]
+                    vector = vectors.transpose().dot(weight) / weight_sum
+                    new_standardized_states.append(origin_state + vector)
+                else:
+                    new_standardized_states.append(origin_state)
 
-        for action, _ in enumerate(self.saved_state_action_transitions):
-            if len(self.saved_state_action_transitions_from[action]) > 0:
-                #print(f"{action=}")
-                #print(f"{self.saved_state_action_transitions_from[action]=}")
-                #print(f"{self.standardized_states[self.saved_state_action_transitions_from[action]]=}")
-                dist = origin_state - self.standardized_states[self.saved_state_action_transitions_from[action]]
-                weight = np.exp(-np.sum(np.square(dist), axis=1) / self.gaussian_width) + self.delta
-                weight_sum = np.sum(weight)
-                vectors = self.state_vectors[action]
-                vector = vectors.transpose().dot(weight) / weight_sum
-                new_standardized_states.append(origin_state + vector)
-            else:
-                new_standardized_states.append(origin_state)
         return new_standardized_states
 
 
-    def get_action_values(self, state):
+    def get_action_values(self, state, ignore_kmeans=True):
         action_values = [0. for _ in self.state_action_transitions]
         weight_sums = [0. for _ in self.state_action_transitions]
-        for action in self.actions:
-            if len(self.saved_state_action_transitions_from[action]) > 0:
-                dist = state - self.standardized_states[self.saved_state_action_transitions_from[action]]
-                weight = np.exp(-np.sum(np.square(dist), axis=1) / self.gaussian_width) + self.delta
-                weight_sums[action] = np.sum(weight)
-                action_values[action] = np.sum(weight * self.rewards[self.saved_state_action_transitions_to[action]]) / \
-                                         weight_sums[action]
+        if ignore_kmeans:
+            for action in self.actions:
+                if len(self.saved_state_action_transitions_from[action]) > 0:
+                    dist = state - self.standardized_states[self.saved_state_action_transitions_from[action]]
+                    weight = np.exp(-np.sum(np.square(dist), axis=1) / self.gaussian_width) + self.delta
+                    weight_sums[action] = np.sum(weight)
+                    action_values[action] = np.sum(weight * self.rewards[self.saved_state_action_transitions_to[action]]) / \
+                                             weight_sums[action]
+        else:
+            for action in self.actions:
+                if len(self.saved_state_action_transitions_from[action]) > 0:
+                    dist = state - self.kmeans_centers
+                    weight = np.exp(-np.sum(np.square(dist), axis=1) / self.gaussian_width) + self.delta
+                    weight_sums[action] = np.sum(weight)
+                    action_values[action] = np.sum(weight * self.center_action_reward_list[action]) / \
+                                             weight_sums[action]
         return action_values
 
-    def search_tree_action_values(self, current_state, search_depth):
+    def search_tree_action_values(self, current_state, search_depth, ignore_kmeans=True):
         action_values = []
         if search_depth <= 0:
-            action_values = self.get_action_values(current_state)
+            action_values = self.get_action_values(current_state, ignore_kmeans=ignore_kmeans)
         else:
-            new_states = self.estimate_resulting_states(current_state)
+            new_states = self.estimate_resulting_states(current_state, ignore_kmeans=ignore_kmeans)
             for state in new_states:
-                action_values.append(np.max(self.search_tree_action_values(state, search_depth - 1)))
+                action_values.append(np.max(self.search_tree_action_values(state, search_depth - 1, ignore_kmeans=ignore_kmeans)))
 
         return action_values
 
 
-    def get_action_search_tree(self, state):
+
+
+    def get_action_search_tree(self, state, ignore_kmeans = True):
         state = self.standardize(state)
-        action_values = self.search_tree_action_values(state, self.search_tree_depth)
+        action_values = self.search_tree_action_values(state, search_depth=self.search_tree_depth, ignore_kmeans=ignore_kmeans)
         action = np.argmax(action_values)
         return action
+
+
+
+
+
+
+    ######################################## Outdated: ########################################
+
+
 
 
     def check_vector(self, old_state, new_real_state):
@@ -546,7 +661,7 @@ class GenericModel:
                 dist = standardized_state - self.kmeans_centers
                 weight = np.exp(-np.sum(np.square(dist), axis=1) / self.gaussian_width) + self.delta
                 weight_sums[action] = np.sum(weight)
-                action_rewards[action] = np.sum(weight * self.kmeans_action_reward_list[action]) / weight_sums[action]
+                action_rewards[action] = np.sum(weight * self.center_action_reward_list[action]) / weight_sums[action]
 
         return max(action_rewards)
 
@@ -554,12 +669,12 @@ class GenericModel:
     def calc_kmeans_center_rewards(self, centers):
         action_rewards_list = []
         weight_sums_list = []
-        for kmean in centers:
+        for center in centers:
             action_rewards = [0. for _ in range(self.action_space_size)]
             weight_sums = [0. for _ in range(self.action_space_size)]
             for action, _ in enumerate(self.state_action_transitions):
                 if len(self.state_action_transitions_from[action]) > 0:
-                    dist = kmean - self.standardized_states[self.state_action_transitions_from[action]]
+                    dist = center - self.standardized_states[self.state_action_transitions_from[action]]
                     weight = np.exp(-np.sum(np.square(dist), axis=1) / self.gaussian_width) + self.delta
                     weight_sums[action] = np.sum(weight)
                     action_rewards[action] = np.sum(weight * self.rewards[self.state_action_transitions_to[action]]) / weight_sums[action]
@@ -568,7 +683,7 @@ class GenericModel:
         return np.asarray(action_rewards_list).transpose(), weight_sums_list
 
 
-    def calc_kmeans_center_vector(self, centers):
+    def calc_kmeans_center_vectorghjghj(self, centers):
         # In this step, we use weighted average to give each center 1 vector per point.
         # When picking actions, we use vectors to estimate location, and use location to get reward.
         action_vector_list = []
@@ -595,4 +710,5 @@ class GenericModel:
             action_vector_list.append(action_vectors)
             weight_sums_list.append(weight_sums)
         np_vector_list = np.asarray(action_vector_list)
+        print(f"Center vectors: {np_vector_list.shape=}")
         return np_vector_list

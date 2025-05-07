@@ -49,14 +49,18 @@ SEGMENTS = [8]
 SEGMENTS = [1, 2, 3, 4, 5, 6, 7, 8]
 EXPANDER_GAUSSIAN = 1
 
+SEARCH_TREE_DEPTH = 3
 
 
 
-RUN_KMEANS_UNWEIGHTED = False
 RUN_KMEANS_UNWEIGHTED = True
+RUN_KMEANS_UNWEIGHTED = False
 
 RUN_KMEANS_WEIGHTED = True
 RUN_KMEANS_WEIGHTED = False
+
+RUN_SEARCH_TREE = False
+RUN_SEARCH_TREE = True
 
 RUN_KMEANS_VECTOR = True
 RUN_KMEANS_VECTOR = False
@@ -88,19 +92,20 @@ COSINE_SIMILARITY = True
 COMMENT = f"Generations of training: {trigK_MeansClient.STANDARD_RUNNING_LENGTH}\n" \
           f"{GAUSSIAN=}\n" \
           f"{EXPANDER_GAUSSIAN=}\n" \
-          f"{COSINE_SIMILARITY=}"
+          f"{COSINE_SIMILARITY=}\n" \
+          f"{SEARCH_TREE_DEPTH=}"
 
 
 
 PATH_PREFIX = ("fordypningsprosjekt\\trig_expanded_" if RUN_FROM_SCRIPT else "trig_expanded_")
 
 def run_program_with_different_seeds(plot_name, plot_title, seed_count=3,
-                discount_factor=kMeansClient.DISCOUNT_FACTOR, gaussian_width=GAUSSIAN,
-                exploration_rate=kMeansClient.EXPLORATION_RATE, standard_episodes=kMeansClient.STANDARD_RUNNING_LENGTH,
-                kmeans_episodes=kMeansClient.KMEANS_RUNNING_LENGTH, weighted_kmeans=True, render_mode=kMeansClient.RENDER_MODE,
-                game_mode=kMeansClient.GAME_MODE, k=None, save_plot=True, ignore_kmeans=False,
-                use_vectors=RUN_KMEANS_VECTOR, vector_type=1, learn=True, use_special_kmeans=False, markdownStorer=None,
-                mode="insert_mode", write_logs=WRITE_LOGS, segments=1, use_cosine_similarity=COSINE_SIMILARITY):
+                                     discount_factor=kMeansClient.DISCOUNT_FACTOR, gaussian_width=GAUSSIAN,
+                                     exploration_rate=kMeansClient.EXPLORATION_RATE, standard_episodes=kMeansClient.LEARNING_LENGTH,
+                                     kmeans_episodes=kMeansClient.SLEEPING_LENGTH, weighted_kmeans=True, render_mode=kMeansClient.RENDER_MODE,
+                                     game_mode=kMeansClient.GAME_MODE, k=None, save_plot=True, ignore_kmeans=False,
+                                     use_vectors=RUN_KMEANS_VECTOR, vector_type=1, learn=True, use_special_kmeans=False, markdownStorer=None,
+                                     mode="insert_mode", write_logs=WRITE_LOGS, segments=1, use_cosine_similarity=COSINE_SIMILARITY):
 
     if MULTITHREADING:
         config_holder = configHolder(discount_factor=discount_factor, gaussian_width=gaussian_width,
@@ -158,7 +163,7 @@ def run_gaussian_k():
                 print("Starting Kmeans Unweighted...")
                 path = f"{PATH_PREFIX}mplots\\trig_expanded\\{kMeansClient.GAME_MODE}\\{segment}s\\{k}k"
                 fileHelper.createDirIfNotExist(path, linux=LINUX)
-                name = path + f"\\{SEED_COUNT}seed__{kMeansClient.STANDARD_RUNNING_LENGTH}_then_{kMeansClient.KMEANS_RUNNING_LENGTH}__unweighted_plot.png"
+                name = path + f"\\{SEED_COUNT}seed__{kMeansClient.LEARNING_LENGTH}_then_{kMeansClient.SLEEPING_LENGTH}__unweighted_plot.png"
                 name = fileHelper.osFormat(name, LINUX)
 
                 title = f"trig_expanded {segment}-segments, k={k} avg{SEED_COUNT} unweighted-kmeans plot"
@@ -173,7 +178,7 @@ def run_gaussian_k():
                 print("Starting Kmeans Weighted...")
                 path = f"{PATH_PREFIX}mplots\\trig_expanded\\{kMeansClient.GAME_MODE}\\{segment}s\\{k}k"
                 fileHelper.createDirIfNotExist(path, linux=LINUX)
-                name = path + f"\\{SEED_COUNT}seed__{kMeansClient.STANDARD_RUNNING_LENGTH}_then_{kMeansClient.KMEANS_RUNNING_LENGTH}__weighted_plot.png"
+                name = path + f"\\{SEED_COUNT}seed__{kMeansClient.LEARNING_LENGTH}_then_{kMeansClient.SLEEPING_LENGTH}__weighted_plot.png"
                 name = fileHelper.osFormat(name, LINUX)
 
                 title = f"trig_expanded {segment}-segments, k={k} avg{SEED_COUNT} weighted-kmeans plot"
@@ -183,11 +188,33 @@ def run_gaussian_k():
                 datas_list.append(datas)
                 labels.append("weighted")
 
+            if RUN_SEARCH_TREE:
+                if k == K_VALUES[0]:
+                    print("Starting Search Tree...")
+                    path = f"{PATH_PREFIX}mplots\\generic\\{kMeansClient.GAME_MODE}\\{gaussian_width}g\\search_tree"
+                    fileHelper.createDirIfNotExist(path, linux=LINUX)
+                    name = path + f"\\{SEED_COUNT}seed__{kMeansClient.LEARNING_LENGTH}_then_{kMeansClient.SLEEPING_LENGTH}__tree_plot.png"
+                    name = fileHelper.osFormat(name, LINUX)
+
+                    title = f"gw={gaussian_width}, avg{SEED_COUNT} tree plot"
+                    basic_datas = run_program_with_different_seeds(name, title, seed_count=SEED_COUNT,
+                                                                   gaussian_width=gaussian_width,
+                                                                   weighted_kmeans=False, ignore_kmeans=True,
+                                                                   use_vectors=False, markdownStorer=markdownStorer,
+                                                                   mode="Search Tree", use_search_tree=True,
+                                                                   search_tree_depth=SEARCH_TREE_DEPTH, save_midway=True,
+                                                                   learn=False)
+                    datas_list.append(basic_datas)
+                    labels.append("tree")
+                else:
+                    datas_list.append(basic_datas)
+                    labels.append("tree")
+
             if RUN_KMEANS_VECTOR:
                 print("Starting Vector...")
                 path = f"{PATH_PREFIX}mplots\\trig_expanded\\{kMeansClient.GAME_MODE}\\{segment}s\\{k}k"
                 fileHelper.createDirIfNotExist(path, linux=LINUX)
-                name = path + f"\\{SEED_COUNT}seed__{kMeansClient.STANDARD_RUNNING_LENGTH}_then_{kMeansClient.KMEANS_RUNNING_LENGTH}__vector_plot.png"
+                name = path + f"\\{SEED_COUNT}seed__{kMeansClient.LEARNING_LENGTH}_then_{kMeansClient.SLEEPING_LENGTH}__vector_plot.png"
                 name = fileHelper.osFormat(name, LINUX)
 
                 title = f"trig_expanded {segment}-segments, k={k} avg{SEED_COUNT} vector-kmeans plot"
@@ -201,7 +228,7 @@ def run_gaussian_k():
                 print("Starting Vector-2...")
                 path = f"{PATH_PREFIX}mplots\\trig_expanded\\{kMeansClient.GAME_MODE}\\{segment}s\\{k}k"
                 fileHelper.createDirIfNotExist(path, linux=LINUX)
-                name = path + f"\\{SEED_COUNT}seed__{kMeansClient.STANDARD_RUNNING_LENGTH}_then_{kMeansClient.KMEANS_RUNNING_LENGTH}__vector2_plot.png"
+                name = path + f"\\{SEED_COUNT}seed__{kMeansClient.LEARNING_LENGTH}_then_{kMeansClient.SLEEPING_LENGTH}__vector2_plot.png"
                 name = fileHelper.osFormat(name, LINUX)
 
                 title = f"trig_expanded {segment}-segments, k={k} avg{SEED_COUNT} vector2-kmeans plot"
@@ -216,7 +243,7 @@ def run_gaussian_k():
                     print("Starting No Kmeans...")
                     path = f"{PATH_PREFIX}mplots\\trig_expanded\\{kMeansClient.GAME_MODE}\\{segment}s\\basic"
                     fileHelper.createDirIfNotExist(path, linux=LINUX)
-                    name = path + f"\\{SEED_COUNT}seed__{kMeansClient.STANDARD_RUNNING_LENGTH}_then_{kMeansClient.KMEANS_RUNNING_LENGTH}__basic_plot.png"
+                    name = path + f"\\{SEED_COUNT}seed__{kMeansClient.LEARNING_LENGTH}_then_{kMeansClient.SLEEPING_LENGTH}__basic_plot.png"
                     name = fileHelper.osFormat(name, LINUX)
 
                     title = f"trig_expanded {segment}-segments, avg{SEED_COUNT} basic plot"
@@ -234,7 +261,7 @@ def run_gaussian_k():
                 print("Starting Special Kmeans Unweighted...")
                 path = f"{PATH_PREFIX}mplots\\trig_expanded\\{kMeansClient.GAME_MODE}\\{segment}s\\{k}k"
                 fileHelper.createDirIfNotExist(path, linux=LINUX)
-                name = path + f"\\{SEED_COUNT}seed__{kMeansClient.STANDARD_RUNNING_LENGTH}_then_{kMeansClient.KMEANS_RUNNING_LENGTH}__special_kmeans_plot.png"
+                name = path + f"\\{SEED_COUNT}seed__{kMeansClient.LEARNING_LENGTH}_then_{kMeansClient.SLEEPING_LENGTH}__special_kmeans_plot.png"
                 name = fileHelper.osFormat(name, LINUX)
 
                 title = f"trig_expanded {segment}-segments, k={k}, avg{SEED_COUNT} special_kmeans plot"
@@ -250,7 +277,7 @@ def run_gaussian_k():
                 print("Starting Special Kmeans Weighted...")
                 path = f"{PATH_PREFIX}mplots\\trig_expanded\\{kMeansClient.GAME_MODE}\\{segment}s\\{k}k"
                 fileHelper.createDirIfNotExist(path, linux=LINUX)
-                name = path + f"\\{SEED_COUNT}seed__{kMeansClient.STANDARD_RUNNING_LENGTH}_then_{kMeansClient.KMEANS_RUNNING_LENGTH}__weighted_special_kmeans_plot.png"
+                name = path + f"\\{SEED_COUNT}seed__{kMeansClient.LEARNING_LENGTH}_then_{kMeansClient.SLEEPING_LENGTH}__weighted_special_kmeans_plot.png"
                 name = fileHelper.osFormat(name, LINUX)
 
                 title = f"trig_expanded {segment}-segments, k={k}, avg{SEED_COUNT} weighted_special_kmeans plot"
@@ -267,7 +294,7 @@ def run_gaussian_k():
                     print("Starting Sleeping No Kmeans...")
                     path = f"{PATH_PREFIX}mplots\\trig_expanded\\{kMeansClient.GAME_MODE}\\{segment}s\\basic"
                     fileHelper.createDirIfNotExist(path, linux=LINUX)
-                    name = path + f"\\{SEED_COUNT}seed__{kMeansClient.STANDARD_RUNNING_LENGTH}_then_{kMeansClient.KMEANS_RUNNING_LENGTH}__basic_no_learn_plot.png"
+                    name = path + f"\\{SEED_COUNT}seed__{kMeansClient.LEARNING_LENGTH}_then_{kMeansClient.SLEEPING_LENGTH}__basic_no_learn_plot.png"
                     name = fileHelper.osFormat(name, LINUX)
 
                     title = f"trig_expanded {segment}-segments, avg{SEED_COUNT} basic-no_learn plot"
@@ -289,14 +316,14 @@ def run_gaussian_k():
                 fileHelper.createDirIfNotExist(path, linux=LINUX)
 
                 types =  f"{'_weighted' if RUN_KMEANS_WEIGHTED else ''}{'_unweighted' if RUN_KMEANS_UNWEIGHTED else ''}{'_vector' if RUN_KMEANS_VECTOR else ''}{'_basic' if RUN_BASIC else ''}"
-                name = path + f"\\{SEED_COUNT}seed__{kMeansClient.STANDARD_RUNNING_LENGTH}_then_{kMeansClient.KMEANS_RUNNING_LENGTH}" \
+                name = path + f"\\{SEED_COUNT}seed__{kMeansClient.LEARNING_LENGTH}_then_{kMeansClient.SLEEPING_LENGTH}" \
                               f"{types}.png"
                 name = fileHelper.osFormat(name, LINUX)
 
                 title = f"trig_expanded {segment}-segments, k={k} avg{SEED_COUNT}{types} plot"
 
                 plotHelper.plot_multiple_graph_types(datas_list, labels, name, title, show_std=False)
-                name = path + f"\\{SEED_COUNT}seed__{kMeansClient.STANDARD_RUNNING_LENGTH}_then_{kMeansClient.KMEANS_RUNNING_LENGTH}" \
+                name = path + f"\\{SEED_COUNT}seed__{kMeansClient.LEARNING_LENGTH}_then_{kMeansClient.SLEEPING_LENGTH}" \
                               f"{types}_std.png"
                 name = fileHelper.osFormat(name, LINUX)
 

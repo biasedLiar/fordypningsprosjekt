@@ -14,6 +14,7 @@ GAME_MODE = "CartPole-v1"
 #game_mode = "LunarLander-v2"
 
 DISCOUNT_FACTOR = 0.99999  # Low discount penalize longer episodes.
+DISCOUNT_FACTOR = 0.9  # Low discount penalize longer episodes.
 # For example, shorter paths to the goal will receive higher reward than longer paths,
 # even though the rewards from the environment are the same.
 # Not necessarily applicable to every environment, such as cart pole, where the goal is to stay alive as long as possible,
@@ -25,8 +26,8 @@ EXPLORATION_RATE = 0.1  # Controls when actions with little data should be chose
 
 K_MEANS_K = 20
 
-STANDARD_RUNNING_LENGTH = 50
-KMEANS_RUNNING_LENGTH = 100
+LEARNING_LENGTH = 100
+SLEEPING_LENGTH = 100
 KMEANS_TYPE = STANDARD
 TSNE = False
 
@@ -36,8 +37,8 @@ path = f"mplots\\generic\\{GAME_MODE}\\single\\{GAUSSIAN_WIDTH}g"
 
 
 def run_program(seed=SEED, discount_factor=DISCOUNT_FACTOR, gaussian_width=GAUSSIAN_WIDTH,
-                exploration_rate=EXPLORATION_RATE, standard_episodes=STANDARD_RUNNING_LENGTH,
-                kmeans_episodes=KMEANS_RUNNING_LENGTH, weighted_kmeans=True, render_mode=RENDER_MODE,
+                exploration_rate=EXPLORATION_RATE, standard_episodes=LEARNING_LENGTH,
+                kmeans_episodes=SLEEPING_LENGTH, weighted_kmeans=True, render_mode=RENDER_MODE,
                 game_mode=GAME_MODE, k=K_MEANS_K, save_plot=True, ignore_kmeans=False, use_vectors=False, learn=True,
                 vector_type=1, do_standardize=True, use_special_kmeans=False, write_logs=True, use_search_tree=False,
                 search_tree_depth=-1, save_midway=False):
@@ -45,7 +46,6 @@ def run_program(seed=SEED, discount_factor=DISCOUNT_FACTOR, gaussian_width=GAUSS
     env = gymnasium.make(game_mode, render_mode=render_mode)
     env.action_space.seed(seed)
     np.random.seed(seed)
-
     model = GenericModel(env.action_space.n, env.observation_space.shape[0], gaussian_width, exploration_rate, K=k, weighted_kmeans=weighted_kmeans,
                          use_vectors=use_vectors, vector_type=vector_type, do_standardize=do_standardize,
                          use_special_kmeans=use_special_kmeans, use_search_tree=use_search_tree, search_tree_depth=search_tree_depth)
@@ -59,6 +59,7 @@ def run_program(seed=SEED, discount_factor=DISCOUNT_FACTOR, gaussian_width=GAUSS
     data = []
     action_string = ""
     path = []
+    reward_list = [0.0]
     while True:
         if render_mode == "human":
             for event in pygame.event.get():
@@ -66,18 +67,14 @@ def run_program(seed=SEED, discount_factor=DISCOUNT_FACTOR, gaussian_width=GAUSS
                     env.close()
                     exit()
 
-        if episodes < standard_episodes or ignore_kmeans:
-            if use_search_tree and episodes >= standard_episodes:
-                action = model.get_action_search_tree(state)
-            else:
-                action = model.get_action_without_kmeans(state)
-        elif use_vectors:
-            action = model.get_action_with_vector(state)
+
+        if episodes < standard_episodes or (ignore_kmeans and not use_search_tree):
+            action = model.get_action_without_kmeans(state)
+        elif use_search_tree:
+            action = model.get_action_search_tree(state, ignore_kmeans=ignore_kmeans)
         else:
-            #print("REached")
             action = model.get_action_kmeans(state)
         action_string += str(action)
-
 
         actions.append(action)
         old_state = state
@@ -88,6 +85,7 @@ def run_program(seed=SEED, discount_factor=DISCOUNT_FACTOR, gaussian_width=GAUSS
             model.check_vector(old_state, state)
 
         rewards += float(reward)
+        reward_list.append(float(reward))
 
         if terminated or truncated:
             #print(f"{seed=}, {episodes=}, rewards: {rewards}")
@@ -101,15 +99,17 @@ def run_program(seed=SEED, discount_factor=DISCOUNT_FACTOR, gaussian_width=GAUSS
                     path=[]
                     path=[]
             if learn or episodes < standard_episodes:
+                reward_new = plotHelper.get_rewards(reward_list, DISCOUNT_FACTOR)
                 for i, state in enumerate(states):
                     model.states = np.vstack((model.states, state))
-                    model.rewards = np.hstack((model.rewards, np.power(discount_factor, len(states) - 1 - i) * rewards))
+                    model.rewards = np.hstack((model.rewards, reward_new[i]))
                     if i > 0:
                         model.state_action_transitions[actions[i - 1]].append((len(model.states) - 2, len(model.states) - 1))
                         model.state_action_transitions_from[actions[i - 1]].append(len(model.states) - 2)
                         model.state_action_transitions_to[actions[i - 1]].append(len(model.states) - 1)
 
             rewards = 0.
+            reward_list = [0]
             action_string = ""
             path = []
             actions.clear()
@@ -118,17 +118,23 @@ def run_program(seed=SEED, discount_factor=DISCOUNT_FACTOR, gaussian_width=GAUSS
             states.append(state)
             episodes += 1
             if episodes == standard_episodes:
+                model.midway = True
+                if save_midway:
+                    model.calc_search_tree_state_vectors(ignore_kmeans=ignore_kmeans)
                 if not ignore_kmeans:
                     if write_logs:
                         print("Calculating kmeans centers...")
-                    model.calc_standard_kmeans(write_logs=write_logs, run_tsne=TSNE)
+                    if use_search_tree:
+                        if not save_midway:
+                            raise NotImplementedError
+                        model.calc_search_tree_kmeans(write_logs=write_logs, run_tsne=TSNE)
+                    else:
+                        model.calc_standard_kmeans(write_logs=write_logs, run_tsne=TSNE)
                     if TSNE:
                         model.tsne_based_on_reward()
                     if write_logs:
                         print(f"{model.states.shape=}")
                         print("Finished calculating kmeans centers")
-                elif save_midway:
-                    model.calc_search_tree_state_vectors()
             if episodes == kmeans_episodes + standard_episodes:
                 break
 
@@ -148,19 +154,20 @@ def run_program(seed=SEED, discount_factor=DISCOUNT_FACTOR, gaussian_width=GAUSS
         plt.legend(loc="upper left")
         plt.title(f"{20}K-{gaussian_width}G avg:{avg} V0 threshold")
 
-        plot_name = path + f"\\{STANDARD_RUNNING_LENGTH}_then_{KMEANS_RUNNING_LENGTH}_plot.png"
+        plot_name = path + f"\\{LEARNING_LENGTH}_then_{SLEEPING_LENGTH}_plot.png"
 
         plt.savefig(plot_name)
         plt.clf()
     if use_special_kmeans:
         print(f"Finished seed {seed}")
+    print(f"Finished seed {seed}")
     return data
 
 
 def run_program_with_different_seeds(seed_count=3, discount_factor=DISCOUNT_FACTOR, gaussian_width=GAUSSIAN_WIDTH,
-                exploration_rate=EXPLORATION_RATE, standard_episodes=STANDARD_RUNNING_LENGTH,
-                kmeans_episodes=KMEANS_RUNNING_LENGTH, kmeans_type=KMEANS_TYPE, render_mode=RENDER_MODE,
-                game_mode=GAME_MODE, save_plot=True):
+                                     exploration_rate=EXPLORATION_RATE, standard_episodes=LEARNING_LENGTH,
+                                     kmeans_episodes=SLEEPING_LENGTH, kmeans_type=KMEANS_TYPE, render_mode=RENDER_MODE,
+                                     game_mode=GAME_MODE, save_plot=True):
     datas = []
     for seed in range(seed_count):
         data = run_program(seed=seed, discount_factor=discount_factor, gaussian_width=gaussian_width,
