@@ -47,12 +47,16 @@ MULTITHREADING=True
 
 
 SEGMENTS = [8]
-SEGMENTS = [2, 3, 4, 5, 6, 7, 8]
+SEGMENTS = [2, 3, 4, 5, 6]
 EXPANDER_GAUSSIAN = 0.5
 
 SEARCH_TREE_DEPTH = 2
 
 
+RUN_BASIC_NO_LEARN = False
+RUN_BASIC_NO_LEARN = True
+
+#-------------------------------------
 
 RUN_KMEANS_UNWEIGHTED = True
 RUN_KMEANS_UNWEIGHTED = False
@@ -60,8 +64,12 @@ RUN_KMEANS_UNWEIGHTED = False
 RUN_KMEANS_WEIGHTED = True
 RUN_KMEANS_WEIGHTED = False
 
-RUN_SEARCH_TREE = False
+#-------------------------------------------
+
 RUN_SEARCH_TREE = True
+RUN_SEARCH_TREE = False
+
+#---------------------------------------
 
 RUN_KMEANS_VECTOR = True
 RUN_KMEANS_VECTOR = False
@@ -69,11 +77,7 @@ RUN_KMEANS_VECTOR = False
 RUN_KMEANS_VECTOR2 = True
 RUN_KMEANS_VECTOR2 = False
 
-RUN_BASIC = True
-RUN_BASIC = False
-
-RUN_BASIC_NO_LEARN = True
-RUN_BASIC_NO_LEARN = False
+#----------------------------------------
 
 RUN_SPECIAL_KMEANS = True
 RUN_SPECIAL_KMEANS = False
@@ -81,32 +85,40 @@ RUN_SPECIAL_KMEANS = False
 RUN_WEIGHTED_SPECIAL_KMEANS = True
 RUN_WEIGHTED_SPECIAL_KMEANS = False
 
+#-----------------------------------------
+
+RUN_BASIC = True
+RUN_BASIC = False
 
 #gw0.55-250
 #gw0.4-250
 
 WRITE_MARKDOWN = True
+MAKE_GRAPHS = False
+
 WRITE_LOGS = False
 COSINE_SIMILARITY = False
 
 PATH_PREFIX = ("fordypningsprosjekt\\expanded_" if RUN_FROM_SCRIPT else "expanded_")
 
+MD_PATH_PREFIX = ("fordypningsprosjekt\\" if RUN_FROM_SCRIPT else "") + "expanded_"
 
-COMMENT = f"Generations of training: {kMeansClient.STANDARD_RUNNING_LENGTH}\n" \
+COMMENT = f"Generations of training: {kMeansClient.LEARNING_LENGTH}\n" \
           f"{GAUSSIAN=}\n" \
           f"{EXPANDER_GAUSSIAN=}\n" \
           f"{COSINE_SIMILARITY=}\n" \
           f"{SEARCH_TREE_DEPTH=}" \
-          f"\n\nNothing special, but stuff fixed"
+          f"\n\nNew reward schema\n" \
+          f"Testing basic nolearn"
 
 def run_program_with_different_seeds(plot_name, plot_title, seed_count=3,
-                discount_factor=kMeansClient.DISCOUNT_FACTOR, gaussian_width=GAUSSIAN,
-                exploration_rate=kMeansClient.EXPLORATION_RATE, standard_episodes=kMeansClient.STANDARD_RUNNING_LENGTH,
-                kmeans_episodes=kMeansClient.KMEANS_RUNNING_LENGTH, weighted_kmeans=True, render_mode=kMeansClient.RENDER_MODE,
-                game_mode=kMeansClient.GAME_MODE, k=None, save_plot=True, ignore_kmeans=False,
-                use_vectors=RUN_KMEANS_VECTOR, vector_type=1, learn=True, use_special_kmeans=False, markdownStorer=None,
-                mode="insert_mode", write_logs=WRITE_LOGS, segments=1, use_cosine_similarity=COSINE_SIMILARITY,
-                use_search_tree=False, search_tree_depth=-1, save_midway=False):
+                                     discount_factor=kMeansClient.DISCOUNT_FACTOR, gaussian_width=GAUSSIAN,
+                                     exploration_rate=kMeansClient.EXPLORATION_RATE, standard_episodes=kMeansClient.LEARNING_LENGTH,
+                                     kmeans_episodes=kMeansClient.SLEEPING_LENGTH, weighted_kmeans=True, render_mode=kMeansClient.RENDER_MODE,
+                                     game_mode=kMeansClient.GAME_MODE, k=None, save_plot=True, ignore_kmeans=False,
+                                     use_vectors=RUN_KMEANS_VECTOR, vector_type=1, learn=True, use_special_kmeans=False, markdownStorer=None,
+                                     mode="insert_mode", write_logs=WRITE_LOGS, segments=1, use_cosine_similarity=COSINE_SIMILARITY,
+                                     use_search_tree=False, search_tree_depth=-1, save_midway=False):
 
     if MULTITHREADING:
         config_holder = configHolder(discount_factor=discount_factor, gaussian_width=gaussian_width,
@@ -126,7 +138,7 @@ def run_program_with_different_seeds(plot_name, plot_title, seed_count=3,
         with Pool((cpu_count() - 1)) as p:
             datas = p.map(config_holder.run_with_seed, range(seed_count))
 
-        datas = np.asarray(datas)
+        datas = np.asarray([data[0] for data in datas])
     else:
         datas = []
         for seed in range(seed_count):
@@ -142,10 +154,12 @@ def run_program_with_different_seeds(plot_name, plot_title, seed_count=3,
         datas = np.asarray(datas)
 
     plot_title = ("" if MULTITHREADING else "") + plot_title
-    plotHelper.plot_with_max_min_mean_std(datas, plot_name, plot_title)
+    if MAKE_GRAPHS:
+        plotHelper.plot_with_max_min_mean_std(datas, plot_name, plot_title)
     avg = np.round(np.mean(datas), 2).item()
+    std = np.round(np.std(datas), 2).item()
     if markdownStorer != None:
-        markdownStorer.add_data_point(mode, avg, plot_name, gaussian_width, k, seed_count, segments=segments)
+        markdownStorer.add_data_point(mode, avg, std, plot_name, gaussian_width, k, seed_count, segments=segments)
         markdownStorer.update_markdown(LINUX, PATH_PREFIX)
     return datas
 
@@ -337,7 +351,7 @@ def run_gaussian_k():
         print(f"\n\n\n\n{k=}: time:{end - start}")
         time.sleep(5)
     if markdownStorer != None:
-        markdownStorer.create_markdown(LINUX, PATH_PREFIX)
+        markdownStorer.create_markdown(LINUX, MD_PATH_PREFIX)
 
 if __name__ == '__main__':
     total_start = time.time()

@@ -29,8 +29,8 @@ EXPLORATION_RATE = 0.1  # Controls when actions with little data should be chose
 SEGMENTS = 5
 K_MEANS_K = 20
 
-STANDARD_RUNNING_LENGTH = 50
-KMEANS_RUNNING_LENGTH = 100
+LEARNING_LENGTH = 100
+SLEEPING_LENGTH = 100
 KMEANS_TYPE = STANDARD
 TSNE = False
 
@@ -44,8 +44,8 @@ OBSERVATION_LIMITS = np.asarray([[-2.4, 2.4],
                                  [-0.3, 0.3]])
 
 def run_program(seed=SEED, discount_factor=DISCOUNT_FACTOR, gaussian_width=GAUSSIAN_WIDTH,
-                exploration_rate=EXPLORATION_RATE, standard_episodes=STANDARD_RUNNING_LENGTH,
-                kmeans_episodes=KMEANS_RUNNING_LENGTH, weighted_kmeans=True, render_mode=RENDER_MODE,
+                exploration_rate=EXPLORATION_RATE, standard_episodes=LEARNING_LENGTH,
+                kmeans_episodes=SLEEPING_LENGTH, weighted_kmeans=True, render_mode=RENDER_MODE,
                 game_mode=GAME_MODE, k=K_MEANS_K, save_plot=True, ignore_kmeans=False, use_vectors=False, learn=True,
                 vector_type=1, do_standardize=True, use_special_kmeans=False, write_logs=True, segments=SEGMENTS,
                 expander_gaussian=1, use_cosine_similarity=False, use_search_tree=False,
@@ -72,6 +72,7 @@ def run_program(seed=SEED, discount_factor=DISCOUNT_FACTOR, gaussian_width=GAUSS
     data = []
     action_string = ""
     path = []
+    reward_list = [0.0]
     while True:
         if render_mode == "human":
             for event in pygame.event.get():
@@ -104,6 +105,7 @@ def run_program(seed=SEED, discount_factor=DISCOUNT_FACTOR, gaussian_width=GAUSS
             model.check_vector(old_state, expanded_state)
 
         rewards += float(reward)
+        reward_list.append(float(reward))
 
         if terminated or truncated:
             if write_logs:
@@ -117,15 +119,17 @@ def run_program(seed=SEED, discount_factor=DISCOUNT_FACTOR, gaussian_width=GAUSS
                     if TSNE:
                         model.tsne_of_path(path)
             if learn or episodes < standard_episodes:
+                reward_new = plotHelper.get_rewards(reward_list, DISCOUNT_FACTOR)
                 for i, state in enumerate(states):
                     model.states = np.vstack((model.states, state))
-                    model.rewards = np.hstack((model.rewards, np.power(discount_factor, len(states) - 1 - i) * rewards))
+                    model.rewards = np.hstack((model.rewards, reward_new[i]))
                     if i > 0:
                         model.state_action_transitions[actions[i - 1]].append((len(model.states) - 2, len(model.states) - 1))
                         model.state_action_transitions_from[actions[i - 1]].append(len(model.states) - 2)
                         model.state_action_transitions_to[actions[i - 1]].append(len(model.states) - 1)
 
             rewards = 0.
+            reward_list = [0]
             action_string = ""
             path = []
             actions.clear()
@@ -165,19 +169,21 @@ def run_program(seed=SEED, discount_factor=DISCOUNT_FACTOR, gaussian_width=GAUSS
         plt.legend(loc="upper left")
         plt.title(f"{20}K-{gaussian_width}G avg:{avg} V0 threshold")
 
-        plot_name = path + f"\\{STANDARD_RUNNING_LENGTH}_then_{KMEANS_RUNNING_LENGTH}_plot.png"
+        plot_name = path + f"\\{LEARNING_LENGTH}_then_{SLEEPING_LENGTH}_plot.png"
 
         plt.savefig(plot_name)
         plt.clf()
     if use_special_kmeans:
         print(f"Finished seed {seed}")
-    return data
+    print(f"Finished seed {seed}")
+
+    return (data, data)
 
 
 def run_program_with_different_seeds(seed_count=3, discount_factor=DISCOUNT_FACTOR, gaussian_width=GAUSSIAN_WIDTH,
-                exploration_rate=EXPLORATION_RATE, standard_episodes=STANDARD_RUNNING_LENGTH,
-                kmeans_episodes=KMEANS_RUNNING_LENGTH, kmeans_type=KMEANS_TYPE, render_mode=RENDER_MODE,
-                game_mode=GAME_MODE, save_plot=True):
+                                     exploration_rate=EXPLORATION_RATE, standard_episodes=LEARNING_LENGTH,
+                                     kmeans_episodes=SLEEPING_LENGTH, kmeans_type=KMEANS_TYPE, render_mode=RENDER_MODE,
+                                     game_mode=GAME_MODE, save_plot=True):
     datas = []
     for seed in range(seed_count):
         data = run_program(seed=seed, discount_factor=discount_factor, gaussian_width=gaussian_width,
