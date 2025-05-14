@@ -72,7 +72,7 @@ class MarkdownStorer:
             if self.segments != None:
                 f.write(f'# Segments: {self.segments}.\n'.encode())
 
-            if self.Ks != None:
+            if self.Ks != -1:
                 f.write(f'# K values of {str(self.Ks)} tested.\n'.encode())
 
             if self.GWs != None:

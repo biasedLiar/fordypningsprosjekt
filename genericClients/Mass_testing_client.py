@@ -29,8 +29,8 @@ SEED_COUNT = 100
 
 GAUSSIANS = [0.515, 0.535, 0.55, 0.565, 0.58]
 GAUSSIANS = [0.3, 0.55, 0.6, 0.65, 0.7]
-GAUSSIANS = [0.55]
-GAUSSIANS = [0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6]
+GAUSSIANS = [0.1]
+GAUSSIANS = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7]
 
 K_VALUES = [200, 250, 300, 350, 400]
 K_VALUES = [100, 150, 200, 250, 300, 350, 400, 600, 800]
@@ -52,8 +52,8 @@ RUN_BASIC_NO_LEARN = False
 
 #-----------------------------------
 
-RUN_KMEANS_UNWEIGHTED = False
 RUN_KMEANS_UNWEIGHTED = True
+RUN_KMEANS_UNWEIGHTED = False
 
 RUN_KMEANS_WEIGHTED = True
 RUN_KMEANS_WEIGHTED = False
@@ -63,8 +63,8 @@ RUN_KMEANS_WEIGHTED = False
 RUN_SEARCH_TREE = True
 RUN_SEARCH_TREE = False
 
-RUN_SEARCH_TREE_KMEANS = True
 RUN_SEARCH_TREE_KMEANS = False
+RUN_SEARCH_TREE_KMEANS = True
 
 #-----------------------------------
 
@@ -85,11 +85,11 @@ RUN_BASIC = False
 WRITE_MARKDOWN = True
 MAKE_GRAPHS = False
 
-SEARCH_TREE_DEPTH = 2
+SEARCH_TREE_DEPTH = 4
 
 date_string = datetime.today().strftime('%Y-%m-%d__%H-%M')
 COMMENT = f"{('search-tree-depth: ' + str(SEARCH_TREE_DEPTH) if RUN_SEARCH_TREE or RUN_SEARCH_TREE_KMEANS else '')}\n" \
-          f"Testing new rewards schema"
+          f"Testing kmeans sigmoid weighting"
 
 PATH_PREFIX = ("fordypningsprosjekt\\" if RUN_FROM_SCRIPT else "") + f"Finals\\{date_string}\\"
 MD_PATH_PREFIX = ("fordypningsprosjekt\\" if RUN_FROM_SCRIPT else "")
@@ -98,7 +98,7 @@ def run_program_with_different_seeds(plot_name, plot_title, seed_count=3,
                                      discount_factor=kMeansClient.DISCOUNT_FACTOR, gaussian_width=kMeansClient.GAUSSIAN_WIDTH,
                                      exploration_rate=kMeansClient.EXPLORATION_RATE, standard_episodes=kMeansClient.LEARNING_LENGTH,
                                      kmeans_episodes=kMeansClient.SLEEPING_LENGTH, weighted_kmeans=True,
-                                     render_mode=kMeansClient.RENDER_MODE, game_mode=kMeansClient.GAME_MODE, k=kMeansClient.K_MEANS_K,
+                                     render_mode=kMeansClient.RENDER_MODE, game_mode=kMeansClient.GAME_MODE, k=-1,
                                      save_plot=True, ignore_kmeans=False, use_vectors=False, vector_type=1, learn=True,
                                      use_special_kmeans=False, markdownStorer=None, mode="insert_mode", write_logs=WRITE_LOGS,
                                      use_search_tree=False, search_tree_depth=-1, save_midway=False):

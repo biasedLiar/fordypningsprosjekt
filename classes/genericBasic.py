@@ -282,7 +282,7 @@ class GenericModel:
                 i += 1
             if write_logs:
                 print(i)
-        if self.show_special:
+        if self.show_special or True:
             plot.clf()
         return model.mu
 
@@ -424,7 +424,9 @@ class GenericModel:
 
 
     def get_kmeans_weights(self):
-        formatted_input = np.asarray(self.rewards) / (max(np.abs(self.rewards)))
+        formatted_input = (2*np.asarray(self.rewards) / (max(np.abs(self.rewards)))) - 1
+        formatted_input = 1 / (1 + np.exp(-5*formatted_input))
+        return formatted_input
         softmaxed_rewards = softmax(formatted_input)
         return softmaxed_rewards
 
