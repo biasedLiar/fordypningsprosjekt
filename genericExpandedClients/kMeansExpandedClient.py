@@ -73,6 +73,13 @@ def run_program(seed=SEED, discount_factor=DISCOUNT_FACTOR, gaussian_width=GAUSS
     action_string = ""
     path = []
     reward_list = [0.0]
+    end_kmeans = time.time()
+    start_kmeans = end_kmeans
+    start_post_kmeans = end_kmeans
+    end_post_kmeans = end_kmeans
+
+    total_sleeping_steps = 0
+
     while True:
         if render_mode == "human":
             for event in pygame.event.get():
@@ -92,6 +99,9 @@ def run_program(seed=SEED, discount_factor=DISCOUNT_FACTOR, gaussian_width=GAUSS
             action = model.get_action_kmeans(expanded_state)
         action_string += str(action)
 
+
+        if episodes >= standard_episodes:
+            total_sleeping_steps += 1
 
         actions.append(action)
         old_state = expanded_state
@@ -140,6 +150,8 @@ def run_program(seed=SEED, discount_factor=DISCOUNT_FACTOR, gaussian_width=GAUSS
             states.append(expanded_state)
             episodes += 1
             if episodes == standard_episodes and not ignore_kmeans:
+                start_kmeans = time.time()
+                model.midway = True
                 if write_logs:
                     print("Calculating kmeans centers...")
                 model.calc_standard_kmeans(write_logs=write_logs, run_tsne=TSNE)
@@ -148,10 +160,14 @@ def run_program(seed=SEED, discount_factor=DISCOUNT_FACTOR, gaussian_width=GAUSS
                 if write_logs:
                     print(f"{model.states.shape=}")
                     print("Finished calculating kmeans centers")
+                end_kmeans = time.time()
+                start_post_kmeans = time.time()
 
             elif episodes == standard_episodes and save_midway:
                 model.calc_search_tree_state_vectors()
+
             if episodes == kmeans_episodes + standard_episodes:
+                end_post_kmeans = time.time()
                 break
 
     if save_plot:
@@ -177,7 +193,9 @@ def run_program(seed=SEED, discount_factor=DISCOUNT_FACTOR, gaussian_width=GAUSS
         print(f"Finished seed {seed}")
     print(f"Finished seed {seed}")
 
-    return (data, data)
+    kmeans_time = end_kmeans - start_kmeans
+    post_kmeans_time = end_post_kmeans - start_post_kmeans
+    return (data, kmeans_time, post_kmeans_time, total_sleeping_steps)
 
 
 def run_program_with_different_seeds(seed_count=3, discount_factor=DISCOUNT_FACTOR, gaussian_width=GAUSSIAN_WIDTH,

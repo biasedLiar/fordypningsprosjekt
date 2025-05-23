@@ -22,10 +22,12 @@ class MarkdownStorer:
         self.learn_length = learn_length
         self.date = datetime.today().strftime('%Y-%m-%d__%H-%M')
 
-    def add_data_point(self, mode, avg, std, plot_string, gw, k, seeds, segments=1):
+    def add_data_point(self, mode, avg, std, plot_string, gw, k, seeds, segments=1, kmeans_time=-1,
+                       post_kmeans_time=-1, total_steps=-1):
         if not mode in self.datas.keys():
             self.datas[mode] = []
-        runStat = RunStat(mode, avg, std, plot_string, gw=gw, k=k, seeds=seeds, segments=segments)
+        runStat = RunStat(mode, avg, std, plot_string, gw=gw, k=k, seeds=seeds, segments=segments,
+                          kmeans_time=kmeans_time, post_kmeans_time=post_kmeans_time, total_sleeping_steps=total_steps)
         self.datas[mode].append(runStat)
         self.run_count += 1
         self.max_seeds = max(self.max_seeds, seeds)
@@ -109,6 +111,16 @@ class MarkdownStorer:
                 for runStat in self.datas[mode]:
                     f.write(
                         f'{runStat.std}\n'.encode())
+
+                f.write(f'\nkmeans time:\n'.encode())
+                for runStat in self.datas[mode]:
+                    f.write(
+                        f'{runStat.kmeans_time}\n'.encode())
+
+                f.write(f'\nsteps per second:\n'.encode())
+                for runStat in self.datas[mode]:
+                    f.write(
+                        f'{runStat.steps_per_second}\n'.encode())
 
         print("Finished writing to file.")
 

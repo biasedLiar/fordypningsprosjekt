@@ -30,7 +30,7 @@ SEED_COUNT = 100
 GAUSSIANS = [0.515, 0.535, 0.55, 0.565, 0.58]
 GAUSSIANS = [0.3, 0.55, 0.6, 0.65, 0.7]
 GAUSSIANS = [0.1]
-GAUSSIANS = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7]
+GAUSSIANS = [0.3, 0.4, 0.5, 0.6, 0.7, 0.1, 0.2]
 
 K_VALUES = [200, 250, 300, 350, 400]
 K_VALUES = [100, 150, 200, 250, 300, 350, 400, 600, 800]
@@ -60,11 +60,11 @@ RUN_KMEANS_WEIGHTED = False
 
 #-----------------------------------
 
-RUN_SEARCH_TREE = True
 RUN_SEARCH_TREE = False
+RUN_SEARCH_TREE = True
 
-RUN_SEARCH_TREE_KMEANS = False
 RUN_SEARCH_TREE_KMEANS = True
+RUN_SEARCH_TREE_KMEANS = False
 
 #-----------------------------------
 
@@ -85,7 +85,7 @@ RUN_BASIC = False
 WRITE_MARKDOWN = True
 MAKE_GRAPHS = False
 
-SEARCH_TREE_DEPTH = 4
+SEARCH_TREE_DEPTH = 2
 
 date_string = datetime.today().strftime('%Y-%m-%d__%H-%M')
 COMMENT = f"{('search-tree-depth: ' + str(SEARCH_TREE_DEPTH) if RUN_SEARCH_TREE or RUN_SEARCH_TREE_KMEANS else '')}\n" \
@@ -114,14 +114,24 @@ def run_program_with_different_seeds(plot_name, plot_title, seed_count=3,
                                      use_special_kmeans=use_special_kmeans, write_logs=write_logs,
                                      search_tree_depth=search_tree_depth, use_search_tree=use_search_tree,
                                      save_midway=save_midway)
-        datas = []
-        pool = Pool(processes=(cpu_count() - 1))
-        with Pool((cpu_count() - 1)) as p:
-            datas = p.map(config_holder.run_with_seed, range(seed_count))
 
-        datas = np.asarray(datas)
+        old_datas = []
+        datas = []
+        kmeans_time = []
+        post_kmeans_time = []
+        total_sleeping_steps = []
+        with Pool((cpu_count() - 1)) as p:
+            old_datas = p.map(config_holder.run_with_seed, range(seed_count))
+        for data in old_datas:
+            datas.append(data[0])
+            kmeans_time.append(data[1])
+            post_kmeans_time.append(data[2])
+            total_sleeping_steps.append(data[3])
     else:
         datas = []
+        kmeans_time = []
+        post_kmeans_time = []
+        total_sleeping_steps = []
         for seed in range(seed_count):
             data = kMeansClient.run_program(seed=seed, discount_factor=discount_factor, gaussian_width=gaussian_width,
                                             exploration_rate=exploration_rate, standard_episodes=standard_episodes,
@@ -130,15 +140,24 @@ def run_program_with_different_seeds(plot_name, plot_title, seed_count=3,
                                             vector_type=vector_type, learn=learn, do_standardize=True, use_special_kmeans=use_special_kmeans,
                                             write_logs=write_logs, use_search_tree=use_search_tree, search_tree_depth=search_tree_depth,
                                             save_midway=save_midway)
-            datas.append(data)
-        datas = np.asarray(datas)
+            datas.append(data[0])
+            kmeans_time.append(data[1])
+            post_kmeans_time.append(data[2])
+            total_sleeping_steps.append(data[3])
+
+    datas = np.asarray(datas)
+    kmeans_time = np.round(np.mean(np.asarray(kmeans_time)), 2).item()
+    post_kmeans_time = np.round(np.mean(np.asarray(post_kmeans_time)), 2).item()
+    total_sleeping_steps = np.round(np.mean(np.asarray(total_sleeping_steps)), 2).item()
+
     if MAKE_GRAPHS:
         plot_title = ("" if MULTITHREADING else "") + plot_title
         plotHelper.plot_with_max_min_mean_std(datas, plot_name, plot_title)
     avg = np.round(np.mean(datas), 2).item()
     std = np.round(np.std(datas), 2).item()
     if markdownStorer != None:
-        markdownStorer.add_data_point(mode, avg, std, plot_name, gaussian_width, k, seed_count)
+        markdownStorer.add_data_point(mode, avg, std, plot_name, gaussian_width, k, seed_count, kmeans_time=kmeans_time,
+                                      post_kmeans_time=post_kmeans_time, total_steps=total_sleeping_steps)
         if LINUX:
             markdownStorer.update_markdown(LINUX, MD_PATH_PREFIX)
     return datas
