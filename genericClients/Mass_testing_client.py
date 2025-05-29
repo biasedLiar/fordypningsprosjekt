@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import os
 import sys
 
+import numpy as np
 
 #dir_path = os.path.dirname(os.path.realpath(__file__))
 dir_path = os.getcwd()
@@ -29,16 +30,17 @@ SEED_COUNT = 100
 
 GAUSSIANS = [0.515, 0.535, 0.55, 0.565, 0.58]
 GAUSSIANS = [0.3, 0.55, 0.6, 0.65, 0.7]
+GAUSSIANS = [0.075]
+GAUSSIANS = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7]
 GAUSSIANS = [0.1]
-GAUSSIANS = [0.3, 0.4, 0.5, 0.6, 0.7, 0.1, 0.2]
 
 K_VALUES = [200, 250, 300, 350, 400]
 K_VALUES = [100, 150, 200, 250, 300, 350, 400, 600, 800]
 K_VALUES = [1000, 1250, 1500, 1750, 2000]
 K_VALUES = [100, 250, 500]
 K_VALUES = [20, 50, 100, 250]
-K_VALUES = [1]
 K_VALUES = [50, 100, 250, 500, 1000]
+K_VALUES = [1000]
 
 
 EXPLORATION_RATES = [0.1]
@@ -52,16 +54,16 @@ RUN_BASIC_NO_LEARN = False
 
 #-----------------------------------
 
-RUN_KMEANS_UNWEIGHTED = True
 RUN_KMEANS_UNWEIGHTED = False
+RUN_KMEANS_UNWEIGHTED = True
 
 RUN_KMEANS_WEIGHTED = True
 RUN_KMEANS_WEIGHTED = False
 
 #-----------------------------------
 
-RUN_SEARCH_TREE = False
 RUN_SEARCH_TREE = True
+RUN_SEARCH_TREE = False
 
 RUN_SEARCH_TREE_KMEANS = True
 RUN_SEARCH_TREE_KMEANS = False
@@ -85,11 +87,11 @@ RUN_BASIC = False
 WRITE_MARKDOWN = True
 MAKE_GRAPHS = False
 
-SEARCH_TREE_DEPTH = 2
+SEARCH_TREE_DEPTH = 4
 
 date_string = datetime.today().strftime('%Y-%m-%d__%H-%M')
 COMMENT = f"{('search-tree-depth: ' + str(SEARCH_TREE_DEPTH) if RUN_SEARCH_TREE or RUN_SEARCH_TREE_KMEANS else '')}\n" \
-          f"Testing kmeans sigmoid weighting"
+          f"Testing kmeans --- weighting"
 
 PATH_PREFIX = ("fordypningsprosjekt\\" if RUN_FROM_SCRIPT else "") + f"Finals\\{date_string}\\"
 MD_PATH_PREFIX = ("fordypningsprosjekt\\" if RUN_FROM_SCRIPT else "")
@@ -120,6 +122,8 @@ def run_program_with_different_seeds(plot_name, plot_title, seed_count=3,
         kmeans_time = []
         post_kmeans_time = []
         total_sleeping_steps = []
+        learn_datas = []
+        num_nodes = []
         with Pool((cpu_count() - 1)) as p:
             old_datas = p.map(config_holder.run_with_seed, range(seed_count))
         for data in old_datas:
@@ -127,6 +131,8 @@ def run_program_with_different_seeds(plot_name, plot_title, seed_count=3,
             kmeans_time.append(data[1])
             post_kmeans_time.append(data[2])
             total_sleeping_steps.append(data[3])
+            learn_datas.append(data[4])
+            num_nodes.append(data[5])
     else:
         datas = []
         kmeans_time = []
@@ -149,17 +155,39 @@ def run_program_with_different_seeds(plot_name, plot_title, seed_count=3,
     kmeans_time = np.round(np.mean(np.asarray(kmeans_time)), 2).item()
     post_kmeans_time = np.round(np.mean(np.asarray(post_kmeans_time)), 2).item()
     total_sleeping_steps = np.round(np.mean(np.asarray(total_sleeping_steps)), 2).item()
+    num_node_mean = np.round(np.mean(np.asarray(num_nodes)), 2).item()
 
     if MAKE_GRAPHS:
         plot_title = ("" if MULTITHREADING else "") + plot_title
         plotHelper.plot_with_max_min_mean_std(datas, plot_name, plot_title)
     avg = np.round(np.mean(datas), 2).item()
     std = np.round(np.std(datas), 2).item()
+
+
     if markdownStorer != None:
+        markdownStorer.comment += f"\n{num_node_mean=}\n"
         markdownStorer.add_data_point(mode, avg, std, plot_name, gaussian_width, k, seed_count, kmeans_time=kmeans_time,
                                       post_kmeans_time=post_kmeans_time, total_steps=total_sleeping_steps)
         if LINUX:
             markdownStorer.update_markdown(LINUX, MD_PATH_PREFIX)
+
+    if True:
+        learn_data = np.array(learn_datas)
+        means = np.mean(learn_data, axis=1)
+        stds = np.std(learn_data, axis=1)
+        timesteps = np.arange(learn_data.shape[0])
+        plt.plot(timesteps, means - stds, means + stds, alpha=0.3, label='±1 std dev')
+        plt.xlabel('Time')
+        plt.ylabel('Value')
+        plt.title('Mean and Standard Deviation Across Runs')
+        plt.legend()
+        plt.grid(True)
+        path = f"{PATH_PREFIX}special"
+        fileHelper.createDirIfNotExist(path, linux=LINUX)
+        name = path + f"\\learning_plots.png"
+        name = fileHelper.osFormat(name, LINUX)
+        plt.savefig(name)
+        plt.clf()
     return datas
 
 

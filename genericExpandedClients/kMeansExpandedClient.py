@@ -87,16 +87,20 @@ def run_program(seed=SEED, discount_factor=DISCOUNT_FACTOR, gaussian_width=GAUSS
                     env.close()
                     exit()
 
-        if episodes < standard_episodes or ignore_kmeans:
-            if use_search_tree and episodes >= standard_episodes:
-                action = model.get_action_search_tree(expanded_state)
-            else:
-                action = model.get_action_without_kmeans(expanded_state)
-        elif use_vectors:
-            action = model.get_action_with_vector(expanded_state)
+
+
+
+        if episodes < standard_episodes or (ignore_kmeans and not use_search_tree):
+            action = model.get_action_without_kmeans(expanded_state)
+        elif use_search_tree:
+            action = model.get_action_search_tree(expanded_state, ignore_kmeans=ignore_kmeans)
         else:
-            #print("REached")
             action = model.get_action_kmeans(expanded_state)
+
+
+
+
+
         action_string += str(action)
 
 
@@ -149,22 +153,25 @@ def run_program(seed=SEED, discount_factor=DISCOUNT_FACTOR, gaussian_width=GAUSS
 
             states.append(expanded_state)
             episodes += 1
-            if episodes == standard_episodes and not ignore_kmeans:
+            if episodes == standard_episodes:
                 start_kmeans = time.time()
                 model.midway = True
-                if write_logs:
-                    print("Calculating kmeans centers...")
-                model.calc_standard_kmeans(write_logs=write_logs, run_tsne=TSNE)
-                if TSNE:
-                    model.tsne_based_on_reward()
-                if write_logs:
-                    print(f"{model.states.shape=}")
-                    print("Finished calculating kmeans centers")
+                if save_midway:
+                    model.calc_search_tree_state_vectors(ignore_kmeans=ignore_kmeans)
+                if not ignore_kmeans:
+                    if write_logs:
+                        print("Calculating kmeans centers...")
+                    if use_search_tree:
+                        model.calc_search_tree_kmeans(write_logs=write_logs, run_tsne=TSNE)
+                    else:
+                        model.calc_standard_kmeans(write_logs=write_logs, run_tsne=TSNE)
+                    if TSNE:
+                        model.tsne_based_on_reward()
+                    if write_logs:
+                        print(f"{model.states.shape=}")
+                        print("Finished calculating kmeans centers")
                 end_kmeans = time.time()
                 start_post_kmeans = time.time()
-
-            elif episodes == standard_episodes and save_midway:
-                model.calc_search_tree_state_vectors()
 
             if episodes == kmeans_episodes + standard_episodes:
                 end_post_kmeans = time.time()

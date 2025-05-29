@@ -427,8 +427,10 @@ class GenericModel:
         formatted_input = (2*np.asarray(self.rewards) / (max(np.abs(self.rewards)))) - 1
         formatted_input = 1 / (1 + np.exp(-5*formatted_input))
         return formatted_input
-        softmaxed_rewards = softmax(formatted_input)
-        return softmaxed_rewards
+
+        formatted_input = np.asarray(self.rewards) / max(np.abs(self.rewards))
+        return formatted_input
+
 
     def get_action_kmeans(self, state, debug=False):
         standardized_state = self.standardize(state)

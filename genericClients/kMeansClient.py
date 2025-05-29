@@ -57,6 +57,8 @@ def run_program(seed=SEED, discount_factor=DISCOUNT_FACTOR, gaussian_width=GAUSS
     states.append(state)
     episodes = 0
     data = []
+    learn_datas = []
+    learning_nodes = -100000000
     action_string = ""
     path = []
     reward_list = [0.0]
@@ -104,6 +106,8 @@ def run_program(seed=SEED, discount_factor=DISCOUNT_FACTOR, gaussian_width=GAUSS
                         model.tsne_of_path(path)
                     path=[]
                     path=[]
+            else:
+                learn_datas.append(rewards)
             if learn or episodes < standard_episodes:
                 reward_new = plotHelper.get_rewards(reward_list, DISCOUNT_FACTOR)
                 for i, state in enumerate(states):
@@ -124,6 +128,7 @@ def run_program(seed=SEED, discount_factor=DISCOUNT_FACTOR, gaussian_width=GAUSS
             states.append(state)
             episodes += 1
             if episodes == standard_episodes:
+                learning_nodes = len(model.rewards)
                 start_kmeans = time.time()
                 model.midway = True
                 if save_midway:
@@ -132,8 +137,6 @@ def run_program(seed=SEED, discount_factor=DISCOUNT_FACTOR, gaussian_width=GAUSS
                     if write_logs:
                         print("Calculating kmeans centers...")
                     if use_search_tree:
-                        if not save_midway:
-                            raise NotImplementedError
                         model.calc_search_tree_kmeans(write_logs=write_logs, run_tsne=TSNE)
                     else:
                         model.calc_standard_kmeans(write_logs=write_logs, run_tsne=TSNE)
@@ -176,7 +179,7 @@ def run_program(seed=SEED, discount_factor=DISCOUNT_FACTOR, gaussian_width=GAUSS
 
     kmeans_time = end_kmeans - start_kmeans
     post_kmeans_time = end_post_kmeans - start_post_kmeans
-    return (data, kmeans_time, post_kmeans_time, total_sleeping_steps)
+    return (data, kmeans_time, post_kmeans_time, total_sleeping_steps, learn_datas, learning_nodes)
 
 
 def run_program_with_different_seeds(seed_count=3, discount_factor=DISCOUNT_FACTOR, gaussian_width=GAUSSIAN_WIDTH,
