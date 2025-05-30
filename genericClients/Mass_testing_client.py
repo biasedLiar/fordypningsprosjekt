@@ -32,7 +32,7 @@ GAUSSIANS = [0.515, 0.535, 0.55, 0.565, 0.58]
 GAUSSIANS = [0.3, 0.55, 0.6, 0.65, 0.7]
 GAUSSIANS = [0.075]
 GAUSSIANS = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7]
-GAUSSIANS = [0.1]
+GAUSSIANS = [0.2]
 
 K_VALUES = [200, 250, 300, 350, 400]
 K_VALUES = [100, 150, 200, 250, 300, 350, 400, 600, 800]
@@ -173,13 +173,16 @@ def run_program_with_different_seeds(plot_name, plot_title, seed_count=3,
 
     if True:
         learn_data = np.array(learn_datas)
+        learn_data = learn_data.transpose()
         means = np.mean(learn_data, axis=1)
         stds = np.std(learn_data, axis=1)
         timesteps = np.arange(learn_data.shape[0])
-        plt.plot(timesteps, means - stds, means + stds, alpha=0.3, label='±1 std dev')
-        plt.xlabel('Time')
-        plt.ylabel('Value')
-        plt.title('Mean and Standard Deviation Across Runs')
+        plt.plot(timesteps, means, label='Mean', color='blue')
+
+        plt.fill_between(timesteps, means - stds, means + stds, alpha=0.3, color='red', label='±1 Std Dev')
+        plt.xlabel('Episode')
+        plt.ylabel('Steps')
+        plt.title('Mean and Standard Deviation Episode Length for σ=0.2')
         plt.legend()
         plt.grid(True)
         path = f"{PATH_PREFIX}special"
@@ -187,6 +190,7 @@ def run_program_with_different_seeds(plot_name, plot_title, seed_count=3,
         name = path + f"\\learning_plots.png"
         name = fileHelper.osFormat(name, LINUX)
         plt.savefig(name)
+        print(f"saving to {name=}")
         plt.clf()
     return datas
 
