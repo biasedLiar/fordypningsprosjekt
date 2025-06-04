@@ -2,7 +2,6 @@ import time
 
 from genericClients import kMeansClient
 from genericExpandedClients import kMeansExpandedClient
-from genericExpandedClients import kMeansTrigExpandedClient
 
 class configHolder:
     def __init__(self, discount_factor=kMeansClient.DISCOUNT_FACTOR, gaussian_width=kMeansClient.GAUSSIAN_WIDTH,
@@ -57,21 +56,6 @@ class configHolder:
                                             use_cosine_similarity=self.use_cosine_similarity,
                                             use_search_tree=self.use_search_tree, search_tree_depth=self.search_tree_depth,
                                             save_midway=self.save_midway)
-        elif self.trig_expanded:
-            data = kMeansTrigExpandedClient.run_program(seed=seed, discount_factor=self.discount_factor,
-                                            gaussian_width=self.gaussian_width,
-                                            exploration_rate=self.exploration_rate,
-                                            standard_episodes=self.standard_episodes,
-                                            kmeans_episodes=self.kmeans_episodes, weighted_kmeans=self.weighted_kmeans,
-                                            render_mode=self.render_mode,
-                                            game_mode=self.game_mode, k=self.k, save_plot=self.save_plot,
-                                            ignore_kmeans=self.ignore_kmeans,
-                                            use_vectors=self.use_vectors,
-                                            vector_type=self.vector_type, learn=self.learn,
-                                            use_special_kmeans=self.use_special_kmeans,
-                                            do_standardize=self.do_standardize, write_logs=self.write_logs,
-                                            segments=self.segments, expander_gaussian=self.expander_gaussian,
-                                            use_cosine_similarity=self.use_cosine_similarity)
         else:
             data = kMeansClient.run_program(seed=seed, discount_factor=self.discount_factor,
                                             gaussian_width=self.gaussian_width,
@@ -87,5 +71,4 @@ class configHolder:
                                             do_standardize=self.do_standardize, write_logs=self.write_logs,
                                             use_search_tree=self.use_search_tree, search_tree_depth=self.search_tree_depth,
                                             save_midway=self.save_midway)
-
         return data

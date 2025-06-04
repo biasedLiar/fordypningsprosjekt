@@ -30,35 +30,30 @@ SEED_COUNT = 100
 
 GAUSSIAN = 0.55
 GAUSSIANS = [0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
-GAUSSIANS = [0.3]
+GAUSSIANS = [0.4]
 
 K_VALUES = [20, 50, 100, 250]
-K_VALUES = [50]
 K_VALUES = [50, 100, 250, 500, 1000]
 K_VALUES = [500, 1000]
+K_VALUES = [50]
 
 EXPLORATION_RATES = [0.1]
 
 MULTITHREADING=True
 
-
-
-SEGMENTS = [8]
 SEGMENTS = [2, 3, 4, 5, 6]
-SEGMENTS = [5, 6]
-SEGMENTS = [3, 4]
-SEGMENTS = [2, 3, 4]
+SEGMENTS = [2]
 EXPANDER_GAUSSIAN = 1.0
 
 SEARCH_TREE_DEPTH = 3
 
-RUN_BASIC_NO_LEARN = True
 RUN_BASIC_NO_LEARN = False
+RUN_BASIC_NO_LEARN = True
 
 #-------------------------------------
 
-RUN_KMEANS_UNWEIGHTED = True
 RUN_KMEANS_UNWEIGHTED = False
+RUN_KMEANS_UNWEIGHTED = True
 
 RUN_KMEANS_WEIGHTED = True
 RUN_KMEANS_WEIGHTED = False
@@ -135,7 +130,6 @@ def run_program_with_different_seeds(plot_name, plot_title, seed_count=3,
                                      use_cosine_similarity=use_cosine_similarity,
                                      search_tree_depth=search_tree_depth, use_search_tree=use_search_tree,
                                      save_midway=save_midway)
-        old_datas = []
         datas = []
         kmeans_time = []
         post_kmeans_time = []
@@ -203,7 +197,8 @@ def run_gaussian_k():
                 for gaussian_width in GAUSSIANS:
                     print("Starting Kmeans Unweighted...")
                     path = f"{PATH_PREFIX}mplots\\expanded\\{kMeansClient.GAME_MODE}\\{segment}s\\{k}k"
-                    fileHelper.createDirIfNotExist(path, linux=LINUX)
+                    if MAKE_GRAPHS:
+                        fileHelper.createDirIfNotExist(path, linux=LINUX)
                     name = path + f"\\{SEED_COUNT}seed__{kMeansClient.LEARNING_LENGTH}_then_{kMeansClient.SLEEPING_LENGTH}__unweighted_plot.png"
                     name = fileHelper.osFormat(name, LINUX)
 
@@ -221,7 +216,8 @@ def run_gaussian_k():
                 for gaussian_width in GAUSSIANS:
                     print("Starting Kmeans Weighted...")
                     path = f"{PATH_PREFIX}mplots\\expanded\\{kMeansClient.GAME_MODE}\\{segment}s\\{k}k"
-                    fileHelper.createDirIfNotExist(path, linux=LINUX)
+                    if MAKE_GRAPHS:
+                        fileHelper.createDirIfNotExist(path, linux=LINUX)
                     name = path + f"\\{SEED_COUNT}seed__{kMeansClient.LEARNING_LENGTH}_then_{kMeansClient.SLEEPING_LENGTH}__weighted_plot.png"
                     name = fileHelper.osFormat(name, LINUX)
 
@@ -238,7 +234,8 @@ def run_gaussian_k():
                     for gaussian_width in GAUSSIANS:
                         print("Starting Search Tree...")
                         path = f"{PATH_PREFIX}mplots\\generic\\{kMeansClient.GAME_MODE}\\{gaussian_width}g\\search_tree"
-                        fileHelper.createDirIfNotExist(path, linux=LINUX)
+                        if MAKE_GRAPHS:
+                            fileHelper.createDirIfNotExist(path, linux=LINUX)
                         name = path + f"\\{SEED_COUNT}seed__{kMeansClient.LEARNING_LENGTH}_then_{kMeansClient.SLEEPING_LENGTH}__tree_plot.png"
                         name = fileHelper.osFormat(name, LINUX)
 
@@ -258,7 +255,8 @@ def run_gaussian_k():
                 for gaussian_width in GAUSSIANS:
                     print("Starting Search Tree KMeans...")
                     path = f"{PATH_PREFIX}mplots\\generic\\{kMeansClient.GAME_MODE}\\{gaussian_width}g\\search_tree_kmeans"
-                    fileHelper.createDirIfNotExist(path, linux=LINUX)
+                    if MAKE_GRAPHS:
+                        fileHelper.createDirIfNotExist(path, linux=LINUX)
                     name = path + f"\\{SEED_COUNT}seed__{kMeansClient.LEARNING_LENGTH}_then_{kMeansClient.SLEEPING_LENGTH}__tree_plot.png"
                     name = fileHelper.osFormat(name, LINUX)
 
@@ -277,7 +275,8 @@ def run_gaussian_k():
             if RUN_KMEANS_VECTOR:
                 print("Starting Vector...")
                 path = f"{PATH_PREFIX}mplots\\expanded\\{kMeansClient.GAME_MODE}\\{segment}s\\{k}k"
-                fileHelper.createDirIfNotExist(path, linux=LINUX)
+                if MAKE_GRAPHS:
+                    fileHelper.createDirIfNotExist(path, linux=LINUX)
                 name = path + f"\\{SEED_COUNT}seed__{kMeansClient.LEARNING_LENGTH}_then_{kMeansClient.SLEEPING_LENGTH}__vector_plot.png"
                 name = fileHelper.osFormat(name, LINUX)
 
@@ -291,7 +290,8 @@ def run_gaussian_k():
             if RUN_KMEANS_VECTOR2:
                 print("Starting Vector-2...")
                 path = f"{PATH_PREFIX}mplots\\expanded\\{kMeansClient.GAME_MODE}\\{segment}s\\{k}k"
-                fileHelper.createDirIfNotExist(path, linux=LINUX)
+                if MAKE_GRAPHS:
+                    fileHelper.createDirIfNotExist(path, linux=LINUX)
                 name = path + f"\\{SEED_COUNT}seed__{kMeansClient.LEARNING_LENGTH}_then_{kMeansClient.SLEEPING_LENGTH}__vector2_plot.png"
                 name = fileHelper.osFormat(name, LINUX)
 
@@ -306,7 +306,8 @@ def run_gaussian_k():
                 if k == K_VALUES[0]:
                     print("Starting No Kmeans...")
                     path = f"{PATH_PREFIX}mplots\\expanded\\{kMeansClient.GAME_MODE}\\{segment}s\\basic"
-                    fileHelper.createDirIfNotExist(path, linux=LINUX)
+                    if MAKE_GRAPHS:
+                        fileHelper.createDirIfNotExist(path, linux=LINUX)
                     name = path + f"\\{SEED_COUNT}seed__{kMeansClient.LEARNING_LENGTH}_then_{kMeansClient.SLEEPING_LENGTH}__basic_plot.png"
                     name = fileHelper.osFormat(name, LINUX)
 
@@ -395,10 +396,8 @@ def run_gaussian_k():
 
 
                 plotHelper.plot_multiple_graph_types(datas_list, labels, name, title, show_std=True)
-            time.sleep(2)
         end = time.time()
         print(f"\n\n\n\n{k=}: time:{end - start}")
-        time.sleep(5)
     if markdownStorer != None:
         markdownStorer.create_markdown(LINUX, MD_PATH_PREFIX)
 

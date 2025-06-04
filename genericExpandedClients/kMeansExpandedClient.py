@@ -13,9 +13,7 @@ SEED = 1
 SEED_COUNT = 30
 RENDER_MODE = None  # Set to None to run without graphics
 GAME_MODE = "CartPole-v1"
-#game_mode = "LunarLander-v2"
 
-DISCOUNT_FACTOR = 0.99999
 DISCOUNT_FACTOR = 0.9  # Low discount penalize longer episodes.
 # For example, shorter paths to the goal will receive higher reward than longer paths,
 # even though the rewards from the environment are the same.
@@ -26,12 +24,10 @@ DISCOUNT_FACTOR = 0.9  # Low discount penalize longer episodes.
 GAUSSIAN_WIDTH = 0.3  # Sets the width of the Gaussian function that controls how much far away states should influence the action choice
 EXPLORATION_RATE = 0.1  # Controls when actions with little data should be chosen, 0: never, 1: always
 
-SEGMENTS = 5
 K_MEANS_K = 20
 
 LEARNING_LENGTH = 100
 SLEEPING_LENGTH = 100
-KMEANS_TYPE = STANDARD
 TSNE = False
 
 
@@ -47,8 +43,8 @@ def run_program(seed=SEED, discount_factor=DISCOUNT_FACTOR, gaussian_width=GAUSS
                 exploration_rate=EXPLORATION_RATE, standard_episodes=LEARNING_LENGTH,
                 kmeans_episodes=SLEEPING_LENGTH, weighted_kmeans=True, render_mode=RENDER_MODE,
                 game_mode=GAME_MODE, k=K_MEANS_K, save_plot=True, ignore_kmeans=False, use_vectors=False, learn=True,
-                vector_type=1, do_standardize=True, use_special_kmeans=False, write_logs=True, segments=SEGMENTS,
-                expander_gaussian=1, use_cosine_similarity=False, use_search_tree=False,
+                vector_type=1, do_standardize=True, use_special_kmeans=False, write_logs=True, segments=2,
+                expander_gaussian=1, use_search_tree=False,
                 search_tree_depth=-1, save_midway=False):
 
     env = gymnasium.make(game_mode, render_mode=render_mode)
@@ -122,16 +118,8 @@ def run_program(seed=SEED, discount_factor=DISCOUNT_FACTOR, gaussian_width=GAUSS
         reward_list.append(float(reward))
 
         if terminated or truncated:
-            if write_logs:
-                print(f"{episodes}: {rewards}  {action_string}")
-            #print(f"{seed=}, {episodes=}, rewards: {rewards}")
             if episodes >= standard_episodes:
                 data.append(rewards)
-                if write_logs:
-                    #print(f"{episodes}: {rewards}  {action_string}")
-                    path = np.asarray(path)
-                    if TSNE:
-                        model.tsne_of_path(path)
             if learn or episodes < standard_episodes:
                 reward_new = plotHelper.get_rewards(reward_list, DISCOUNT_FACTOR)
                 for i, state in enumerate(states):
@@ -159,78 +147,21 @@ def run_program(seed=SEED, discount_factor=DISCOUNT_FACTOR, gaussian_width=GAUSS
                 if save_midway:
                     model.calc_search_tree_state_vectors(ignore_kmeans=ignore_kmeans)
                 if not ignore_kmeans:
-                    if write_logs:
-                        print("Calculating kmeans centers...")
                     if use_search_tree:
                         model.calc_search_tree_kmeans(write_logs=write_logs, run_tsne=TSNE)
                     else:
                         model.calc_standard_kmeans(write_logs=write_logs, run_tsne=TSNE)
-                    if TSNE:
-                        model.tsne_based_on_reward()
-                    if write_logs:
-                        print(f"{model.states.shape=}")
-                        print("Finished calculating kmeans centers")
                 end_kmeans = time.time()
                 start_post_kmeans = time.time()
 
             if episodes == kmeans_episodes + standard_episodes:
                 end_post_kmeans = time.time()
                 break
-
-    if save_plot:
-        window_width = 5
-        rolling_avg = plotHelper.rolling_average(data, window_width)
-
-        avg = np.sum(data)/len(data)
-        #avg_plot = np.full((KMEANS_RUNNING_LENGTH), 195)
-        plt.plot(data, label="Steps")
-        plt.plot(rolling_avg, label=f"{window_width}-step avg")
-        #plt.plot(avg_plot, label=f"CartPole-v0 threshold")
-
-        plt.xlabel("Iterations")
-        plt.ylabel("Steps")
-        plt.legend(loc="upper left")
-        plt.title(f"{20}K-{gaussian_width}G avg:{avg} V0 threshold")
-
-        plot_name = path + f"\\{LEARNING_LENGTH}_then_{SLEEPING_LENGTH}_plot.png"
-
-        plt.savefig(plot_name)
-        plt.clf()
-    if use_special_kmeans:
-        print(f"Finished seed {seed}")
     print(f"Finished seed {seed}")
 
     kmeans_time = end_kmeans - start_kmeans
     post_kmeans_time = end_post_kmeans - start_post_kmeans
     return (data, kmeans_time, post_kmeans_time, total_sleeping_steps)
-
-
-def run_program_with_different_seeds(seed_count=3, discount_factor=DISCOUNT_FACTOR, gaussian_width=GAUSSIAN_WIDTH,
-                                     exploration_rate=EXPLORATION_RATE, standard_episodes=LEARNING_LENGTH,
-                                     kmeans_episodes=SLEEPING_LENGTH, kmeans_type=KMEANS_TYPE, render_mode=RENDER_MODE,
-                                     game_mode=GAME_MODE, save_plot=True):
-    datas = []
-    for seed in range(seed_count):
-        data = run_program(seed=seed, discount_factor=discount_factor, gaussian_width=gaussian_width,
-                exploration_rate=exploration_rate, standard_episodes=standard_episodes,
-                kmeans_episodes=kmeans_episodes, kmeans_type=kmeans_type, render_mode=render_mode,
-                game_mode=game_mode, save_plot=False)
-        datas.append(data)
-    datas = np.asarray(datas)
-    bucket_data = plotHelper.average_every_n(datas, list_of_list=True, n=5)
-    avg_reward = plotHelper.average_of_diff_seeds(bucket_data)
-    error_bounds = plotHelper.get_upper_lower_error_bounds(bucket_data, avg_reward)
-    x = np.arange(0, len(data), 5)
-
-    #avg_reward = np.ones_like(avg_reward)*50
-    #error_bounds = [avg_reward - avg_reward*0.5, avg_reward*2 - avg_reward]
-
-    print(f"{avg_reward}")
-    print(f"{error_bounds}")
-
-    plt.errorbar(x, avg_reward, yerr=error_bounds, fmt='-o')
-    plt.title(f"{game_mode} {SEED_COUNT}-count avg plot")
-    plt.show()
 
 
 

@@ -28,11 +28,10 @@ K_MEANS_K = 20
 
 LEARNING_LENGTH = 100
 SLEEPING_LENGTH = 100
-KMEANS_TYPE = STANDARD
 TSNE = False
 
 
-path = f"mplots\\generic\\{GAME_MODE}\\single\\{GAUSSIAN_WIDTH}g"
+path = f"mplots\\generic\\single\\{GAUSSIAN_WIDTH}g"
 
 
 
@@ -180,35 +179,6 @@ def run_program(seed=SEED, discount_factor=DISCOUNT_FACTOR, gaussian_width=GAUSS
     kmeans_time = end_kmeans - start_kmeans
     post_kmeans_time = end_post_kmeans - start_post_kmeans
     return (data, kmeans_time, post_kmeans_time, total_sleeping_steps, learn_datas, learning_nodes)
-
-
-def run_program_with_different_seeds(seed_count=3, discount_factor=DISCOUNT_FACTOR, gaussian_width=GAUSSIAN_WIDTH,
-                                     exploration_rate=EXPLORATION_RATE, standard_episodes=LEARNING_LENGTH,
-                                     kmeans_episodes=SLEEPING_LENGTH, kmeans_type=KMEANS_TYPE, render_mode=RENDER_MODE,
-                                     game_mode=GAME_MODE, save_plot=True):
-    datas = []
-    for seed in range(seed_count):
-        data = run_program(seed=seed, discount_factor=discount_factor, gaussian_width=gaussian_width,
-                exploration_rate=exploration_rate, standard_episodes=standard_episodes,
-                kmeans_episodes=kmeans_episodes, kmeans_type=kmeans_type, render_mode=render_mode,
-                game_mode=game_mode, save_plot=False)
-        datas.append(data)
-    datas = np.asarray(datas)
-    bucket_data = plotHelper.average_every_n(datas, list_of_list=True, n=5)
-    avg_reward = plotHelper.average_of_diff_seeds(bucket_data)
-    error_bounds = plotHelper.get_upper_lower_error_bounds(bucket_data, avg_reward)
-    x = np.arange(0, len(data), 5)
-
-    #avg_reward = np.ones_like(avg_reward)*50
-    #error_bounds = [avg_reward - avg_reward*0.5, avg_reward*2 - avg_reward]
-
-    print(f"{avg_reward}")
-    print(f"{error_bounds}")
-
-    plt.errorbar(x, avg_reward, yerr=error_bounds, fmt='-o')
-    plt.title(f"{game_mode} {SEED_COUNT}-count avg plot")
-    plt.show()
-
 
 
 if __name__ == '__main__':
