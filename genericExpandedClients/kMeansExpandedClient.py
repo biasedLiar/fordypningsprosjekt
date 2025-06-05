@@ -24,6 +24,7 @@ DISCOUNT_FACTOR = 0.9  # Low discount penalize longer episodes.
 GAUSSIAN_WIDTH = 0.3  # Sets the width of the Gaussian function that controls how much far away states should influence the action choice
 EXPLORATION_RATE = 0.1  # Controls when actions with little data should be chosen, 0: never, 1: always
 
+SEGMENTS = 5
 K_MEANS_K = 20
 
 LEARNING_LENGTH = 100
@@ -42,8 +43,7 @@ OBSERVATION_LIMITS = np.asarray([[-2.4, 2.4],
 def run_program(seed=SEED, discount_factor=DISCOUNT_FACTOR, gaussian_width=GAUSSIAN_WIDTH,
                 exploration_rate=EXPLORATION_RATE, standard_episodes=LEARNING_LENGTH,
                 kmeans_episodes=SLEEPING_LENGTH, weighted_kmeans=True, render_mode=RENDER_MODE,
-                game_mode=GAME_MODE, k=K_MEANS_K, save_plot=True, ignore_kmeans=False, use_vectors=False, learn=True,
-                vector_type=1, do_standardize=True, use_special_kmeans=False, write_logs=True, segments=2,
+                game_mode=GAME_MODE, k=K_MEANS_K, ignore_kmeans=False, learn=True, do_standardize=True, write_logs=True, segments=SEGMENTS,
                 expander_gaussian=1, use_search_tree=False,
                 search_tree_depth=-1, save_midway=False):
 
@@ -52,8 +52,7 @@ def run_program(seed=SEED, discount_factor=DISCOUNT_FACTOR, gaussian_width=GAUSS
     np.random.seed(seed)
 
     model = GenericModel(env.action_space.n, env.observation_space.shape[0]*segments, gaussian_width, exploration_rate, K=k, weighted_kmeans=weighted_kmeans,
-                         use_vectors=use_vectors, vector_type=vector_type, do_standardize=do_standardize,
-                         use_special_kmeans=use_special_kmeans, use_cosine_similarity=use_cosine_similarity, use_search_tree=use_search_tree, search_tree_depth=search_tree_depth)
+                         do_standardize=do_standardize, use_search_tree=use_search_tree, search_tree_depth=search_tree_depth)
 
     rewards = 0.  # Accumulative episode rewards
     actions = []  # Episode actions
@@ -111,13 +110,14 @@ def run_program(seed=SEED, discount_factor=DISCOUNT_FACTOR, gaussian_width=GAUSS
 
         states.append(expanded_state)
         path.append(expanded_state)
-        if use_vectors and episodes >= standard_episodes and False:
-            model.check_vector(old_state, expanded_state)
 
         rewards += float(reward)
         reward_list.append(float(reward))
 
         if terminated or truncated:
+            if write_logs:
+                print(f"{episodes}: {rewards}  {action_string}")
+            #print(f"{seed=}, {episodes=}, rewards: {rewards}")
             if episodes >= standard_episodes:
                 data.append(rewards)
             if learn or episodes < standard_episodes:

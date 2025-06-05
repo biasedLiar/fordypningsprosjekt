@@ -35,19 +35,17 @@ path = f"mplots\\generic\\single\\{GAUSSIAN_WIDTH}g"
 
 
 
-def run_program(seed=SEED, discount_factor=DISCOUNT_FACTOR, gaussian_width=GAUSSIAN_WIDTH,
+def run_program(seed=SEED, gaussian_width=GAUSSIAN_WIDTH,
                 exploration_rate=EXPLORATION_RATE, standard_episodes=LEARNING_LENGTH,
-                kmeans_episodes=SLEEPING_LENGTH, weighted_kmeans=True, render_mode=RENDER_MODE,
-                game_mode=GAME_MODE, k=K_MEANS_K, save_plot=True, ignore_kmeans=False, use_vectors=False, learn=True,
-                vector_type=1, do_standardize=True, use_special_kmeans=False, write_logs=True, use_search_tree=False,
+                eval_length=SLEEPING_LENGTH, weighted_kmeans=False, render_mode=RENDER_MODE,
+                game_mode=GAME_MODE, k=K_MEANS_K, ignore_kmeans=False, use_vectors=False, write_logs=True, use_search_tree=False,
                 search_tree_depth=-1, save_midway=False):
 
     env = gymnasium.make(game_mode, render_mode=render_mode)
     env.action_space.seed(seed)
     np.random.seed(seed)
     model = GenericModel(env.action_space.n, env.observation_space.shape[0], gaussian_width, exploration_rate, K=k, weighted_kmeans=weighted_kmeans,
-                         use_vectors=use_vectors, vector_type=vector_type, do_standardize=do_standardize,
-                         use_special_kmeans=use_special_kmeans, use_search_tree=use_search_tree, search_tree_depth=search_tree_depth)
+                         do_standardize=True, use_search_tree=use_search_tree, search_tree_depth=search_tree_depth)
 
     rewards = 0.  # Accumulative episode rewards
     actions = []  # Episode actions
@@ -95,19 +93,11 @@ def run_program(seed=SEED, discount_factor=DISCOUNT_FACTOR, gaussian_width=GAUSS
         reward_list.append(float(reward))
 
         if terminated or truncated:
-            #print(f"{seed=}, {episodes=}, rewards: {rewards}")
             if episodes >= standard_episodes:
                 data.append(rewards)
-                if write_logs:
-                    print(f"{episodes}: {rewards}  {action_string}")
-                    path = np.asarray(path)
-                    if TSNE:
-                        model.tsne_of_path(path)
-                    path=[]
-                    path=[]
             else:
                 learn_datas.append(rewards)
-            if learn or episodes < standard_episodes:
+            if episodes < standard_episodes:
                 reward_new = plotHelper.get_rewards(reward_list, DISCOUNT_FACTOR)
                 for i, state in enumerate(states):
                     model.states = np.vstack((model.states, state))
@@ -133,47 +123,18 @@ def run_program(seed=SEED, discount_factor=DISCOUNT_FACTOR, gaussian_width=GAUSS
                 if save_midway:
                     model.calc_search_tree_state_vectors(ignore_kmeans=ignore_kmeans)
                 if not ignore_kmeans:
-                    if write_logs:
-                        print("Calculating kmeans centers...")
                     if use_search_tree:
                         model.calc_search_tree_kmeans(write_logs=write_logs, run_tsne=TSNE)
                     else:
                         model.calc_standard_kmeans(write_logs=write_logs, run_tsne=TSNE)
-                    if TSNE:
-                        model.tsne_based_on_reward()
-                    if write_logs:
-                        print(f"{model.states.shape=}")
-                        print("Finished calculating kmeans centers")
                 end_kmeans = time.time()
                 start_post_kmeans = time.time()
 
-            if episodes == kmeans_episodes + standard_episodes:
+            if episodes == eval_length + standard_episodes:
                 end_post_kmeans = time.time()
                 break
 
 
-
-    if save_plot:
-        window_width = 5
-        rolling_avg = plotHelper.rolling_average(data, window_width)
-
-        avg = np.sum(data)/len(data)
-        #avg_plot = np.full((KMEANS_RUNNING_LENGTH), 195)
-        plt.plot(data, label="Steps")
-        plt.plot(rolling_avg, label=f"{window_width}-step avg")
-        #plt.plot(avg_plot, label=f"CartPole-v0 threshold")
-
-        plt.xlabel("Iterations")
-        plt.ylabel("Steps")
-        plt.legend(loc="upper left")
-        plt.title(f"{20}K-{gaussian_width}G avg:{avg} V0 threshold")
-
-        plot_name = path + f"\\{LEARNING_LENGTH}_then_{SLEEPING_LENGTH}_plot.png"
-
-        plt.savefig(plot_name)
-        plt.clf()
-    if use_special_kmeans:
-        print(f"Finished seed {seed}")
     print(f"Finished seed {seed}")
 
     kmeans_time = end_kmeans - start_kmeans

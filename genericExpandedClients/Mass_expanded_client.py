@@ -28,67 +28,32 @@ LINUX = True
 SEED_COUNT = 100
 
 
-GAUSSIAN = 0.55
-GAUSSIANS = [0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
 GAUSSIANS = [0.4]
+GAUSSIANS = [0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+GAUSSIANS = [0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.4]
 
 K_VALUES = [20, 50, 100, 250]
-K_VALUES = [50, 100, 250, 500, 1000]
 K_VALUES = [500, 1000]
+K_VALUES = [50, 100, 250, 500, 1000]
 K_VALUES = [50]
 
 EXPLORATION_RATES = [0.1]
 
 MULTITHREADING=True
 
-SEGMENTS = [2, 3, 4, 5, 6]
-SEGMENTS = [2]
+SEGMENTS = [2, 3, 4]
+SEGMENTS = [5]
+
 EXPANDER_GAUSSIAN = 1.0
 
 SEARCH_TREE_DEPTH = 3
 
-RUN_BASIC_NO_LEARN = False
 RUN_BASIC_NO_LEARN = True
-
-#-------------------------------------
-
 RUN_KMEANS_UNWEIGHTED = False
-RUN_KMEANS_UNWEIGHTED = True
-
-RUN_KMEANS_WEIGHTED = True
 RUN_KMEANS_WEIGHTED = False
-
-#-------------------------------------------
-
-RUN_SEARCH_TREE = True
 RUN_SEARCH_TREE = False
-
 RUN_SEARCH_TREE_KMEANS = False
-RUN_SEARCH_TREE_KMEANS = True
 
-#---------------------------------------
-
-RUN_KMEANS_VECTOR = True
-RUN_KMEANS_VECTOR = False
-
-RUN_KMEANS_VECTOR2 = True
-RUN_KMEANS_VECTOR2 = False
-
-#----------------------------------------
-
-RUN_SPECIAL_KMEANS = True
-RUN_SPECIAL_KMEANS = False
-
-RUN_WEIGHTED_SPECIAL_KMEANS = True
-RUN_WEIGHTED_SPECIAL_KMEANS = False
-
-#-----------------------------------------
-
-RUN_BASIC = True
-RUN_BASIC = False
-
-#gw0.55-250
-#gw0.4-250
 
 WRITE_MARKDOWN = True
 MAKE_GRAPHS = False
@@ -101,7 +66,6 @@ PATH_PREFIX = ("fordypningsprosjekt\\expanded_" if RUN_FROM_SCRIPT else "expande
 MD_PATH_PREFIX = ("fordypningsprosjekt\\" if RUN_FROM_SCRIPT else "") + "expanded_"
 
 COMMENT = f"Generations of training: {kMeansClient.LEARNING_LENGTH}\n" \
-          f"{GAUSSIAN=}\n" \
           f"{EXPANDER_GAUSSIAN=}\n" \
           f"{COSINE_SIMILARITY=}\n" \
           f"{SEARCH_TREE_DEPTH=}" \
@@ -109,25 +73,23 @@ COMMENT = f"Generations of training: {kMeansClient.LEARNING_LENGTH}\n" \
           f"linear weighting"
 
 def run_program_with_different_seeds(plot_name, plot_title, seed_count=3,
-                                     discount_factor=kMeansClient.DISCOUNT_FACTOR, gaussian_width=GAUSSIAN,
+                                     discount_factor=kMeansClient.DISCOUNT_FACTOR, gaussian_width=0.3,
                                      exploration_rate=kMeansClient.EXPLORATION_RATE, standard_episodes=kMeansClient.LEARNING_LENGTH,
                                      kmeans_episodes=kMeansClient.SLEEPING_LENGTH, weighted_kmeans=True, render_mode=kMeansClient.RENDER_MODE,
-                                     game_mode=kMeansClient.GAME_MODE, k=None, save_plot=True, ignore_kmeans=False,
-                                     use_vectors=RUN_KMEANS_VECTOR, vector_type=1, learn=True, use_special_kmeans=False, markdownStorer=None,
-                                     mode="insert_mode", write_logs=WRITE_LOGS, segments=1, use_cosine_similarity=COSINE_SIMILARITY,
+                                     game_mode=kMeansClient.GAME_MODE, k=None, ignore_kmeans=False,
+                                     learn=True, markdownStorer=None,
+                                     mode="insert_mode", write_logs=WRITE_LOGS, segments=1,
                                      use_search_tree=False, search_tree_depth=-1, save_midway=False):
 
     if MULTITHREADING:
-        config_holder = configHolder(discount_factor=discount_factor, gaussian_width=gaussian_width,
+        config_holder = configHolder(gaussian_width=gaussian_width,
                                      exploration_rate=exploration_rate, standard_episodes=standard_episodes,
                                      kmeans_episodes=kmeans_episodes, weighted_kmeans=weighted_kmeans,
                                      render_mode=render_mode,
-                                     game_mode=game_mode, k=k, save_plot=False, ignore_kmeans=ignore_kmeans,
-                                     use_vectors=use_vectors,
-                                     vector_type=vector_type, learn=learn, do_standardize=True,
-                                     use_special_kmeans=use_special_kmeans, write_logs=write_logs, segments=segments,
+                                     game_mode=game_mode, k=k, ignore_kmeans=ignore_kmeans,
+                                     learn=learn,
+                                     write_logs=write_logs, segments=segments,
                                      use_expanded=True, expander_gaussian=EXPANDER_GAUSSIAN,
-                                     use_cosine_similarity=use_cosine_similarity,
                                      search_tree_depth=search_tree_depth, use_search_tree=use_search_tree,
                                      save_midway=save_midway)
         datas = []
@@ -149,11 +111,11 @@ def run_program_with_different_seeds(plot_name, plot_title, seed_count=3,
         for seed in range(seed_count):
             data = kMeansClient.run_program(seed=seed, discount_factor=discount_factor, gaussian_width=gaussian_width,
                                             exploration_rate=exploration_rate, standard_episodes=standard_episodes,
-                                            kmeans_episodes=kmeans_episodes, weighted_kmeans=weighted_kmeans, render_mode=render_mode,
-                                            game_mode=game_mode, k=k, save_plot=False, ignore_kmeans=ignore_kmeans, use_vectors=use_vectors,
-                                            vector_type=vector_type, learn=learn, do_standardize=True, use_special_kmeans=use_special_kmeans,
+                                            eval_length=kmeans_episodes, weighted_kmeans=weighted_kmeans, render_mode=render_mode,
+                                            game_mode=game_mode, k=k,  ignore_kmeans=ignore_kmeans,
+                                            learn=learn,
                                             write_logs=write_logs, segments=segments, expander_gaussian=EXPANDER_GAUSSIAN,
-                                            use_cosine_similarity=use_cosine_similarity, use_search_tree=use_search_tree,
+                                            use_search_tree=use_search_tree,
                                             search_tree_depth=search_tree_depth, save_midway=save_midway)
             datas.append(data[0])
             kmeans_time.append(data[1])
@@ -205,7 +167,7 @@ def run_gaussian_k():
                     title = f"{segment}-segments, k={k} avg{SEED_COUNT} unweighted-kmeans plot"
                     datas = run_program_with_different_seeds(name, title, seed_count=SEED_COUNT,
                                                              gaussian_width=gaussian_width,
-                                                             k=k, weighted_kmeans=False, use_vectors=False,
+                                                             k=k, weighted_kmeans=False,
                                                              markdownStorer=markdownStorer, mode="Kmeans Unweighted",
                                                              segments=segment)
                     datas_list.append(datas)
@@ -223,8 +185,8 @@ def run_gaussian_k():
 
                     title = f"{segment}-segments, k={k} avg{SEED_COUNT} weighted-kmeans plot"
                     datas = run_program_with_different_seeds(name, title, seed_count=SEED_COUNT, k=k, weighted_kmeans=True,
-                                                             gaussian_width=gaussian_width,
-                                                             use_vectors=False, markdownStorer=markdownStorer, mode="Kmeans Weighted",
+                                                             gaussian_width=gaussian_width, learn=False,
+                                                             markdownStorer=markdownStorer, mode="Kmeans Weighted",
                                                              segments=segment)
                     datas_list.append(datas)
                     labels.append("weighted")
@@ -243,7 +205,7 @@ def run_gaussian_k():
                         basic_datas = run_program_with_different_seeds(name, title, seed_count=SEED_COUNT,
                                                                        gaussian_width=gaussian_width,
                                                                        weighted_kmeans=False, ignore_kmeans=True,
-                                                                       use_vectors=False, markdownStorer=markdownStorer,
+                                                                       markdownStorer=markdownStorer,
                                                                        mode="Search Tree", use_search_tree=True,
                                                                        search_tree_depth=SEARCH_TREE_DEPTH,
                                                                        save_midway=True,
@@ -265,94 +227,12 @@ def run_gaussian_k():
                                                                    gaussian_width=gaussian_width,
                                                                    weighted_kmeans=False, ignore_kmeans=False,
                                                                    k=k,
-                                                                   use_vectors=False, markdownStorer=markdownStorer,
+                                                                   markdownStorer=markdownStorer,
                                                                    mode="Search Tree KMeans", use_search_tree=True,
                                                                    search_tree_depth=SEARCH_TREE_DEPTH, save_midway=True,
                                                                    learn=False, segments=segment)
                     datas_list.append(basic_datas)
                     labels.append("tree")
-
-            if RUN_KMEANS_VECTOR:
-                print("Starting Vector...")
-                path = f"{PATH_PREFIX}mplots\\expanded\\{kMeansClient.GAME_MODE}\\{segment}s\\{k}k"
-                if MAKE_GRAPHS:
-                    fileHelper.createDirIfNotExist(path, linux=LINUX)
-                name = path + f"\\{SEED_COUNT}seed__{kMeansClient.LEARNING_LENGTH}_then_{kMeansClient.SLEEPING_LENGTH}__vector_plot.png"
-                name = fileHelper.osFormat(name, LINUX)
-
-                title = f"{segment}-segments, k={k} avg{SEED_COUNT} vector-kmeans plot"
-                datas = run_program_with_different_seeds(name, title, seed_count=SEED_COUNT, k=k, weighted_kmeans=True,
-                                                         use_vectors=True, markdownStorer=markdownStorer, mode="Kmeans Vector",
-                                                         segments=segment)
-                datas_list.append(datas)
-                labels.append("vector")
-
-            if RUN_KMEANS_VECTOR2:
-                print("Starting Vector-2...")
-                path = f"{PATH_PREFIX}mplots\\expanded\\{kMeansClient.GAME_MODE}\\{segment}s\\{k}k"
-                if MAKE_GRAPHS:
-                    fileHelper.createDirIfNotExist(path, linux=LINUX)
-                name = path + f"\\{SEED_COUNT}seed__{kMeansClient.LEARNING_LENGTH}_then_{kMeansClient.SLEEPING_LENGTH}__vector2_plot.png"
-                name = fileHelper.osFormat(name, LINUX)
-
-                title = f"{segment}-segments, k={k} avg{SEED_COUNT} vector2-kmeans plot"
-                datas = run_program_with_different_seeds(name, title, seed_count=SEED_COUNT, k=k, weighted_kmeans=True,
-                                                         use_vectors=True, vector_type=2, markdownStorer=markdownStorer,
-                                                         mode="Kmeans Vector-2", segments=segment)
-                datas_list.append(datas)
-                labels.append("vector2")
-
-            if RUN_BASIC:
-                if k == K_VALUES[0]:
-                    print("Starting No Kmeans...")
-                    path = f"{PATH_PREFIX}mplots\\expanded\\{kMeansClient.GAME_MODE}\\{segment}s\\basic"
-                    if MAKE_GRAPHS:
-                        fileHelper.createDirIfNotExist(path, linux=LINUX)
-                    name = path + f"\\{SEED_COUNT}seed__{kMeansClient.LEARNING_LENGTH}_then_{kMeansClient.SLEEPING_LENGTH}__basic_plot.png"
-                    name = fileHelper.osFormat(name, LINUX)
-
-                    title = f"{segment}-segments, avg{SEED_COUNT} basic plot"
-                    basic_datas = run_program_with_different_seeds(name, title, seed_count=SEED_COUNT, k=k,
-                                                                   weighted_kmeans=False, ignore_kmeans=True,
-                                                                   use_vectors=False, markdownStorer=markdownStorer,
-                                                                   mode="No Kmeans", segments=segment)
-                    datas_list.append(basic_datas)
-                    labels.append("basic")
-                else:
-                    datas_list.append(basic_datas)
-                    labels.append("basic")
-
-            if RUN_SPECIAL_KMEANS:
-                print("Starting Special Kmeans Unweighted...")
-                path = f"{PATH_PREFIX}mplots\\expanded\\{kMeansClient.GAME_MODE}\\{segment}s\\{k}k"
-                fileHelper.createDirIfNotExist(path, linux=LINUX)
-                name = path + f"\\{SEED_COUNT}seed__{kMeansClient.LEARNING_LENGTH}_then_{kMeansClient.SLEEPING_LENGTH}__special_kmeans_plot.png"
-                name = fileHelper.osFormat(name, LINUX)
-
-                title = f"{segment}-segments, k={k}, avg{SEED_COUNT} special_kmeans plot"
-                basic_datas = run_program_with_different_seeds(name, title, seed_count=SEED_COUNT, k=k,
-                                                               weighted_kmeans=False, ignore_kmeans=False,
-                                                               use_vectors=False, use_special_kmeans=True,
-                                                               markdownStorer=markdownStorer, mode="Special Kmeans",
-                                                                segments=segment)
-                datas_list.append(basic_datas)
-                labels.append("special_kmeans")
-
-            if RUN_WEIGHTED_SPECIAL_KMEANS:
-                print("Starting Special Kmeans Weighted...")
-                path = f"{PATH_PREFIX}mplots\\expanded\\{kMeansClient.GAME_MODE}\\{segment}s\\{k}k"
-                fileHelper.createDirIfNotExist(path, linux=LINUX)
-                name = path + f"\\{SEED_COUNT}seed__{kMeansClient.LEARNING_LENGTH}_then_{kMeansClient.SLEEPING_LENGTH}__weighted_special_kmeans_plot.png"
-                name = fileHelper.osFormat(name, LINUX)
-
-                title = f"{segment}-segments, k={k}, avg{SEED_COUNT} weighted_special_kmeans plot"
-                basic_datas = run_program_with_different_seeds(name, title, seed_count=SEED_COUNT,k=k,
-                                                               weighted_kmeans=True, ignore_kmeans=False,
-                                                               use_vectors=False, use_special_kmeans=True,
-                                                               markdownStorer=markdownStorer, mode="Special Kmeans Unweighted",
-                                                               segments=segment)
-                datas_list.append(basic_datas)
-                labels.append("weighted_special_kmeans")
 
             if RUN_BASIC_NO_LEARN:
                 if k == K_VALUES[0]:
@@ -364,10 +244,10 @@ def run_gaussian_k():
                         name = fileHelper.osFormat(name, LINUX)
 
                         title = f"{segment}-segments, avg{SEED_COUNT} basic-no_learn plot"
-                        basic_NL_datas = run_program_with_different_seeds(name, title, seed_count=SEED_COUNT,k=k,
+                        basic_NL_datas = run_program_with_different_seeds(name, title, seed_count=SEED_COUNT,
                                                                         gaussian_width=gaussian_width,
                                                                         weighted_kmeans=False, ignore_kmeans=True,
-                                                                        use_vectors=False, learn=False,
+                                                                        learn=False,
                                                                         markdownStorer=markdownStorer, mode="Sleeping No Kmeans",
                                                                         segments=segment)
                     datas_list.append(basic_NL_datas)

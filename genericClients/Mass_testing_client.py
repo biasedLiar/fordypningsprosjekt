@@ -4,13 +4,9 @@ import sys
 
 import numpy as np
 
-#dir_path = os.path.dirname(os.path.realpath(__file__))
-dir_path = os.getcwd()
+sys_path = '/home/eliaseb/PycharmProjects/fordypningsprosjekt'
 
-print(dir_path)
-print("\n\n\n")
-
-sys.path.append('/home/eliaseb/PycharmProjects/fordypningsprosjekt')
+sys.path.append(sys_path)
 num_arguments = len(sys.argv)
 RUN_FROM_SCRIPT = (num_arguments > 1)
 
@@ -32,7 +28,7 @@ GAUSSIANS = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7]
 GAUSSIANS = [0.2]
 
 K_VALUES = [50, 100, 250, 500, 1000]
-K_VALUES = [1000]
+K_VALUES = [50]
 
 
 EXPLORATION_RATES = [0.1]
@@ -72,7 +68,7 @@ PATH_PREFIX = ("fordypningsprosjekt\\" if RUN_FROM_SCRIPT else "") + f"Finals\\{
 MD_PATH_PREFIX = ("fordypningsprosjekt\\" if RUN_FROM_SCRIPT else "")
 
 def run_program_with_different_seeds(plot_name, plot_title, seed_count=3,
-                                     discount_factor=kMeansClient.DISCOUNT_FACTOR, gaussian_width=kMeansClient.GAUSSIAN_WIDTH,
+                                     gaussian_width=kMeansClient.GAUSSIAN_WIDTH,
                                      exploration_rate=kMeansClient.EXPLORATION_RATE, standard_episodes=kMeansClient.LEARNING_LENGTH,
                                      kmeans_episodes=kMeansClient.SLEEPING_LENGTH, weighted_kmeans=True,
                                      render_mode=kMeansClient.RENDER_MODE, game_mode=kMeansClient.GAME_MODE, k=-1,
@@ -81,14 +77,13 @@ def run_program_with_different_seeds(plot_name, plot_title, seed_count=3,
                                      use_search_tree=False, search_tree_depth=-1, save_midway=False):
 
     if MULTITHREADING:
-        config_holder = configHolder(discount_factor=discount_factor, gaussian_width=gaussian_width,
+        config_holder = configHolder(gaussian_width=gaussian_width,
                                      exploration_rate=exploration_rate, standard_episodes=standard_episodes,
                                      kmeans_episodes=kmeans_episodes, weighted_kmeans=weighted_kmeans,
                                      render_mode=render_mode,
-                                     game_mode=game_mode, k=k, save_plot=False, ignore_kmeans=ignore_kmeans,
-                                     use_vectors=use_vectors,
-                                     vector_type=vector_type, learn=learn, do_standardize=True,
-                                     use_special_kmeans=use_special_kmeans, write_logs=write_logs,
+                                     game_mode=game_mode, k=k, ignore_kmeans=ignore_kmeans,
+                                     learn=learn, do_standardize=True,
+                                     write_logs=write_logs,
                                      search_tree_depth=search_tree_depth, use_search_tree=use_search_tree,
                                      save_midway=save_midway)
         datas = []
@@ -112,9 +107,9 @@ def run_program_with_different_seeds(plot_name, plot_title, seed_count=3,
         post_kmeans_time = []
         total_sleeping_steps = []
         for seed in range(seed_count):
-            data = kMeansClient.run_program(seed=seed, discount_factor=discount_factor, gaussian_width=gaussian_width,
+            data = kMeansClient.run_program(seed=seed, gaussian_width=gaussian_width,
                                             exploration_rate=exploration_rate, standard_episodes=standard_episodes,
-                                            kmeans_episodes=kmeans_episodes, weighted_kmeans=weighted_kmeans, render_mode=render_mode,
+                                            eval_length=kmeans_episodes, weighted_kmeans=weighted_kmeans, render_mode=render_mode,
                                             game_mode=game_mode, k=k, save_plot=False, ignore_kmeans=ignore_kmeans, use_vectors=use_vectors,
                                             vector_type=vector_type, learn=learn, do_standardize=True, use_special_kmeans=use_special_kmeans,
                                             write_logs=write_logs, use_search_tree=use_search_tree, search_tree_depth=search_tree_depth,
