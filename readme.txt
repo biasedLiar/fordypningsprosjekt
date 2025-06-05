@@ -25,6 +25,7 @@ K_VALUES: The numbers of clusters used when running K_Means
 SEARCH_TREE_DEPTH: The number of steps forward in time VST-EWQM predicts
 SEGMENTS: The g-value used for state space transformation
 EXPANDER_GAUSSIAN: Used to change the gaussian width of state space transformation
+USE_SIGMOID_WEIGHTING: Decides whether weighted K-Means is run with sigmoid weighting or with linear weighting
 
 The following boolean variables are used to set what versions of the program to be run.
 RUN_BASIC_NO_LEARN   Runs the basic EWQM algorithm
