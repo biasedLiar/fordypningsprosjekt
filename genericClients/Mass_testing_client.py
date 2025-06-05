@@ -4,7 +4,7 @@ import sys
 
 import numpy as np
 
-sys_path = '/home/eliaseb/PycharmProjects/fordypningsprosjekt'
+sys_path = '/home/eliaseb/PycharmProjects/master-thesis'
 
 sys.path.append(sys_path)
 num_arguments = len(sys.argv)
@@ -64,8 +64,8 @@ date_string = datetime.today().strftime('%Y-%m-%d__%H-%M')
 COMMENT = f"{('search-tree-depth: ' + str(SEARCH_TREE_DEPTH) if RUN_SEARCH_TREE or RUN_SEARCH_TREE_KMEANS else '')}\n" \
           f"Testing kmeans --- weighting"
 
-PATH_PREFIX = ("fordypningsprosjekt\\" if RUN_FROM_SCRIPT else "") + f"Finals\\{date_string}\\"
-MD_PATH_PREFIX = ("fordypningsprosjekt\\" if RUN_FROM_SCRIPT else "")
+PATH_PREFIX = ("master-thesis\\" if RUN_FROM_SCRIPT else "") + f"Finals\\{date_string}\\"
+MD_PATH_PREFIX = ("master-thesis\\" if RUN_FROM_SCRIPT else "")
 
 def run_program_with_different_seeds(plot_name, plot_title, seed_count=3,
                                      gaussian_width=kMeansClient.GAUSSIAN_WIDTH,

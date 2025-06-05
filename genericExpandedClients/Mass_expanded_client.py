@@ -9,7 +9,7 @@ dir_path = os.getcwd()
 print(dir_path)
 print("\n\n\n")
 
-sys.path.append('/home/eliaseb/PycharmProjects/fordypningsprosjekt')
+sys.path.append('/home/eliaseb/PycharmProjects/master-thesis')
 num_arguments = len(sys.argv)
 RUN_FROM_SCRIPT = (num_arguments > 1)
 
@@ -61,9 +61,9 @@ MAKE_GRAPHS = False
 WRITE_LOGS = False
 COSINE_SIMILARITY = False
 
-PATH_PREFIX = ("fordypningsprosjekt\\expanded_" if RUN_FROM_SCRIPT else "expanded_")
+PATH_PREFIX = ("master-thesis\\expanded_" if RUN_FROM_SCRIPT else "expanded_")
 
-MD_PATH_PREFIX = ("fordypningsprosjekt\\" if RUN_FROM_SCRIPT else "") + "expanded_"
+MD_PATH_PREFIX = ("master-thesis\\" if RUN_FROM_SCRIPT else "") + "expanded_"
 
 COMMENT = f"Generations of training: {kMeansClient.LEARNING_LENGTH}\n" \
           f"{EXPANDER_GAUSSIAN=}\n" \
