@@ -28,9 +28,9 @@ LINUX = True
 SEED_COUNT = 100
 
 
-GAUSSIANS = [0.4]
 GAUSSIANS = [0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
 GAUSSIANS = [0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.4]
+GAUSSIANS = [0.4]
 
 K_VALUES = [20, 50, 100, 250]
 K_VALUES = [500, 1000]
@@ -42,10 +42,10 @@ EXPLORATION_RATES = [0.1]
 MULTITHREADING=True
 
 SEGMENTS = [2, 3, 4]
-SEGMENTS = [5]
+SEGMENTS = [2]
 
 EXPANDER_GAUSSIAN = 1.0
-
+USE_SIGMOID_WEIGHTING = True
 SEARCH_TREE_DEPTH = 3
 
 RUN_BASIC_NO_LEARN = True
@@ -59,7 +59,6 @@ WRITE_MARKDOWN = True
 MAKE_GRAPHS = False
 
 WRITE_LOGS = False
-COSINE_SIMILARITY = False
 
 PATH_PREFIX = ("master-thesis\\expanded_" if RUN_FROM_SCRIPT else "expanded_")
 
@@ -67,7 +66,6 @@ MD_PATH_PREFIX = ("master-thesis\\" if RUN_FROM_SCRIPT else "") + "expanded_"
 
 COMMENT = f"Generations of training: {kMeansClient.LEARNING_LENGTH}\n" \
           f"{EXPANDER_GAUSSIAN=}\n" \
-          f"{COSINE_SIMILARITY=}\n" \
           f"{SEARCH_TREE_DEPTH=}" \
           f"\n\nNew reward schema\n" \
           f"linear weighting"
@@ -77,7 +75,7 @@ def run_program_with_different_seeds(plot_name, plot_title, seed_count=3,
                                      exploration_rate=kMeansClient.EXPLORATION_RATE, standard_episodes=kMeansClient.LEARNING_LENGTH,
                                      kmeans_episodes=kMeansClient.SLEEPING_LENGTH, weighted_kmeans=True, render_mode=kMeansClient.RENDER_MODE,
                                      game_mode=kMeansClient.GAME_MODE, k=None, ignore_kmeans=False,
-                                     learn=True, markdownStorer=None,
+                                     learn=True, markdownStorer=None, weighted_sigmoid=USE_SIGMOID_WEIGHTING,
                                      mode="insert_mode", write_logs=WRITE_LOGS, segments=1,
                                      use_search_tree=False, search_tree_depth=-1, save_midway=False):
 
@@ -91,7 +89,7 @@ def run_program_with_different_seeds(plot_name, plot_title, seed_count=3,
                                      write_logs=write_logs, segments=segments,
                                      use_expanded=True, expander_gaussian=EXPANDER_GAUSSIAN,
                                      search_tree_depth=search_tree_depth, use_search_tree=use_search_tree,
-                                     save_midway=save_midway)
+                                     save_midway=save_midway, weighted_sigmoid=weighted_sigmoid)
         datas = []
         kmeans_time = []
         post_kmeans_time = []
@@ -111,12 +109,12 @@ def run_program_with_different_seeds(plot_name, plot_title, seed_count=3,
         for seed in range(seed_count):
             data = kMeansClient.run_program(seed=seed, discount_factor=discount_factor, gaussian_width=gaussian_width,
                                             exploration_rate=exploration_rate, standard_episodes=standard_episodes,
-                                            eval_length=kmeans_episodes, weighted_kmeans=weighted_kmeans, render_mode=render_mode,
+                                            weighted_kmeans=weighted_kmeans, render_mode=render_mode,
                                             game_mode=game_mode, k=k,  ignore_kmeans=ignore_kmeans,
                                             learn=learn,
                                             write_logs=write_logs, segments=segments, expander_gaussian=EXPANDER_GAUSSIAN,
                                             use_search_tree=use_search_tree,
-                                            search_tree_depth=search_tree_depth, save_midway=save_midway)
+                                            search_tree_depth=search_tree_depth, save_midway=save_midway, weighted_sigmoid=weighted_sigmoid)
             datas.append(data[0])
             kmeans_time.append(data[1])
             post_kmeans_time.append(data[2])
@@ -152,8 +150,6 @@ def run_gaussian_k():
         for segment in SEGMENTS:
             print(f"Starting segments: {segment}.")
             start_2 = time.time()
-            labels = []
-            datas_list = []
             if RUN_KMEANS_UNWEIGHTED:
 
                 for gaussian_width in GAUSSIANS:
@@ -170,8 +166,7 @@ def run_gaussian_k():
                                                              k=k, weighted_kmeans=False,
                                                              markdownStorer=markdownStorer, mode="Kmeans Unweighted",
                                                              segments=segment)
-                    datas_list.append(datas)
-                    labels.append("unweighted")
+
 
             if RUN_KMEANS_WEIGHTED:
 
@@ -188,8 +183,7 @@ def run_gaussian_k():
                                                              gaussian_width=gaussian_width, learn=False,
                                                              markdownStorer=markdownStorer, mode="Kmeans Weighted",
                                                              segments=segment)
-                    datas_list.append(datas)
-                    labels.append("weighted")
+
 
             if RUN_SEARCH_TREE:
                 if k == K_VALUES[0]:
@@ -210,8 +204,7 @@ def run_gaussian_k():
                                                                        search_tree_depth=SEARCH_TREE_DEPTH,
                                                                        save_midway=True,
                                                                        learn=False, segments=segment)
-                        datas_list.append(basic_datas)
-                        labels.append("tree")
+
 
             if RUN_SEARCH_TREE_KMEANS:
                 for gaussian_width in GAUSSIANS:
@@ -231,8 +224,7 @@ def run_gaussian_k():
                                                                    mode="Search Tree KMeans", use_search_tree=True,
                                                                    search_tree_depth=SEARCH_TREE_DEPTH, save_midway=True,
                                                                    learn=False, segments=segment)
-                    datas_list.append(basic_datas)
-                    labels.append("tree")
+
 
             if RUN_BASIC_NO_LEARN:
                 if k == K_VALUES[0]:
@@ -250,32 +242,8 @@ def run_gaussian_k():
                                                                         learn=False,
                                                                         markdownStorer=markdownStorer, mode="Sleeping No Kmeans",
                                                                         segments=segment)
-                    datas_list.append(basic_NL_datas)
-                    labels.append("basic no-learn")
-                else:
-                    datas_list.append(basic_NL_datas)
-                    labels.append("basic no-learn")
-
             end_2 = time.time()
             print(f"\n\n{segment=}, {k=}: time:{end_2 - start_2}")
-            if len(labels) > 1:
-                path = f"plots\\expanded\\{kMeansClient.GAME_MODE}\\aggregate\\{segment}s\\{k}k"
-                fileHelper.createDirIfNotExist(path, linux=LINUX)
-
-                types =  f"{'_weighted' if RUN_KMEANS_WEIGHTED else ''}{'_unweighted' if RUN_KMEANS_UNWEIGHTED else ''}{'_vector' if RUN_KMEANS_VECTOR else ''}{'_basic' if RUN_BASIC else ''}"
-                name = path + f"\\{SEED_COUNT}seed__{kMeansClient.LEARNING_LENGTH}_then_{kMeansClient.SLEEPING_LENGTH}" \
-                              f"{types}.png"
-                name = fileHelper.osFormat(name, LINUX)
-
-                title = f"{segment}-segments, k={k} avg{SEED_COUNT}{types} plot"
-
-                plotHelper.plot_multiple_graph_types(datas_list, labels, name, title, show_std=False)
-                name = path + f"\\{SEED_COUNT}seed__{kMeansClient.LEARNING_LENGTH}_then_{kMeansClient.SLEEPING_LENGTH}" \
-                              f"{types}_std.png"
-                name = fileHelper.osFormat(name, LINUX)
-
-
-                plotHelper.plot_multiple_graph_types(datas_list, labels, name, title, show_std=True)
         end = time.time()
         print(f"\n\n\n\n{k=}: time:{end - start}")
     if markdownStorer != None:

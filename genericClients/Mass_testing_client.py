@@ -32,28 +32,18 @@ K_VALUES = [50]
 
 
 EXPLORATION_RATES = [0.1]
+USE_SIGMOID_WEIGHTING=False
 
 MULTITHREADING = True
 WRITE_LOGS = False
 
 
 RUN_BASIC_NO_LEARN = True
-
-#-----------------------------------
-
-RUN_KMEANS_UNWEIGHTED = True
-
+RUN_KMEANS_UNWEIGHTED = False
 RUN_KMEANS_WEIGHTED = False
-
-#-----------------------------------
-
 RUN_SEARCH_TREE = False
+RUN_SEARCH_TREE_KMEANS = False
 
-RUN_SEARCH_TREE_KMEANS = True
-
-#-----------------------------------
-
-RUN_BASIC = False
 
 WRITE_MARKDOWN = True
 MAKE_GRAPHS = False
@@ -61,8 +51,7 @@ MAKE_GRAPHS = False
 SEARCH_TREE_DEPTH = 4
 
 date_string = datetime.today().strftime('%Y-%m-%d__%H-%M')
-COMMENT = f"{('search-tree-depth: ' + str(SEARCH_TREE_DEPTH) if RUN_SEARCH_TREE or RUN_SEARCH_TREE_KMEANS else '')}\n" \
-          f"Testing kmeans --- weighting"
+COMMENT = f"{('search-tree-depth: ' + str(SEARCH_TREE_DEPTH) if RUN_SEARCH_TREE or RUN_SEARCH_TREE_KMEANS else '')}\n"
 
 PATH_PREFIX = ("master-thesis\\" if RUN_FROM_SCRIPT else "") + f"Finals\\{date_string}\\"
 MD_PATH_PREFIX = ("master-thesis\\" if RUN_FROM_SCRIPT else "")
@@ -70,7 +59,7 @@ MD_PATH_PREFIX = ("master-thesis\\" if RUN_FROM_SCRIPT else "")
 def run_program_with_different_seeds(plot_name, plot_title, seed_count=3,
                                      gaussian_width=kMeansClient.GAUSSIAN_WIDTH,
                                      exploration_rate=kMeansClient.EXPLORATION_RATE, standard_episodes=kMeansClient.LEARNING_LENGTH,
-                                     kmeans_episodes=kMeansClient.SLEEPING_LENGTH, weighted_kmeans=True,
+                                     kmeans_episodes=kMeansClient.SLEEPING_LENGTH, weighted_kmeans=True, weighted_sigmoid=USE_SIGMOID_WEIGHTING,
                                      render_mode=kMeansClient.RENDER_MODE, game_mode=kMeansClient.GAME_MODE, k=-1,
                                      save_plot=True, ignore_kmeans=False, use_vectors=False, vector_type=1, learn=True,
                                      use_special_kmeans=False, markdownStorer=None, mode="insert_mode", write_logs=WRITE_LOGS,
@@ -85,7 +74,7 @@ def run_program_with_different_seeds(plot_name, plot_title, seed_count=3,
                                      learn=learn, do_standardize=True,
                                      write_logs=write_logs,
                                      search_tree_depth=search_tree_depth, use_search_tree=use_search_tree,
-                                     save_midway=save_midway)
+                                     save_midway=save_midway, weighted_sigmoid=weighted_sigmoid)
         datas = []
         kmeans_time = []
         post_kmeans_time = []
@@ -110,10 +99,9 @@ def run_program_with_different_seeds(plot_name, plot_title, seed_count=3,
             data = kMeansClient.run_program(seed=seed, gaussian_width=gaussian_width,
                                             exploration_rate=exploration_rate, standard_episodes=standard_episodes,
                                             eval_length=kmeans_episodes, weighted_kmeans=weighted_kmeans, render_mode=render_mode,
-                                            game_mode=game_mode, k=k, save_plot=False, ignore_kmeans=ignore_kmeans, use_vectors=use_vectors,
-                                            vector_type=vector_type, learn=learn, do_standardize=True, use_special_kmeans=use_special_kmeans,
+                                            game_mode=game_mode, k=k, ignore_kmeans=ignore_kmeans,
                                             write_logs=write_logs, use_search_tree=use_search_tree, search_tree_depth=search_tree_depth,
-                                            save_midway=save_midway)
+                                            save_midway=save_midway, weighted_sigmoid=weighted_sigmoid)
             datas.append(data[0])
             kmeans_time.append(data[1])
             post_kmeans_time.append(data[2])
@@ -190,8 +178,7 @@ def run_gaussian_k():
                                                          gaussian_width=gaussian_width,
                                                          k=k, weighted_kmeans=False, use_vectors=False,
                                                          markdownStorer=markdownStorer, mode="Kmeans Unweighted")
-                datas_list.append(datas)
-                labels.append("unweighted")
+
 
 
             if RUN_KMEANS_WEIGHTED:
@@ -206,8 +193,7 @@ def run_gaussian_k():
                 datas = run_program_with_different_seeds(name, title, seed_count=SEED_COUNT,
                                                          gaussian_width=gaussian_width, k=k, weighted_kmeans=True,
                                                          use_vectors=False, markdownStorer=markdownStorer, mode="Kmeans Weighted")
-                datas_list.append(datas)
-                labels.append("weighted")
+
 
             if RUN_SEARCH_TREE_KMEANS:
                 print("Starting Search Tree KMeans...")
@@ -223,8 +209,7 @@ def run_gaussian_k():
                                                          markdownStorer=markdownStorer, mode="Kmeans search tree",
                                                          search_tree_depth=SEARCH_TREE_DEPTH, save_midway=True,
                                                          learn=False, ignore_kmeans=False, use_search_tree=True)
-                datas_list.append(datas)
-                labels.append("kmeans search tree")
+
 
             if RUN_SEARCH_TREE:
                 if k == K_VALUES[0]:
@@ -243,11 +228,7 @@ def run_gaussian_k():
                                                                    mode="Search Tree", use_search_tree=True,
                                                                    search_tree_depth=SEARCH_TREE_DEPTH, save_midway=True,
                                                                    learn=False)
-                    datas_list.append(basic_datas)
-                    labels.append("tree")
-                else:
-                    datas_list.append(basic_datas)
-                    labels.append("tree")
+
 
             if RUN_BASIC_NO_LEARN:
                 if k == K_VALUES[0]:
@@ -263,11 +244,6 @@ def run_gaussian_k():
                                                                     weighted_kmeans=False, ignore_kmeans=True,
                                                                     use_vectors=False, learn=False,
                                                                     markdownStorer=markdownStorer, mode="Sleeping No Kmeans")
-                    datas_list.append(basic_NL_datas)
-                    labels.append("basic no-learn")
-                else:
-                    datas_list.append(basic_NL_datas)
-                    labels.append("basic no-learn")
 
             end_2 = time.time()
             print(f"\n\n{gaussian_width=}, {k=}: time:{end_2 - start_2}")

@@ -19,13 +19,14 @@ from sklearn.utils import gen_even_slices
 class GenericModel:
     def __init__(self, action_space_n, observation_space_shape, gaussian_width, exploration_rate, weighted_kmeans=True,
                  K=20, do_standardize=True, use_search_tree=False,
-                 search_tree_depth=-1):
+                 search_tree_depth=-1, weighted_sigmoid=False):
         self.gaussian_width = gaussian_width
         self.gaussian_width_vector = gaussian_width
         self.action_space_size = action_space_n
         self.observation_space_size = observation_space_shape
         self.exploration_rate = exploration_rate
         self.weighted_kmeans = weighted_kmeans
+        self.weighted_sigmoid = weighted_sigmoid
         self.do_standardize = do_standardize
         self.K = K
         self.delta = 10**-8
@@ -46,13 +47,6 @@ class GenericModel:
         self.state_action_transitions_to: list[list[int]] = [[] for _ in self.actions]
 
         self.state_vectors: list[np.ndarray] = [np.empty((0, self.observation_space_size)) for i in range(self.action_space_size)]
-
-        self.saved_state_action_transitions: list[list[tuple[int,
-                                                       int]]] = [[] for _ in range(self.action_space_size)]  # type: ignore
-
-
-        self.saved_state_action_transitions_from: list[list[int]] = [[] for _ in self.actions]
-        self.saved_state_action_transitions_to: list[list[int]] = [[] for _ in self.actions]
 
         self.num_states_when_ran_kmeans = -1
         self.scaler = None
@@ -240,9 +234,10 @@ class GenericModel:
 
 
     def get_kmeans_weights(self):
-        formatted_input = (2*np.asarray(self.rewards) / (max(np.abs(self.rewards)))) - 1
-        formatted_input = 1 / (1 + np.exp(-5*formatted_input))
-        return formatted_input
+        if self.weighted_sigmoid:
+            formatted_input = (2*np.asarray(self.rewards) / (max(np.abs(self.rewards)))) - 1
+            formatted_input = 1 / (1 + np.exp(-5*formatted_input))
+            return formatted_input
 
         formatted_input = np.asarray(self.rewards) / max(np.abs(self.rewards))
         return formatted_input

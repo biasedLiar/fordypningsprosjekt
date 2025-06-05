@@ -39,12 +39,13 @@ def run_program(seed=SEED, gaussian_width=GAUSSIAN_WIDTH,
                 exploration_rate=EXPLORATION_RATE, standard_episodes=LEARNING_LENGTH,
                 eval_length=SLEEPING_LENGTH, weighted_kmeans=False, render_mode=RENDER_MODE,
                 game_mode=GAME_MODE, k=K_MEANS_K, ignore_kmeans=False, use_vectors=False, write_logs=True, use_search_tree=False,
-                search_tree_depth=-1, save_midway=False):
+                search_tree_depth=-1, save_midway=False, weighted_sigmoid=False):
 
     env = gymnasium.make(game_mode, render_mode=render_mode)
     env.action_space.seed(seed)
     np.random.seed(seed)
-    model = GenericModel(env.action_space.n, env.observation_space.shape[0], gaussian_width, exploration_rate, K=k, weighted_kmeans=weighted_kmeans,
+    model = GenericModel(env.action_space.n, env.observation_space.shape[0], gaussian_width, exploration_rate, K=k,
+                         weighted_kmeans=weighted_kmeans, weighted_sigmoid=weighted_sigmoid,
                          do_standardize=True, use_search_tree=use_search_tree, search_tree_depth=search_tree_depth)
 
     rewards = 0.  # Accumulative episode rewards

@@ -8,7 +8,7 @@ class configHolder:
                  exploration_rate=kMeansClient.EXPLORATION_RATE, standard_episodes=kMeansClient.LEARNING_LENGTH,
                  kmeans_episodes=kMeansClient.SLEEPING_LENGTH, weighted_kmeans=True, render_mode=kMeansClient.RENDER_MODE,
                  game_mode=kMeansClient.GAME_MODE, k=kMeansClient.K_MEANS_K, ignore_kmeans=False,
-                 learn=False, do_standardize=True, write_logs=True,
+                 learn=False, do_standardize=True, write_logs=True, weighted_sigmoid=False,
                  use_expanded=False, segments=1, expander_gaussian=1,
                  use_search_tree=False, search_tree_depth=-1, save_midway=False):
         self.gaussian_width=gaussian_width
@@ -16,6 +16,7 @@ class configHolder:
         self.standard_episodes = standard_episodes
         self.kmeans_episodes = kmeans_episodes
         self.weighted_kmeans = weighted_kmeans
+        self.weighted_sigmoid = weighted_sigmoid
         self.render_mode = render_mode
         self.game_mode = game_mode
         self.k = k
@@ -44,7 +45,7 @@ class configHolder:
                                             do_standardize=self.do_standardize, write_logs=self.write_logs,
                                             segments=self.segments, expander_gaussian=self.expander_gaussian,
                                             use_search_tree=self.use_search_tree, search_tree_depth=self.search_tree_depth,
-                                            save_midway=self.save_midway)
+                                            save_midway=self.save_midway, weighted_sigmoid=self.weighted_sigmoid)
         else:
             data = kMeansClient.run_program(seed=seed,
                                             gaussian_width=self.gaussian_width,
@@ -56,5 +57,5 @@ class configHolder:
                                             ignore_kmeans=self.ignore_kmeans,
                                             write_logs=self.write_logs,
                                             use_search_tree=self.use_search_tree, search_tree_depth=self.search_tree_depth,
-                                            save_midway=self.save_midway)
+                                            save_midway=self.save_midway, weighted_sigmoid=self.weighted_sigmoid)
         return data

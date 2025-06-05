@@ -11,10 +11,11 @@ and
 script2.sh
 will run the Mass_testing_client.py and Mass_expanded_client respectively.
 
-In order to run a test, the following variable must be chosen:
-
+In order to run a test, the following variable must be set:
 sys_path: the location the program is run from
 LINUX: whether the program should format files using the linux file format.
+
+To choose the settings of the program being run, set the following settings:
 SEED_COUNT: the number of seeds to test, set to 100 in this report
 MULTITHREADING: Whether to run the seeds in parallell.
 EXPLORATION_RATES: the exploration thresholds tested
